@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@types/node": "^10.12.0",
+    "node-fetch": "^2.2.0"
+  }
+}
