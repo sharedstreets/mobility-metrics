@@ -1,6 +1,19 @@
 {
   "dependencies": {
+    "@turf/helpers": "^6.1.4",
+    "@turf/invariant": "^6.1.2",
     "@types/node": "^10.12.0",
-    "node-fetch": "^2.2.0"
+    "h3-js": "^3.2.0",
+    "moment": "^2.23.0",
+    "node-fetch": "^2.2.0",
+    "node-persist": "^3.0.2",
+    "untildify": "^3.0.3",
+    "uuid": "^3.3.2",
+    "uuid-by-string": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.1.4",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.2.2"
   }
 }
