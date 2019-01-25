@@ -24,8 +24,9 @@ async function getStatusChanges() {
 
     var h3AvailabilityAggregator = new H3AvailabilityStatusAggregator();
 
+    // event generator loop
     var statusEvents = statusEventMap.processStatusEvents(mdsQuery);
-        for await(var event of statusEvents) {
+    for await(var event of statusEvents) {
             if(event.error) {
                 console.log("out of order...");
 

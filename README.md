@@ -5,7 +5,7 @@
 
 1. ```yarn install ```
 
-2. Run ```process_status_changes.ts``` as a chron job.
+2. Run ```process_status_changes.ts``` as a cron job.
 
 3. Run ```express.ts``` server api end point.
 

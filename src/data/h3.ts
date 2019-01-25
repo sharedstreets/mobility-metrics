@@ -7,7 +7,7 @@ import { PeriodSize, Week } from "./periodicity";
 
 const h3 = require("h3-js");
 
-const BASE_H3_INDEX_LEVEL = 8;
+const BASE_H3_INDEX_LEVEL = 9;
 
 function pointToH3(point:Feature<Point>):string {
     var lnglat = getCoord(point);
