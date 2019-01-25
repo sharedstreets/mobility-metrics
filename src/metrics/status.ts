@@ -48,7 +48,7 @@ export class StatusMetric {
     }
 }
 
-export class FactionalCount {
+export class FractionalCount {
     count:number = 0;
     fractionalCount:number = 0;
 
@@ -105,7 +105,7 @@ export class H3AvailabilityStatusAggregator {
                 }
 
                 if(!this.data[week][period.period][h3index]){
-                    var fracionalCount = new FactionalCount();
+                    var fracionalCount = new FractionalCount();
                     this.data[week][period.period][h3index] = fracionalCount;
                 }
 
