@@ -7,6 +7,7 @@ import { InMemoryMDSStatusMap, DiskBackedMDSStatusMap } from './src/data/status_
 import { StatusChangeEvent } from "./src/data/status_changes";
 import { StatusMetric, StatusMetricType, H3AvailabilityStatusAggregator } from './src/metrics/status'
 
+const h3 = require("h3-js");
 
 async function getStatusChanges() {
 

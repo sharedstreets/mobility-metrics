@@ -2,9 +2,9 @@ import { MDSStatusChange } from "../data/mds";
 import { stat } from "fs";
 import { StatusChangeEvent } from "./status_changes";
 import { MDSStatusChangeQuery } from "../provider/generic";
+import { LevelDB } from "./leveldb";
 
 const DEFAULT_DATA_DIRECTORY = './data/mds_status_map/';
-
 
 // keeps track of processed status change events and caches (encryped!) 
 // last status data for generating status transitions
@@ -12,17 +12,16 @@ export abstract class MDSStatusMap {
 
     abstract async getStatus(status:MDSStatusChange):Promise<MDSStatusChange>;
     abstract async setStatus(MDSStatusChange);
-    abstract async checkStatus(MDSStatusChange, boolean):Promise<boolean>;
+    abstract async alreadyLogged(MDSStatusChange, boolean):Promise<boolean>;
 
     async *processStatusEvents(data:MDSStatusChangeQuery):AsyncIterableIterator<StatusChangeEvent> {
         for(var newStatus of data.getSortedResults()) {
 
             // only generate events for new, previously unprocessed status changes
-            if(await this.checkStatus(newStatus, true)){
+            if(! await this.alreadyLogged(newStatus, true)){
                 var oldStatus = await this.setStatus(newStatus);
-                if(oldStatus) {
+                if(oldStatus)
                     yield new StatusChangeEvent(oldStatus, newStatus);
-                }
             }
             else {
                 // TODO duplicate record QA?
@@ -41,13 +40,14 @@ export class InMemoryMDSStatusMap extends MDSStatusMap {
         super();
     }
 
-    async checkStatus(status:MDSStatusChange, logStatus:boolean):Promise<boolean> {
+    async alreadyLogged(status:MDSStatusChange, logStatus:boolean):Promise<boolean> {
         if(this.loggedStatusEvents.has(status.getId()))
-            return false;
+            return true;
         
         if(logStatus)
             this.loggedStatusEvents.set(status.getId(), true);
-        return true;
+
+        return false;
     }
 
     async getStatus(status:MDSStatusChange):Promise<MDSStatusChange> {
@@ -62,52 +62,52 @@ export class InMemoryMDSStatusMap extends MDSStatusMap {
     
 }
 
-// simple disk-backed data store -- uses node-persist to store MDS status to disk
-// TODO switch to LevelDB/LevelUp: https://www.npmjs.com/package/levelup
+// Levelup disk-backed data store 
 export class DiskBackedMDSStatusMap extends MDSStatusMap {
     
-    storage;
+    db:LevelDB;
     encrypt:boolean
 
     // TODO add encryption to  MDSStatusChange methods for disk backed data storage
     constructor(directory=DEFAULT_DATA_DIRECTORY, encrypt:boolean=true) {
         super();
-        this.storage = require('node-persist');
-        this.storage.init({dir: directory});
+        this.db = new LevelDB(directory);
         this.encrypt = encrypt;
     }
 
-    async checkStatus(status:MDSStatusChange, logStatus:boolean):Promise<boolean> {
+    async alreadyLogged(status:MDSStatusChange, logStatus:boolean):Promise<boolean> {
         var eventKey = 'event-id-' + status.getId();
-        if(await this.storage.getItem(eventKey))
-            return false;
-        
-        if(logStatus)
-            await this.storage.setItem(eventKey, true);
-            
-        return true;
+
+        var exists = await this.db.has(eventKey);
+        if(!exists && logStatus)
+                await this.db.put(eventKey, true);
+
+        return exists;
     }
 
     async getStatus(status:MDSStatusChange):Promise<MDSStatusChange> {
-        var data = await this.storage.getItem(status.getDeviceId());
+        
+        var data = await this.db.get(status.getDeviceId());
 
-        if(this.encrypt)
+        if(data && this.encrypt)
             return new MDSStatusChange(data, status.getRecordSecret());
         else 
-            return data;
-            
+            return JSON.parse(data);
+    
     }
 
     async setStatus(status:MDSStatusChange):Promise<MDSStatusChange> {
+        
         var data;
 
         if(this.encrypt)
             data = status.encrypt();
         else 
-            data = status;
+            data = JSON.stringify(status);
 
         var oldStatus = await this.getStatus(status);
-        await this.storage.setItem(status.getDeviceId(), data);
+        await this.db.put(status.getDeviceId(), data);
+
         return oldStatus;
 
     }
