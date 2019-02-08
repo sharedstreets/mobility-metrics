@@ -1,8 +1,12 @@
 import { EventType, MDSStatusChange } from "../data/mds";
 import { StatusChangeEvent, StatusEventError, StatusEventErrorType } from "../data/status_changes";
-import { GenericPeriodicMetric } from "./generic_aggregator";
+import { GenericPeriodicMetric, FractionalCount, GenericMetricAggregator, GenericMetric } from "./generic_aggregator";
 
 import * as fs from "fs";
+import { Geometries } from "@turf/helpers/lib/geojson";
+import { FeatureCollection } from "@turf/helpers";
+
+const h3 = require("h3-js");
 
 const DEFAULT_DATA_DIRECTORY = './data/metrics/'
 
@@ -16,12 +20,14 @@ export enum StatusMetricType {
     OTHER = "other"
 }
 
-export class StatusMetric {
+
+export class StatusMetric extends GenericMetric {
 
     statusEvent:StatusChangeEvent;
     statusType:StatusMetricType;
 
     constructor(statusEvent:StatusChangeEvent) {
+        super()
 
         this.statusEvent = statusEvent;
 
@@ -48,73 +54,91 @@ export class StatusMetric {
     }
 }
 
-export class FractionalCount {
-    count:number = 0;
-    fractionalCount:number = 0;
-
-    add(fractionalValue) {
-        this.count = this.count + 1;
-        this.fractionalCount = this.fractionalCount + fractionalValue
-    }
-}
-
-export class H3AvailabilityStatusAggregator {
-
-    metricName = "availability";
-    data = {};
-
+export class H3AvailabilityStatusAggregator extends GenericMetricAggregator<StatusMetric, FractionalCount> {
+    
     constructor() {
-
-        fs.mkdirSync(this.getPath(), {recursive:true});
-
-        for(var dataFile in fs.readdirSync(this.getPath())) {
-            var parts = dataFile.split('/');
-            var week =  parts[parts.length -1];
-            var content = fs.readFileSync(dataFile);
-            this.data[week]  = JSON.parse(content.toString());
-        }
+        super()
     }
 
-    getPath():string {
-        return DEFAULT_DATA_DIRECTORY + this.metricName + '/';
+    getMetricName():string {
+        return "h3_availability";
     }
 
-    save() {
-        for(var week of Object.keys(this.data)){
-            var weekObject = this.data[week];
-            var jsonContent = JSON.stringify(weekObject);
-            fs.writeFileSync(this.getPath() + week, jsonContent);
-        }
+    defaultValue():FractionalCount {
+        return new FractionalCount();
     }
-
+    
     addData(data:StatusMetric) {
+
         if(data.statusType === StatusMetricType.AVAILABLE) {
+
             var h3status = data.statusEvent.getH3StatusChange();
             var h3index = h3status.initialH3Status.getH3Index();
 
             for(var period of data.statusEvent.getPeriods()) {
-                var week = period.week.toString();
-                if(!this.data[week]){
-                    var periodMap = {};
-                    this.data[week] = periodMap;
-                }
-
-                if(!this.data[week][period.period]){
-                    var h3Map = {};
-                    this.data[week][period.period] = h3Map;
-                }
-
-                if(!this.data[week][period.period][h3index]){
-                    var fracionalCount = new FractionalCount();
-                    this.data[week][period.period][h3index] = fracionalCount;
-                }
-
-                this.data[week][period.period][h3index].add(period.fraction);
+               this.getBin(period, h3index).add(period.fraction)
             }
         }
     }
+
+    getGeoJson(weeks:string[], filterPeriod:string):{} {
+        var h3sum:Map<string,FractionalCount> = new Map<string,FractionalCount>();
+        for(var week of Object.keys(this.data)) {
+            for(var period of Object.keys(this.data[week])) {
+                if(filterPeriod && filterPeriod !== period)
+                    continue;
+                for(var h3index of Object.keys(this.data[week][period])) {
+
+                    if(!h3sum.has(h3index)) {
+                        h3sum.set(h3index, new FractionalCount());
+                    }
+
+                    var fractionalCount:FractionalCount = this.data[week][period][h3index];
+                    h3sum.get(h3index).count += 1;
+                    h3sum.get(h3index).fractionalCount += fractionalCount.fractionalCount;
+                }
+            }
+        }
+        var featureCollection = {type:"FeatureCollection", features:[]}
+        for(var h3index of h3sum.keys()) {
+
+            var averageFractionalCount = h3sum.get(h3index).fractionalCount / h3sum.get(h3index).count;
+            var h3Coords = h3.h3ToGeoBoundary(h3index, true)
+            var h3Feature = {type:"Feature", properties:{averageFractionalCount:averageFractionalCount}, geometry:{type:"Polygon", coordinates:[h3Coords]}};
+            featureCollection.features.push(h3Feature);
+
+        }
+
+        return featureCollection;
+
+    }
 }
 
-class ShStAvailabilityStatusAggregator {
+class ShStAvailabilityStatusAggregator extends GenericMetricAggregator<StatusMetric, FractionalCount> {
+
+ 
+    getMetricName():string {
+        return "shst_availability";
+    }
+
+
+    defaultValue():FractionalCount {
+        return new FractionalCount();
+    }
+    
+    addData(data:StatusMetric) {
+
+        if(data.statusType === StatusMetricType.AVAILABLE) {
+
+            var shStstatus = data.statusEvent.getShStStatusChange();
+
+            // TODO implement (optional?) binned aggreagion -- this is just aggregating at segment level
+            var shStReferenceId = shStstatus.initialShStStatus.shstLocationRef.referenceId;
+
+            for(var period of data.statusEvent.getPeriods()) {
+               this.getBin(period, shStReferenceId).add(period.fraction)
+            }
+        }
+    }
 
 }

@@ -34,9 +34,7 @@ This project provides a pluggable architecture for adding new MDS provider data 
 
 1. ```yarn install ```
 
-2. Run ```process_status_changes.ts``` as a cron job.
-
-3. Run ```express.ts``` server api end point.
+2. Run ```server.ts``` to run data collector and API end point. 
 
 
 ### Technical Details

@@ -11,14 +11,18 @@ const h3 = require("h3-js");
 
 async function getStatusChanges() {
 
-    const mdsProvider  = new UberMDSProvider();
+    const mdsProvider  = new BirdMDSProvider();
 
     // last two hours for testing...
-    var endTime = Math.round(Date.now() / 1000);
-    var startTime = endTime - (60 * 60 * 2); 
+    var now = Math.round(Date.now() / 1000);
+    var startTime = now - (60 * 60 * (72 * 20)); 
+    var endTime = startTime + (60 * 60 * 10) 
+    
+
+    var statusEventMap = new DiskBackedMDSStatusMap();
 
     var mdsQuery = new MDSStatusChangeQuery(mdsProvider, startTime, endTime);
-    var statusEventMap = new DiskBackedMDSStatusMap();
+    
 
     await mdsQuery.run(); // loads data pages for time range query 
 
@@ -27,18 +31,21 @@ async function getStatusChanges() {
     // event generator loop
     var statusEvents = statusEventMap.processStatusEvents(mdsQuery);
     for await(var event of statusEvents) {
-            if(event.error) {
-                console.log("out of order...");
+        
+        if(event.error) {
+            console.log("out of order...");
 
-                // TODO QA logging for MDS data
-            }
-            else {
-                var statusMetric = new StatusMetric(event)
-                h3AvailabilityAggregator.addData(statusMetric);
-            }
+            // TODO QA logging for MDS data
+        }
+        else {
+            var statusMetric = new StatusMetric(event)
+            h3AvailabilityAggregator.addData(statusMetric);
+        }
+
+        h3AvailabilityAggregator.save();
     }
 
-    h3AvailabilityAggregator.save();
+    
 }
 
 getStatusChanges();

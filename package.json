@@ -4,6 +4,7 @@
     "@turf/invariant": "^6.1.2",
     "@types/levelup": "^3.1.0",
     "@types/node": "^10.12.0",
+    "cors": "^2.8.5",
     "express": "^4.16.4",
     "h3-js": "^3.2.0",
     "leveldown": "^4.0.1",

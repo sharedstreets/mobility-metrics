@@ -25,10 +25,18 @@ export class Week {
     day:number;
 
     toString():string {
-        return this.year + '-' + this.month + '-' + this.day;
+        const zeroPad = (n) => {
+            if ( n < 10 ) {
+                return ( '0' + n.toString () );
+            }
+            return n;
+        };
+        return this.year + '-' + zeroPad(this.month) + '-' + zeroPad(this.day);
     }
 
     isEqual(week):boolean {
+        
+
         if(this.year === week.year && this.month === week.month && this.day === week.day)
             return true;
         else
@@ -140,7 +148,7 @@ export function getPeriodsForTimeRange(startTime:number, endTime:number):Periodi
             // calculate the factional range for data that begins and ends within the same period
             var newPeriod = new PeriodicTimestamp();
             Object.assign(newPeriod, startPeriod);
-            newPeriod.fraction = endPeriod.fraction - (1 - startPeriod.fraction);
+            newPeriod.fraction = startPeriod.fraction - (1 - endPeriod.fraction);
             periods.push(newPeriod);
         }
     }

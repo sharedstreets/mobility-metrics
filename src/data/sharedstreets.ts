@@ -14,7 +14,19 @@ const SHST_API_SEARCH_RADIUS = 50; // meters
 
 export class SharedStreetsLocationRef {
     referenceId:string;
+    referenceLength:number
     location:number;
+
+    getBin(targetBinSize:number):number {
+        if(targetBinSize > 0) {
+            var numberOfBins = Math.floor(this.referenceLength / targetBinSize);
+            var averageBinLength = this.referenceLength / numberOfBins;
+            var bin = Math.floor(this.location / averageBinLength) + 1;
+            return bin;
+        }
+        else 
+            return 1;
+    } 
 }
 
 async function pointToShStLocationRef(point:Feature<Point>):Promise<SharedStreetsLocationRef> {
@@ -37,6 +49,7 @@ async function pointToShStLocationRef(point:Feature<Point>):Promise<SharedStreet
 
         if( data.features.length > 0) {
             locationRef.referenceId = data.features[0].properties.referenceId;
+            locationRef.referenceLength = data.features[0].properties.referenceLength;
             locationRef.location = data.features[0].properties.location;
             
             return locationRef;
