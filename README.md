@@ -17,7 +17,6 @@ These tools are built on the theory that most metrics used for planning and over
 1. Convert event streams (e.g. *user drop off*) to vehicle states (e.g. *vehicle available*), while minimizing storage of historical state data, and encrypting any cached data while at rest.
 ![MDS events to device states](docs/images/event_process6.png)
 
-
 2. Aggregate vehicle states using well known street/spatial zone representations (e.g. linear [SharedStreets IDs](https://github.com/sharedstreets/sharedstreets-ref-system) or [H3 zones](https://uber.github.io/h3/))
 ![MDS events to device states](docs/images/event_process8.png)
 
@@ -25,10 +24,7 @@ These tools are built on the theory that most metrics used for planning and over
 
 ![MDS events to device states](docs/images/event_process7.png)
 
-
-
 This project provides a pluggable architecture for adding new MDS provider data sources, and for creating new metrics derived from event streams. All code and related tools are made available as open source (under and MIT license) and can be deployed by cities and local governments as a way to manage their MDS data collection process, or by mobility operators or developers of analysis software.
-
 
 ### Getting started
 
@@ -36,12 +32,11 @@ This project provides a pluggable architecture for adding new MDS provider data 
 
 2. Run ```server.ts``` to run data collector and API end point. 
 
-
 ### Technical Details
 
 #### Safely processing event streams
 
-The SharedStreets aggregation tools provide methods for processing historical and real-time streams of MDS event data, while minimizing the that kept by the processor. These tools store only the last processed event, required for generating state transitions when future events are collected. Once used historical state data is discarded, however, a hashed signature of each event is kept to ensure the event is not accidentally  re-processed in future queries to the MDS data stream.
+The SharedStreets aggregation tools provide methods for processing historical and real-time streams of MDS event data, while minimizing the data that is kept by the processor. These tools store only the last processed event, required for generating state transitions when future events are collected. Historical state data is discarded once used, however, a hashed signature of each event is kept to ensure the event is not accidentally  re-processed in future queries to the MDS data stream.
 
 **State 1:** most recent event is kept for each device
 ![MDS events to device states](docs/images/event_process2.png)
