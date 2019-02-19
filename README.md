@@ -1,4 +1,4 @@
-## MDS + SharedStreets Data Processing Pipeline
+## SharedStreets Micromobility Data Processing Pipeline
 
 This project provides a series of tools for collecting, processing, and interpreting ["Micromobility Data Specification" (MDS)](https://github.com/CityOfLosAngeles/mobility-data-specification) formatted data streams using SharedStreet analysis and aggregation methods. These tools are designed to minimize privacy/re-identification risks inherent in working with citizen-generated movement data, and improve the quality and consistency of derived analysis. 
 
@@ -30,7 +30,7 @@ This project provides a pluggable architecture for adding new MDS provider data 
 
 1. ```yarn install ```
 
-2. Run ```server.ts``` to run data collector and API end point. 
+2. ```yarn run ts-node server.ts``` to run data collector and API end point. 
 
 ### Technical Details
 
