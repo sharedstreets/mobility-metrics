@@ -15,8 +15,8 @@ async function getStatusChanges() {
 
     // last two hours for testing...
     var now = Math.round(Date.now() / 1000);
-    var startTime = now - (60 * 60 * (72 * 20)); 
-    var endTime = startTime + (60 * 60 * 10) 
+    var startTime = now - (60 * 60 * 2); 
+    var endTime = now;//startTime + (60 * 60 * 10) 
     
 
     var statusEventMap = new DiskBackedMDSStatusMap();

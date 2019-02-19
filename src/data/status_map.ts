@@ -15,6 +15,8 @@ export abstract class MDSStatusMap {
     abstract async alreadyLogged(MDSStatusChange, boolean):Promise<boolean>;
 
     async *processStatusEvents(data:MDSStatusChangeQuery):AsyncIterableIterator<StatusChangeEvent> {
+        var alreadyProcessedRecords = 0;
+        
         for(var newStatus of data.getSortedResults()) {
 
             // only generate events for new, previously unprocessed status changes
@@ -24,10 +26,14 @@ export abstract class MDSStatusMap {
                     yield new StatusChangeEvent(oldStatus, newStatus);
             }
             else {
+                alreadyProcessedRecords++;
                 // TODO duplicate record QA?
             }
             
         }
+
+        if(alreadyProcessedRecords > 0)
+        console.log(alreadyProcessedRecords + " already processed records (skipping)")
     }   
 }
 
