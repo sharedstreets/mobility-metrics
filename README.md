@@ -28,9 +28,32 @@ This project provides a pluggable architecture for adding new MDS provider data 
 
 ### Getting started
 
-1. ```yarn install ```
+#### clone
 
-2. ```yarn run ts-node server.ts``` to run data collector and API end point. 
+```sh
+git clone https://github.com/sharedstreets/sharedstreets-micromobility-connector.git
+cd sharedstreets-micromobility-connector
+```
+
+#### install dependencies
+
+```sh
+yarn install
+```
+
+#### initialize data directory
+
+```sh
+mkdir -p data
+```
+
+#### run server
+
+The main program will initialize by kicking off a forked process for backfilling MDS data. At the same time, it will start up an HTTP server that reports metrics for requested time periods.
+
+```sh
+yarn run ts-node server.ts
+```
 
 ### Technical Details
 
