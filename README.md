@@ -1,11 +1,11 @@
 ## SharedStreets Micromobility Data Processing Pipeline
 
-This project provides a series of tools for collecting, processing, and interpreting ["Micromobility Data Specification" (MDS)](https://github.com/CityOfLosAngeles/mobility-data-specification) formatted data streams using SharedStreet analysis and aggregation methods. These tools are designed to minimize privacy/re-identification risks inherent in working with citizen-generated movement data, and improve the quality and consistency of derived analysis. 
+This project provides a series of tools for collecting, processing, and interpreting ["Micromobility Data Specification" (MDS)](https://github.com/CityOfLosAngeles/mobility-data-specification) formatted data streams using SharedStreet analysis and aggregation methods. These tools are designed to minimize privacy/re-identification risks inherent in working with citizen-generated movement data, and improve the quality and consistency of derived analysis.
 
 The project addresses the following challenges in working with MDS data:
 
 - MDS provides event-based data streams that require additional, at times complex, processing steps to determine the historical and real-time state of mobility services, and related performance metrics.
- 
+
 - Generation of metrics involves processing historical event sequence (MDS "status changes" and "trips") and requires caching data containing sensitive citizen-generated, re-identifiable travel information.
 
 ![MDS events to device states](docs/images/event_process1.png)
@@ -41,18 +41,16 @@ cd sharedstreets-micromobility-connector
 yarn install
 ```
 
-#### initialize data directory
+#### backfill data
 
 ```sh
-mkdir -p data
+npm run backfill
 ```
 
 #### run server
 
-The main program will initialize by kicking off a forked process for backfilling MDS data. At the same time, it will start up an HTTP server that reports metrics for requested time periods.
-
 ```sh
-yarn run ts-node server.ts
+npm run server
 ```
 
 ### Technical Details
@@ -63,7 +61,7 @@ The SharedStreets aggregation tools provide methods for processing historical an
 
 **State 1:** most recent event is kept for each device
 ![MDS events to device states](docs/images/event_process2.png)
-**State 2:** 
+**State 2:**
 previous "pick up" event used to process "available" state and discarded
 ![MDS events to device states](docs/images/event_process3.png)
 
@@ -72,4 +70,4 @@ The SharedStreets tools provide an additional layer of protection by encrypting 
 **Encrypting state data:** most recent cached event is encrypted
 ![MDS events to device states](docs/images/event_process4.png)
 **Decrypting state data:** cached events can only be decrypted using data contained in a future event from the same vehicle
-![MDS events to device states](docs/images/event_process5.png) 
+![MDS events to device states](docs/images/event_process5.png)

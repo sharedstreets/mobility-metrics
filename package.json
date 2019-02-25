@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "lint": "prettier **/*.ts --write",
+    "lint": "prettier **/*.ts index.html --write",
+    "build": "browserify index.js -o bundle.js",
     "server": "ts-node server.ts",
     "backfill": "rm -rf data; mkdir data; ts-node mds_processor.ts"
   },
