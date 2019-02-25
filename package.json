@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "lint": "prettier **/*.ts --write",
+    "server": "ts-node server.ts",
+    "backfill": "rm -rf data; mkdir data; ts-node mds_processor.ts"
+  },
   "dependencies": {
     "@turf/helpers": "^6.1.4",
     "@turf/invariant": "^6.1.2",
@@ -17,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node-fetch": "^2.1.4",
+    "prettier": "^1.16.4",
     "ts-node": "^7.0.1",
     "typescript": "^3.2.2"
   }
