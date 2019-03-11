@@ -9,11 +9,12 @@
     />
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js"></script>
     <script src="bundle.js"></script>
-    <script
-      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-      integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script src="https://unpkg.com/simple-statistics@7.0.1/dist/simple-statistics.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.css"
+    />
     <link
       href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css"
       rel="stylesheet"
@@ -23,75 +24,129 @@
         margin: 0;
         padding: 0;
       }
+      #controls {
+        padding-right: 80%;
+        margin-left: 10px;
+        heigh: 100%;
+      }
       #map {
         position: absolute;
         top: 0;
         bottom: 0;
+        margin-left: 20%;
         width: 100%;
       }
     </style>
   </head>
   <body>
+    <div id="controls">
+      <h1 class="title" id="title"></h1>
+      <div>
+        <label>week</label>
+        <input id="week" type="date" />
+      </div>
+      <div>
+        <label>hour</label>
+        <input id="period" type="range" min="0" max="167" value="31" step="1" />
+      </div>
+    </div>
     <div id="map"></div>
     <script>
-      mapboxgl.accessToken = 'pk.eyJ1IjoibW9yZ2FuaGVybG9ja2VyIiwiYSI6Ii1zLU4xOWMifQ.FubD68OEerk74AYCLduMZQ';
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoibW9yZ2FuaGVybG9ja2VyIiwiYSI6Ii1zLU4xOWMifQ.FubD68OEerk74AYCLduMZQ";
       var map = new mapboxgl.Map({
-          container: 'map',
-          style: 'mapbox://styles/mapbox/dark-v9',
-          center: [-83.06900024414062,
-                42.348395259793],
-          zoom: 12
+        container: "map",
+        style: "mapbox://styles/mapbox/dark-v9",
+        center: [-83.06900024414062, 42.348395259793],
+        zoom: 12
       });
 
-      map.on('load', function () {
+      map.on("load", function() {
         map.addLayer({
-          'id': 'bins',
-          'type': 'fill',
-          'source': {
-            'type': 'geojson',
-            'data': {
-              "type": "FeatureCollection",
-              "features": []
+          id: "bins",
+          type: "fill",
+          source: {
+            type: "geojson",
+            data: {
+              type: "FeatureCollection",
+              features: []
             }
           },
-          'layout': {},
-          'paint': {
-          'fill-color': '#0ff',
-          'fill-opacity': 0.4
+          layout: {},
+          paint: {
+            "fill-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "quantile"],
+              1,
+              "#f1eef6",
+              2,
+              "#d7b5d8",
+              3,
+              "#df65b0",
+              4,
+              "#dd1c77",
+              5,
+              "#980043"
+            ],
+            "fill-opacity": 0.4
           }
         });
 
         //:metric/:week/:period
-        var metric = 'h3_availability'
-        var week = '2019/02/24'
-        var period = '31'
-        var periods = 168 // hours in week
+        var metric = "h3_availability";
+        var week = "2019-02-24";
+        var period = "31";
+        var periods = 168; // hours in week
 
-        // animate
-        var i = 0
-        setInterval(() => {
-          steps = []
+        $("#week").on("change", function(data) {
+          week = data.target.value.split("/").join("-");
+          update();
+        });
+        $("#period").on("change", function(data) {
+          period = data.target.value;
+          update();
+        });
 
-          Object.keys(data).forEach(key => {
-            /*var step = []
-            Object.keys(data[key]).forEach(bin => {
-              var ring = h3.h3ToGeoBoundary(bin).map(pair => {
-                return [pair[1], pair[0]]
-              })
-              ring.push(JSON.parse(JSON.stringify(ring[0])))
-              var geo = turf.polygon([ring], data[key][bin])
-              step.push(geo)
-            })
+        update();
 
-            steps.push(turf.featureCollection(step))
-          })*/
+        function update() {
+          var days = {
+            0: "Sun",
+            1: "Mon",
+            2: "Tue",
+            3: "Wed",
+            4: "Thu",
+            5: "Fri",
+            6: "Sat"
+          };
+          var day = days[Math.floor(((+period + 1) / 168) * 7)];
+          var hour = (+period + 1) % 24;
+          $("#title").text(day + " " + hour + ":00");
 
-          map.getSource('bins').setData(steps[i])
+          $.getJSON("/metric/" + metric + "/" + week + "/" + period, function(
+            data
+          ) {
+            var stats = data.features.map(f => {
+              return f.properties.averageFractionalCount;
+            });
 
-          // reset
-          i++
-          if(i > steps.length-1) i = 0
-        }, 2000)
+            var groups = 5;
+
+            data.features = data.features.map(f => {
+              var quantile = ss.quantileRank(
+                stats,
+                f.properties.averageFractionalCount
+              );
+              f.properties.quantile = Math.floor(quantile * 5) + 1;
+              delete f.properties.averageFractionalCount;
+
+              return f;
+            });
+
+            map.getSource("bins").setData(data);
+          });
+        }
       });
     </script>
   </body>

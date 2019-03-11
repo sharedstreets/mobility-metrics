@@ -1,30 +1,18 @@
 {
   "scripts": {
-    "lint": "prettier **/*.ts index.html --write",
-    "build": "browserify index.js -o bundle.js",
+    "lint": "prettier '{,!(node_modules)/**/}*.js' index.html --write",
+    "test": "npm run lint; tap -R spec test/*.test.js",
     "server": "ts-node server.ts",
     "backfill": "rm -rf data; mkdir data; ts-node mds_processor.ts"
   },
   "dependencies": {
-    "@turf/helpers": "^6.1.4",
-    "@turf/invariant": "^6.1.2",
-    "@types/levelup": "^3.1.0",
-    "@types/node": "^10.12.0",
-    "cors": "^2.8.5",
-    "express": "^4.16.4",
-    "h3-js": "^3.2.0",
-    "leveldown": "^4.0.1",
-    "levelup": "^4.0.0",
-    "moment": "^2.23.0",
-    "node-fetch": "^2.2.0",
-    "untildify": "^3.0.3",
-    "uuid": "^3.3.2",
-    "uuid-by-string": "^2.0.1"
+    "@turf/turf": "^5.1.6",
+    "h3-js": "^3.4.2",
+    "through2": "^3.0.1",
+    "untildify": "^3.0.3"
   },
   "devDependencies": {
-    "@types/node-fetch": "^2.1.4",
     "prettier": "^1.16.4",
-    "ts-node": "^7.0.1",
-    "typescript": "^3.2.2"
+    "tap": "^12.6.0"
   }
 }
