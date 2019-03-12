@@ -14,7 +14,7 @@ test("bird - trips stream", t => {
       t.equal(count, 4, "found trips");
       t.done();
     });
-
+  [];
   var start = 1552351799 - 60 * 60;
   var stop = 1552351799;
 
@@ -36,8 +36,8 @@ test("bird - changes stream", t => {
       t.done();
     });
 
-  var start = 1552351799 - 60 * 30;
-  var stop = 1552351799;
+  var start = 1552351799 - 60 * 30; // 30 minutes before stop
+  var stop = 1552351799; // console.log(Math.round((new Date()).getTime() / 1000))
 
   bird.changes(stream, start, stop);
 });
