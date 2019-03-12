@@ -5,29 +5,39 @@ const through2 = require("through2");
 test("bird - trips stream", t => {
   var count = 0;
   var stream = through2
-    .obj((chunk, enc, next) => {
+    .obj((trip, enc, next) => {
+      t.equal(trip.route.type, "FeatureCollection");
       count++;
       next();
     })
     .on("finish", () => {
-      t.equal(count, 5, "found trips");
+      t.equal(count, 4, "found trips");
       t.done();
     });
 
-  bird.trips(stream);
+  var start = 1552351799 - 60 * 60;
+  var stop = 1552351799;
+
+  bird.trips(stream, start, stop);
 });
 
 test("bird - changes stream", t => {
   var count = 0;
   var stream = through2
-    .obj((chunk, enc, next) => {
+    .obj((change, enc, next) => {
+      t.ok(change.event_type, "event_type");
+      t.ok(change.event_type_reason, "event_type_reason");
+      t.ok(change.event_time, "event_time");
       count++;
       next();
     })
     .on("finish", () => {
-      t.equal(count, 5, "found changes");
+      t.equal(count, 4, "found changes");
       t.done();
     });
 
-  bird.changes(stream);
+  var start = 1552351799 - 60 * 30;
+  var stop = 1552351799;
+
+  bird.changes(stream, start, stop);
 });
