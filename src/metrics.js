@@ -1,6 +1,8 @@
 const queue = require("d3-queue").queue;
+const h3 = require("h3-js");
 
-var Metrics = function(store) {
+var Metrics = function(provider, store) {
+  this.provider = provider;
   this.store = store;
 };
 

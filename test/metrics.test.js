@@ -5,8 +5,9 @@ const bird = require("../src/providers/bird.js");
 const Metrics = require("../src/metrics.js");
 
 test("metrics - trips", t => {
+  var provider = "bird";
   var store = mem();
-  var metrics = new Metrics(store);
+  var metrics = new Metrics(provider, store);
 
   t.ok(metrics.store, "has data store");
   t.ok(metrics.trip, "has trip function");
@@ -28,8 +29,9 @@ test("metrics - trips", t => {
 });
 
 test("metrics - changes", t => {
+  var provider = "bird";
   var store = mem();
-  var metrics = new Metrics(store);
+  var metrics = new Metrics(provider, store);
 
   t.ok(metrics.change, "has change function");
 
