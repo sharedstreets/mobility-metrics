@@ -7,7 +7,10 @@
   },
   "dependencies": {
     "@turf/turf": "^5.1.6",
+    "d3-queue": "^3.0.7",
     "h3-js": "^3.4.2",
+    "level": "^4.0.0",
+    "level-mem": "^3.0.1",
     "through2": "^3.0.1",
     "untildify": "^3.0.3"
   },

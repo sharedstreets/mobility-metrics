@@ -12,9 +12,9 @@ test("bird - trips stream", t => {
     })
     .on("finish", () => {
       t.equal(count, 4, "found trips");
-      t.done();
+      t.end();
     });
-  [];
+
   var start = 1552351799 - 60 * 60;
   var stop = 1552351799;
 
@@ -33,7 +33,7 @@ test("bird - changes stream", t => {
     })
     .on("finish", () => {
       t.equal(count, 4, "found changes");
-      t.done();
+      t.end();
     });
 
   var start = 1552351799 - 60 * 30; // 30 minutes before stop
