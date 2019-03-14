@@ -2,21 +2,22 @@ const queue = require("d3-queue").queue;
 const h3 = require("h3-js");
 const moment = require("moment");
 
-var Metrics = function(provider, store) {
-  this.provider = provider;
+const Z = 9
+
+var Metrics = function(store) {
   this.store = store;
 };
 
 // PROCESS EVENTS
 
-Metrics.prototype.change = function(change, done) {
+Metrics.prototype.change = function(change, provider, done) {
   var q = queue(1);
 
   q.defer(cb => {
-    this.utilization(trip, null, cb);
+    this.utilization(trip, null, provider, cb);
   });
   q.defer(cb => {
-    this.availability(trip, null, cb);
+    this.availability(trip, null, provider, cb);
   });
 
   q.awaitAll(() => {
@@ -24,26 +25,26 @@ Metrics.prototype.change = function(change, done) {
   });
 };
 
-Metrics.prototype.trip = function(trip, done) {
+Metrics.prototype.trip = function(trip, provider, done) {
   var d = new Date(trip.start_time * 1000);
-  var times = [day(d), hour(d), quarter(d)];
+  var times = [day(d)]//, hour(d), quarter(d)];
 
   var q = queue(1);
 
   q.defer(cb => {
-    this.vehicles(trip, times, cb);
+    this.vehicles(trip, times, provider, cb);
   });
   q.defer(cb => {
-    this.pickups(trip, times, cb);
+    this.pickups(trip, times, provider, cb);
   });
   q.defer(cb => {
-    this.dropoffs(trip, times, cb);
+    this.dropoffs(trip, times, provider, cb);
   });
   q.defer(cb => {
-    this.pickupsvia(trip, times, cb);
+    this.pickupsvia(trip, times, provider, cb);
   });
   q.defer(cb => {
-    this.dropoffsvia(trip, times, cb);
+    this.dropoffsvia(trip, times, provider, cb);
   });
 
   q.awaitAll(() => {
@@ -53,22 +54,22 @@ Metrics.prototype.trip = function(trip, done) {
 
 // AGGREGATORS
 
-Metrics.prototype.utilization = function(change, times, done) {
+Metrics.prototype.utilization = function(change, times, provider, done) {
   done();
 };
 
-Metrics.prototype.availability = function(change, times, done) {
+Metrics.prototype.availability = function(change, times, provider, done) {
   done();
 };
 
-Metrics.prototype.vehicles = function(trip, times, done) {
+Metrics.prototype.vehicles = function(trip, times, provider, done) {
   var h3s = new Set();
 
   trip.route.features.forEach(ping => {
     var bin = h3.geoToH3(
       ping.geometry.coordinates[1],
       ping.geometry.coordinates[0],
-      11
+      Z
     );
     h3s.add(bin);
   });
@@ -79,7 +80,7 @@ Metrics.prototype.vehicles = function(trip, times, done) {
       var qtime = queue(1);
       times.forEach(time => {
         qtime.defer(timecb => {
-          var id = "vehicles!" + bin + "!" + time;
+          var id = provider + "!vehicles!" + bin + "!" + time;
 
           this.store.get(id, (err, record) => {
             if (!record) record = 1;
@@ -104,17 +105,17 @@ Metrics.prototype.vehicles = function(trip, times, done) {
   });
 };
 
-Metrics.prototype.pickups = function(trip, times, done) {
+Metrics.prototype.pickups = function(trip, times, provider, done) {
   var bin = h3.geoToH3(
     trip.route.features[0].geometry.coordinates[1],
     trip.route.features[0].geometry.coordinates[0],
-    11
+    Z
   );
 
   var qtime = queue(1);
   times.forEach(time => {
     qtime.defer(timecb => {
-      var id = "pickups!" + bin + "!" + time;
+      var id = provider + "!pickups!" + bin + "!" + time;
 
       this.store.get(id, (err, record) => {
         if (!record) record = 1;
@@ -133,17 +134,17 @@ Metrics.prototype.pickups = function(trip, times, done) {
   });
 };
 
-Metrics.prototype.dropoffs = function(trip, times, done) {
+Metrics.prototype.dropoffs = function(trip, times, provider, done) {
   var bin = h3.geoToH3(
     trip.route.features[trip.route.features.length - 1].geometry.coordinates[1],
     trip.route.features[trip.route.features.length - 1].geometry.coordinates[0],
-    11
+    Z
   );
 
   var qtime = queue(1);
   times.forEach(time => {
     qtime.defer(timecb => {
-      var id = "dropoffs!" + bin + "!" + time;
+      var id = provider + "!dropoffs!" + bin + "!" + time;
 
       this.store.get(id, (err, record) => {
         if (!record) record = 1;
@@ -162,22 +163,22 @@ Metrics.prototype.dropoffs = function(trip, times, done) {
   });
 };
 
-Metrics.prototype.pickupsvia = function(trip, times, done) {
+Metrics.prototype.pickupsvia = function(trip, times, provider, done) {
   var binA = h3.geoToH3(
     trip.route.features[0].geometry.coordinates[1],
     trip.route.features[0].geometry.coordinates[0],
-    11
+    Z
   );
   var binB = h3.geoToH3(
     trip.route.features[trip.route.features.length - 1].geometry.coordinates[1],
     trip.route.features[trip.route.features.length - 1].geometry.coordinates[0],
-    11
+    Z
   );
 
   var qtime = queue(1);
   times.forEach(time => {
     qtime.defer(timecb => {
-      var id = "dropoffs!" + binA + "!" + binB + "!" + time;
+      var id = provider + "!dropoffs!" + binA + "!" + binB + "!" + time;
 
       this.store.get(id, (err, record) => {
         if (!record) record = 1;
@@ -196,22 +197,22 @@ Metrics.prototype.pickupsvia = function(trip, times, done) {
   });
 };
 
-Metrics.prototype.dropoffsvia = function(trip, times, done) {
+Metrics.prototype.dropoffsvia = function(trip, times, provider, done) {
   var binA = h3.geoToH3(
     trip.route.features[0].geometry.coordinates[1],
     trip.route.features[0].geometry.coordinates[0],
-    11
+    Z
   );
   var binB = h3.geoToH3(
     trip.route.features[trip.route.features.length - 1].geometry.coordinates[1],
     trip.route.features[trip.route.features.length - 1].geometry.coordinates[0],
-    11
+    Z
   );
 
   var qtime = queue(1);
   times.forEach(time => {
     qtime.defer(timecb => {
-      var id = "dropoffs!" + binB + "!" + binA + "!" + time;
+      var id = provider + "!dropoffs!" + binB + "!" + binA + "!" + time;
 
       this.store.get(id, (err, record) => {
         if (!record) record = 1;

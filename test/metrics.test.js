@@ -7,14 +7,14 @@ const Metrics = require("../src/metrics.js");
 test("metrics - trips", t => {
   var provider = "bird";
   var store = mem();
-  var metrics = new Metrics(provider, store);
+  var metrics = new Metrics(store);
 
   t.ok(metrics.store, "has data store");
   t.ok(metrics.trip, "has trip function");
 
   var stream = through2
     .obj((trip, enc, next) => {
-      metrics.trip(trip, () => {
+      metrics.trip(trip, provider, () => {
         next();
       });
     })
@@ -31,13 +31,13 @@ test("metrics - trips", t => {
 test("metrics - changes", t => {
   var provider = "bird";
   var store = mem();
-  var metrics = new Metrics(provider, store);
+  var metrics = new Metrics(store);
 
   t.ok(metrics.change, "has change function");
 
   var stream = through2
     .obj((change, enc, next) => {
-      metrics.change(change, () => {
+      metrics.change(change, provider, () => {
         next();
       });
     })
