@@ -6,31 +6,31 @@ This repository is a reference implementation of the [Micromobility Metrics Spec
 
 ## API
 
-### /vehicles/
+### GET /vehicles/{provider}/{time}
 
 Returns counts of vehicles per zone.
 
-### /utilization/
+### GET /utilization/{provider}/{time}
 
 Returns a metric describing how much vehicles are used compared to idle per zone
 
-### /availability/
+### GET /availability/{provider}/{time}
 
 Returns a metric describing how much vehicles are idle compared to used per zone
 
-### /pickups/
+### GET /pickups/{provider}/{time}
 
 Returns counts of trips that started in each zone
 
-### /dropoffs/
+### GET /dropoffs/{provider}/{time}
 
 Returns counts of trips that ended in each zone
 
-### /pickupsvia/
+### GET /pickupsvia/{provider}/{time}/{bin}/
 
 Returns counts of trips for each zone that originated in the target zone
 
-### /dropoffsvia/
+### GET /dropoffsvia/{provider}/{time}/{bin}/
 
 Returns counts of trips for each zone that ended in the target zone
 
