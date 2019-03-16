@@ -2,7 +2,7 @@ const queue = require("d3-queue").queue;
 const h3 = require("h3-js");
 const moment = require("moment");
 
-const Z = 9
+const Z = 9;
 
 var Metrics = function(store) {
   this.store = store;
@@ -27,7 +27,7 @@ Metrics.prototype.change = function(change, provider, done) {
 
 Metrics.prototype.trip = function(trip, provider, done) {
   var d = new Date(trip.start_time * 1000);
-  var times = [day(d)]//, hour(d), quarter(d)];
+  var times = [day(d), hour(d), quarter(d)];
 
   var q = queue(1);
 
@@ -55,10 +55,14 @@ Metrics.prototype.trip = function(trip, provider, done) {
 // AGGREGATORS
 
 Metrics.prototype.utilization = function(change, times, provider, done) {
+  // todo: WIP, refactoring window selection on this metric
+  //       for calculating denominator
   done();
 };
 
 Metrics.prototype.availability = function(change, times, provider, done) {
+  // todo: WIP, refactoring window selection on this metric
+  //       for calculating denominator
   done();
 };
 
@@ -80,7 +84,7 @@ Metrics.prototype.vehicles = function(trip, times, provider, done) {
       var qtime = queue(1);
       times.forEach(time => {
         qtime.defer(timecb => {
-          var id = provider + "!vehicles!" + bin + "!" + time;
+          var id = provider + "!vehicles!" + time + "!" + bin;
 
           this.store.get(id, (err, record) => {
             if (!record) record = 1;
@@ -115,7 +119,7 @@ Metrics.prototype.pickups = function(trip, times, provider, done) {
   var qtime = queue(1);
   times.forEach(time => {
     qtime.defer(timecb => {
-      var id = provider + "!pickups!" + bin + "!" + time;
+      var id = provider + "!pickups!" + time + "!" + bin;
 
       this.store.get(id, (err, record) => {
         if (!record) record = 1;
@@ -144,7 +148,7 @@ Metrics.prototype.dropoffs = function(trip, times, provider, done) {
   var qtime = queue(1);
   times.forEach(time => {
     qtime.defer(timecb => {
-      var id = provider + "!dropoffs!" + bin + "!" + time;
+      var id = provider + "!dropoffs!" + time + "!" + bin;
 
       this.store.get(id, (err, record) => {
         if (!record) record = 1;
@@ -178,7 +182,7 @@ Metrics.prototype.pickupsvia = function(trip, times, provider, done) {
   var qtime = queue(1);
   times.forEach(time => {
     qtime.defer(timecb => {
-      var id = provider + "!dropoffs!" + binA + "!" + binB + "!" + time;
+      var id = provider + "!pickupsvia!" + time + "!" + binA + "!" + binB;
 
       this.store.get(id, (err, record) => {
         if (!record) record = 1;
@@ -212,7 +216,7 @@ Metrics.prototype.dropoffsvia = function(trip, times, provider, done) {
   var qtime = queue(1);
   times.forEach(time => {
     qtime.defer(timecb => {
-      var id = provider + "!dropoffs!" + binB + "!" + binA + "!" + time;
+      var id = provider + "!dropoffsvia!" + time + "!" + binA + "!" + binB;
 
       this.store.get(id, (err, record) => {
         if (!record) record = 1;
@@ -241,7 +245,8 @@ function hour(d) {
 
 function quarter(d) {
   var timeKey = moment(d).format("YYYY-MM-DD-HH-");
-  var minutes = (Math.round((d.getMinutes() / 60) * 4) - 1) * 15;
+  var minutes = ((Math.round((d.getMinutes() / 60) * 4) - 1) * 15).toString();
+  if (minutes.length === 1) minutes = "0" + minutes;
   return timeKey + minutes;
 }
 

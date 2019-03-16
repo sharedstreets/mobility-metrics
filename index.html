@@ -8,7 +8,6 @@
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js"></script>
-    <script src="bundle.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script src="https://unpkg.com/simple-statistics@7.0.1/dist/simple-statistics.min.js"></script>
     <link
@@ -40,14 +39,36 @@
   </head>
   <body>
     <div id="controls">
-      <h1 class="title" id="title"></h1>
       <div>
-        <label>week</label>
-        <input id="week" type="date" />
+        <div>metric</div>
+        <select id="metric">
+          <option value=""></option>
+          <option value="vehicles">vehicles</option>
+          <option value="pickups">pickups</option>
+          <option value="dropoffs">dropoffs</option>
+          <option value="pickupsvia">pickups via</option>
+          <option value="dropoffsvia">dropoffs via</option>
+          <option value="availability">availability</option>
+          <option value="utilization">utilization</option>
+        </select>
       </div>
       <div>
-        <label>hour</label>
-        <input id="period" type="range" min="0" max="167" value="31" step="1" />
+        <div>date</div>
+        <input id="date" type="date" value="2019-03-11" />
+      </div>
+      <div>
+        <div>hour</div>
+        <input id="hour" type="text" value="" placeholder="00-23" />
+      </div>
+      <div>
+        <div>minute</div>
+        <input id="minute" type="text" value="" placeholder="00,15,30,45" />
+      </div>
+      <div>
+        <button id="clear">clear</button>
+      </div>
+      <div>
+        <div id="legend"></div>
       </div>
     </div>
     <div id="map"></div>
@@ -93,57 +114,91 @@
           }
         });
 
-        //:metric/:week/:period
-        var metric = "h3_availability";
-        var week = "2019-02-24";
-        var period = "31";
-        var periods = 168; // hours in week
-
-        $("#week").on("change", function(data) {
-          week = data.target.value.split("/").join("-");
+        $("#metric").on("change", function(data) {
           update();
         });
-        $("#period").on("change", function(data) {
-          period = data.target.value;
+
+        $("#date").on("change", function(data) {
           update();
+        });
+
+        $("#hour").on("change", function(data) {
+          update();
+        });
+
+        $("#minutes").on("change", function(data) {
+          update();
+        });
+
+        $("#clear").on("click", function(data) {
+          map.getSource("bins").setData({
+            type: "FeatureCollection",
+            features: []
+          });
+        });
+
+        var bin = "";
+        map.on("click", "bins", function(e) {
+          bin = e.features[0].properties.bin;
         });
 
         update();
 
         function update() {
-          var days = {
-            0: "Sun",
-            1: "Mon",
-            2: "Tue",
-            3: "Wed",
-            4: "Thu",
-            5: "Fri",
-            6: "Sat"
-          };
-          var day = days[Math.floor(((+period + 1) / 168) * 7)];
-          var hour = (+period + 1) % 24;
-          $("#title").text(day + " " + hour + ":00");
+          var metric = $("#metric option:selected").val();
+          var date = $("#date").val();
+          var hour = $("#hour").val();
+          var minute = $("#minute").val();
 
-          $.getJSON("/metric/" + metric + "/" + week + "/" + period, function(
-            data
+          if (
+            bin === "" &&
+            (metric === "pickupsvia" || metric === "dropoffsvia")
           ) {
-            var stats = data.features.map(f => {
-              return f.properties.averageFractionalCount;
-            });
+            alert("select a target on the map");
+          }
 
-            var groups = 5;
+          var time = date;
+          if (hour.length) time += "-" + hour;
+          if (minute.length) time += "-" + minute;
 
-            data.features = data.features.map(f => {
-              var quantile = ss.quantileRank(
-                stats,
-                f.properties.averageFractionalCount
-              );
-              f.properties.quantile = Math.floor(quantile * 5) + 1;
-              delete f.properties.averageFractionalCount;
+          var url;
 
-              return f;
-            });
+          if (metric === "vehicles") {
+            url = "/vehicles/bird/" + time;
+          }
+          if (metric === "pickups") {
+            url = "/pickups/bird/" + time;
+          }
+          if (metric === "dropoffs") {
+            url = "/dropoffs/bird/" + time;
+          }
+          if (metric === "pickupsvia") {
+            url = "/pickupsvia/bird/" + time + "/" + bin + "/";
+          }
+          if (metric === "dropoffsvia") {
+            url = "/dropoffsvia/bird/" + time + "/" + bin + "/";
+          }
 
+          console.log(url);
+
+          $.getJSON(url, function(data) {
+            if (data.features.length) {
+              var stats = data.features.map(f => {
+                return f.properties.value;
+              });
+
+              var groups = 5;
+
+              var legend = "";
+              legend += "max: ";
+              legend += ss.max(stats);
+              $("#legend").text(legend);
+              data.features = data.features.map(f => {
+                var quantile = ss.quantileRank(stats, f.properties.value);
+                f.properties.quantile = Math.floor(quantile * 5) + 1;
+                return f;
+              });
+            }
             map.getSource("bins").setData(data);
           });
         }

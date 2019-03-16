@@ -2,13 +2,16 @@
   "scripts": {
     "lint": "prettier '{,!(node_modules)/**/}*.js' index.html --write",
     "test": "npm run lint; tap -R spec test/*.test.js",
-    "server": "ts-node server.ts",
-    "backfill": "rm -rf data; mkdir data; ts-node mds_processor.ts"
+    "server": "node server.js",
+    "backfill": "rm -rf data; mkdir data; node src/backfill.js",
+    "dump": "node src/dump.js"
   },
   "dependencies": {
     "@turf/turf": "^5.1.6",
     "d3-queue": "^3.0.7",
     "h3-js": "^3.4.2",
+    "hapi": "^18.1.0",
+    "inert": "^5.1.2",
     "level": "^4.0.0",
     "level-mem": "^3.0.1",
     "moment": "^2.24.0",

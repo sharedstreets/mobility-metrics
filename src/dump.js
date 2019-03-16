@@ -6,7 +6,8 @@ level(path.join(__dirname, "../data"))
   .createReadStream()
   .pipe(
     through2.obj((item, enc, next) => {
-      console.log(JSON.stringify(item, null, 2));
+      console.log(item.key);
+      console.log("  " + item.value);
       next();
     })
   );
