@@ -5,231 +5,244 @@ const through2 = require("through2");
 const h3 = require("h3-js");
 const turf = require("@turf/turf");
 
-const server = Hapi.server({
-  port: 5000,
-  host: "localhost"
-});
-
-const store = level(path.join(__dirname, "./data"));
-
-const init = async () => {
-  await server.register(require("inert"));
-
-  // ui
-  server.route({
-    method: "GET",
-    path: "/",
-    handler: (request, h) => {
-      return h.file(path.join(__dirname, "./index.html"));
-    }
+function serve(store, done) {
+  const server = Hapi.server({
+    port: 5000,
+    host: "localhost"
   });
 
-  // METRICS
+  store = store || level(path.join(__dirname, "./data"));
 
-  // vehicles
-  server.route({
-    method: "GET",
-    path: "/vehicles/{provider}/{time}",
-    handler: (request, h) => {
-      return new Promise(function(resolve, reject) {
-        const provider = request.params.provider;
-        const time = request.params.time;
+  const init = async () => {
+    await server.register(require("inert"));
 
-        var data = turf.featureCollection([]);
+    // ui
+    server.route({
+      method: "GET",
+      path: "/",
+      handler: (request, h) => {
+        return h.file(path.join(__dirname, "./index.html"));
+      }
+    });
 
-        store
-          .createReadStream({
-            gte: provider + "!vehicles",
-            lt: provider + "!vehicles?"
-          })
-          .pipe(
-            through2.obj((item, enc, next) => {
-              const key = item.key.split("!");
-              const keyTime = key[2];
-              const keyBin = key[3];
+    // METRICS
 
-              if (time === keyTime) {
-                var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
-                  value: item.value,
-                  bin: keyBin
-                });
-                data.features.push(geo);
-              }
-              next();
+    // vehicles
+    server.route({
+      method: "GET",
+      path: "/vehicles/{provider}/{time}",
+      handler: (request, h) => {
+        return new Promise(function(resolve, reject) {
+          const provider = request.params.provider;
+          const time = request.params.time;
+
+          var data = turf.featureCollection([]);
+
+          store
+            .createReadStream({
+              gte: provider + "!vehicles",
+              lt: provider + "!vehicles?"
             })
-          )
-          .on("finish", () => {
-            resolve(data);
-          });
-      });
-    }
-  });
+            .pipe(
+              through2.obj((item, enc, next) => {
+                const key = item.key.split("!");
+                const keyTime = key[2];
+                const keyBin = key[3];
 
-  // pickups
-  server.route({
-    method: "GET",
-    path: "/pickups/{provider}/{time}",
-    handler: (request, h) => {
-      return new Promise(function(resolve, reject) {
-        const provider = request.params.provider;
-        const time = request.params.time;
+                if (time === keyTime) {
+                  var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
+                    value: item.value,
+                    bin: keyBin
+                  });
 
-        var data = turf.featureCollection([]);
+                  // filter
+                  if (geo.properties.value > 2) data.features.push(geo);
+                }
+                next();
+              })
+            )
+            .on("finish", () => {
+              resolve(data);
+            });
+        });
+      }
+    });
 
-        store
-          .createReadStream({
-            gte: provider + "!pickups",
-            lt: provider + "!pickups?"
-          })
-          .pipe(
-            through2.obj((item, enc, next) => {
-              const key = item.key.split("!");
-              const keyTime = key[2];
-              const keyBin = key[3];
+    // pickups
+    server.route({
+      method: "GET",
+      path: "/pickups/{provider}/{time}",
+      handler: (request, h) => {
+        return new Promise(function(resolve, reject) {
+          const provider = request.params.provider;
+          const time = request.params.time;
 
-              if (time === keyTime) {
-                var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
-                  value: item.value,
-                  bin: keyBin
-                });
-                data.features.push(geo);
-              }
-              next();
+          var data = turf.featureCollection([]);
+
+          store
+            .createReadStream({
+              gte: provider + "!pickups",
+              lt: provider + "!pickups?"
             })
-          )
-          .on("finish", () => {
-            resolve(data);
-          });
-      });
-    }
-  });
+            .pipe(
+              through2.obj((item, enc, next) => {
+                const key = item.key.split("!");
+                const keyTime = key[2];
+                const keyBin = key[3];
 
-  // dropoffs
-  server.route({
-    method: "GET",
-    path: "/dropoffs/{provider}/{time}",
-    handler: (request, h) => {
-      return new Promise(function(resolve, reject) {
-        const provider = request.params.provider;
-        const time = request.params.time;
+                if (time === keyTime) {
+                  var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
+                    value: item.value,
+                    bin: keyBin
+                  });
 
-        var data = turf.featureCollection([]);
+                  // filter
+                  if (geo.properties.value > 2) data.features.push(geo);
+                }
+                next();
+              })
+            )
+            .on("finish", () => {
+              resolve(data);
+            });
+        });
+      }
+    });
 
-        store
-          .createReadStream({
-            gte: provider + "!dropoffs",
-            lt: provider + "!dropoffs?"
-          })
-          .pipe(
-            through2.obj((item, enc, next) => {
-              const key = item.key.split("!");
-              const keyTime = key[2];
-              const keyBin = key[3];
+    // dropoffs
+    server.route({
+      method: "GET",
+      path: "/dropoffs/{provider}/{time}",
+      handler: (request, h) => {
+        return new Promise(function(resolve, reject) {
+          const provider = request.params.provider;
+          const time = request.params.time;
 
-              if (time === keyTime) {
-                var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
-                  value: item.value,
-                  bin: keyBin
-                });
-                data.features.push(geo);
-              }
-              next();
+          var data = turf.featureCollection([]);
+
+          store
+            .createReadStream({
+              gte: provider + "!dropoffs",
+              lt: provider + "!dropoffs?"
             })
-          )
-          .on("finish", () => {
-            resolve(data);
-          });
-      });
-    }
-  });
+            .pipe(
+              through2.obj((item, enc, next) => {
+                const key = item.key.split("!");
+                const keyTime = key[2];
+                const keyBin = key[3];
 
-  // pickupsvia
-  // todo: pickupsvia & dropsvia are in development as API changes
-  //       to meet UI needs with respect to hex targeting
-  server.route({
-    method: "GET",
-    path: "/pickupsvia/{provider}/{time}/{bin}/",
-    handler: (request, h) => {
-      return new Promise(function(resolve, reject) {
-        const provider = request.params.provider;
-        const time = request.params.time;
-        const bin = request.params.bin;
-        console.log(request.params);
-        var data = turf.featureCollection([]);
+                if (time === keyTime) {
+                  var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
+                    value: item.value,
+                    bin: keyBin
+                  });
 
-        store
-          .createReadStream({
-            gte: provider + "!pickupsvia!" + bin,
-            lt: provider + "!pickupsvia!" + bin + "?"
-          })
-          .pipe(
-            through2.obj((item, enc, next) => {
-              const key = item.key.split("!");
-              const keyTime = key[2];
-              const keyBin = key[3];
+                  // filter
+                  if (geo.properties.value > 2) data.features.push(geo);
+                }
+                next();
+              })
+            )
+            .on("finish", () => {
+              resolve(data);
+            });
+        });
+      }
+    });
 
-              if (time === keyTime) {
-                var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
-                  value: item.value
-                });
-                data.features.push(geo);
-              }
-              next();
+    // pickupsvia
+    // todo: pickupsvia & dropsvia are in development as API changes
+    //       to meet UI needs with respect to hex targeting
+    server.route({
+      method: "GET",
+      path: "/pickupsvia/{provider}/{time}/{bin}/",
+      handler: (request, h) => {
+        return new Promise(function(resolve, reject) {
+          const provider = request.params.provider;
+          const time = request.params.time;
+          const bin = request.params.bin;
+          console.log(request.params);
+          var data = turf.featureCollection([]);
+
+          store
+            .createReadStream({
+              gte: provider + "!pickupsvia!" + bin,
+              lt: provider + "!pickupsvia!" + bin + "?"
             })
-          )
-          .on("finish", () => {
-            resolve(data);
-          });
-      });
-    }
-  });
+            .pipe(
+              through2.obj((item, enc, next) => {
+                const key = item.key.split("!");
+                const keyTime = key[2];
+                const keyBin = key[3];
 
-  // dropoffsvia
-  server.route({
-    method: "GET",
-    path: "/dropoffsvia/{provider}/{time}/{bin}/",
-    handler: (request, h) => {
-      return new Promise(function(resolve, reject) {
-        const provider = request.params.provider;
-        const time = request.params.time;
-        const bin = request.params.bin;
+                if (time === keyTime) {
+                  var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
+                    value: item.value
+                  });
+                  // filter
+                  if (geo.properties.value > 2) data.features.push(geo);
+                }
+                next();
+              })
+            )
+            .on("finish", () => {
+              resolve(data);
+            });
+        });
+      }
+    });
 
-        var data = turf.featureCollection([]);
+    // dropoffsvia
+    server.route({
+      method: "GET",
+      path: "/dropoffsvia/{provider}/{time}/{bin}/",
+      handler: (request, h) => {
+        return new Promise(function(resolve, reject) {
+          const provider = request.params.provider;
+          const time = request.params.time;
+          const bin = request.params.bin;
 
-        store
-          .createReadStream({
-            gte: provider + "!dropoffsvia!" + bin,
-            lt: provider + "!dropoffsvia!" + bin + "?"
-          })
-          .pipe(
-            through2.obj((item, enc, next) => {
-              const key = item.key.split("!");
-              const keyTime = key[2];
-              const keyBin = key[3];
+          var data = turf.featureCollection([]);
 
-              if (time === keyTime) {
-                var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
-                  value: item.value
-                });
-                data.features.push(geo);
-              }
-              next();
+          store
+            .createReadStream({
+              gte: provider + "!dropoffsvia!" + bin,
+              lt: provider + "!dropoffsvia!" + bin + "?"
             })
-          )
-          .on("finish", () => {
-            resolve(data);
-          });
-      });
-    }
+            .pipe(
+              through2.obj((item, enc, next) => {
+                const key = item.key.split("!");
+                const keyTime = key[2];
+                const keyBin = key[3];
+
+                if (time === keyTime) {
+                  var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
+                    value: item.value
+                  });
+                  // filter
+                  if (geo.properties.value > 2) data.features.push(geo);
+                }
+                next();
+              })
+            )
+            .on("finish", () => {
+              resolve(data);
+            });
+        });
+      }
+    });
+
+    await server.start();
+    console.log(`Server running at: ${server.info.uri}`);
+    done(null, server);
+  };
+
+  process.on("unhandledRejection", err => {
+    console.log(err);
+    process.exit(1);
   });
 
-  await server.start();
-  console.log(`Server running at: ${server.info.uri}`);
-};
+  init();
+}
 
-process.on("unhandledRejection", err => {
-  console.log(err);
-  process.exit(1);
-});
-
-init();
+module.exports = serve;
