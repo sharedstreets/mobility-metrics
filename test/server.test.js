@@ -12,9 +12,8 @@ test("server", t => {
 });
 
 test("server module", t => {
-  //serve(null, (err, server) => {
-  //  server.stop(null, () => {
-  t.end();
-  //  });
-  //});
+  serve(null, async (err, server) => {
+    await server.stop();
+    t.end();
+  });
 });
