@@ -65,11 +65,15 @@
         <input id="minute" type="text" value="" placeholder="00,15,30,45" />
       </div>
       <div>
+        <button id="target">target</button>
+      </div>
+      <div>
         <button id="clear">clear</button>
       </div>
       <div>
         <div id="legend"></div>
       </div>
+      <div id="download"></div>
     </div>
     <div id="map"></div>
     <script>
@@ -131,11 +135,17 @@
         });
 
         $("#clear").on("click", function(data) {
+          clearQuery();
+        });
+
+        function clearQuery() {
           map.getSource("bins").setData({
             type: "FeatureCollection",
             features: []
           });
-        });
+
+          $("#download").empty();
+        }
 
         var bin = "";
         map.on("click", "bins", function(e) {
@@ -145,6 +155,7 @@
         update();
 
         function update() {
+          clearQuery();
           var metric = $("#metric option:selected").val();
           var date = $("#date").val();
           var hour = $("#hour").val();
@@ -183,6 +194,24 @@
 
           $.getJSON(url, function(data) {
             if (data.features.length) {
+              data.features.forEach(f => {
+                f.properties.value = +f.properties.value;
+              });
+
+              var blob =
+                "text/json;charset=utf-8," +
+                encodeURIComponent(JSON.stringify(data));
+
+              $(
+                '<a href="data:' +
+                  blob +
+                  '" download="' +
+                  metric +
+                  "-" +
+                  time +
+                  '.json">Export</a>'
+              ).appendTo("#download");
+
               var stats = data.features.map(f => {
                 return f.properties.value;
               });

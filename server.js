@@ -161,7 +161,7 @@ function serve(store, done) {
           const provider = request.params.provider;
           const time = request.params.time;
           const bin = request.params.bin;
-          console.log(request.params);
+
           var data = turf.featureCollection([]);
 
           store
@@ -243,6 +243,10 @@ function serve(store, done) {
   });
 
   init();
+}
+
+if (require.main === module) {
+  serve(null, () => {});
 }
 
 module.exports = serve;
