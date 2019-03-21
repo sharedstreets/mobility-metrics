@@ -55,8 +55,9 @@ function serve(store, done) {
                     bin: keyBin
                   });
 
-                  // filter
-                  if (geo.properties.value > 2) data.features.push(geo);
+                  // fuzz
+                  if (geo.properties.value < 2) geo.properties.value = 3;
+                  data.features.push(geo);
                 }
                 next();
               })
@@ -96,8 +97,9 @@ function serve(store, done) {
                     bin: keyBin
                   });
 
-                  // filter
-                  if (geo.properties.value > 2) data.features.push(geo);
+                  // fuzz
+                  if (geo.properties.value < 2) geo.properties.value = 3;
+                  data.features.push(geo);
                 }
                 next();
               })
@@ -137,8 +139,9 @@ function serve(store, done) {
                     bin: keyBin
                   });
 
-                  // filter
-                  if (geo.properties.value > 2) data.features.push(geo);
+                  // fuzz
+                  if (geo.properties.value < 2) geo.properties.value = 3;
+                  data.features.push(geo);
                 }
                 next();
               })
@@ -179,8 +182,10 @@ function serve(store, done) {
                   var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
                     value: item.value
                   });
-                  // filter
-                  if (geo.properties.value > 2) data.features.push(geo);
+
+                  // fuzz
+                  if (geo.properties.value < 2) geo.properties.value = 3;
+                  data.features.push(geo);
                 }
                 next();
               })
@@ -219,8 +224,10 @@ function serve(store, done) {
                   var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
                     value: item.value
                   });
-                  // filter
-                  if (geo.properties.value > 2) data.features.push(geo);
+
+                  // fuzz
+                  if (geo.properties.value < 2) geo.properties.value = 3;
+                  data.features.push(geo);
                 }
                 next();
               })
