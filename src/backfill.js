@@ -9,8 +9,8 @@ var store = level(path.join(__dirname, "../data"));
 var metrics = new Metrics(store);
 var tripCount = 0;
 var changeCount = 0;
-var start = 1552351799 - 60 * 60 * 24 * 2;
-var stop = 1552351799;
+var start = 1534855717 - 60 * 60 * 24 * 4;
+var stop = 1534855717;
 
 var tripStream = through2.obj((trip, enc, next) => {
   metrics.trip(trip, provider, () => {

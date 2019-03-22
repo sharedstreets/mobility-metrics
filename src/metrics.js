@@ -2,7 +2,7 @@ const queue = require("d3-queue").queue;
 const h3 = require("h3-js");
 const moment = require("moment");
 
-const Z = 8;
+const Z = 9;
 
 var Metrics = function(store) {
   this.store = store;

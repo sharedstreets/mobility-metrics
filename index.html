@@ -54,11 +54,11 @@
       </div>
       <div>
         <div>date</div>
-        <input id="date" type="date" value="2019-03-11" />
+        <input id="date" type="date" value="2018-08-17" />
       </div>
       <div>
         <div>hour</div>
-        <input id="hour" type="text" value="" placeholder="00-23" />
+        <input id="hour" type="number" step="1" value="" placeholder="00-23" />
       </div>
       <div>
         <div>minute</div>
@@ -118,6 +118,23 @@
           }
         });
 
+        map.addLayer({
+          id: "target",
+          type: "fill",
+          source: {
+            type: "geojson",
+            data: {
+              type: "FeatureCollection",
+              features: []
+            }
+          },
+          layout: {},
+          paint: {
+            "fill-color": "#f0f",
+            "fill-opacity": 0.6
+          }
+        });
+
         $("#metric").on("change", function(data) {
           update();
         });
@@ -143,13 +160,23 @@
             type: "FeatureCollection",
             features: []
           });
+          /*map.getSource("target").setData({
+            type: "FeatureCollection",
+            features: []
+          });*/
 
           $("#download").empty();
         }
 
-        var bin = "";
-        map.on("click", "bins", function(e) {
-          bin = e.features[0].properties.bin;
+        var target = "";
+        map.on("click", function(e) {
+          $.getJSON("/target/" + e.lngLat.lng + "/" + e.lngLat.lat, function(
+            data
+          ) {
+            target = data;
+            map.getSource("target").setData(target);
+            update();
+          });
         });
 
         update();
@@ -158,14 +185,21 @@
           clearQuery();
           var metric = $("#metric option:selected").val();
           var date = $("#date").val();
-          var hour = $("#hour").val();
-          var minute = $("#minute").val();
+          var hour = $("#hour")
+            .val()
+            .toString();
+          if (hour.length === 1) hour = "0" + hour;
+          var minute = $("#minute")
+            .val()
+            .toString();
+          if (minute.length === 1) minute = "0" + minute;
 
           if (
-            bin === "" &&
+            !target &&
             (metric === "pickupsvia" || metric === "dropoffsvia")
           ) {
             alert("select a target on the map");
+            return;
           }
 
           var time = date;
@@ -184,10 +218,12 @@
             url = "/dropoffs/bird/" + time;
           }
           if (metric === "pickupsvia") {
-            url = "/pickupsvia/bird/" + time + "/" + bin + "/";
+            url =
+              "/pickupsvia/bird/" + time + "/" + target.properties.bin + "/";
           }
           if (metric === "dropoffsvia") {
-            url = "/dropoffsvia/bird/" + time + "/" + bin + "/";
+            url =
+              "/dropoffsvia/bird/" + time + "/" + target.properties.bin + "/";
           }
 
           console.log(url);

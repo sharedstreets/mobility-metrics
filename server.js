@@ -27,6 +27,21 @@ function serve(store, done) {
 
     // METRICS
 
+    // target
+    server.route({
+      method: "GET",
+      path: "/target/{lng}/{lat}",
+      handler: (request, h) => {
+        var bin = h3.geoToH3(+request.params.lat, +request.params.lng, 9);
+
+        var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
+          bin: bin
+        });
+
+        return geo;
+      }
+    });
+
     // vehicles
     server.route({
       method: "GET",
