@@ -65,9 +65,6 @@
         <input id="minute" type="text" value="" placeholder="00,15,30,45" />
       </div>
       <div>
-        <button id="target">target</button>
-      </div>
-      <div>
         <button id="clear">clear</button>
       </div>
       <div>
@@ -160,24 +157,9 @@
             type: "FeatureCollection",
             features: []
           });
-          /*map.getSource("target").setData({
-            type: "FeatureCollection",
-            features: []
-          });*/
 
           $("#download").empty();
         }
-
-        var target = "";
-        map.on("click", function(e) {
-          $.getJSON("/target/" + e.lngLat.lng + "/" + e.lngLat.lat, function(
-            data
-          ) {
-            target = data;
-            map.getSource("target").setData(target);
-            update();
-          });
-        });
 
         update();
 
@@ -193,14 +175,6 @@
             .val()
             .toString();
           if (minute.length === 1) minute = "0" + minute;
-
-          if (
-            !target &&
-            (metric === "pickupsvia" || metric === "dropoffsvia")
-          ) {
-            alert("select a target on the map");
-            return;
-          }
 
           var time = date;
           if (hour.length) time += "-" + hour;
@@ -218,12 +192,10 @@
             url = "/dropoffs/bird/" + time;
           }
           if (metric === "pickupsvia") {
-            url =
-              "/pickupsvia/bird/" + time + "/" + target.properties.bin + "/";
+            url = "/pickupsvia/bird/" + time;
           }
           if (metric === "dropoffsvia") {
-            url =
-              "/dropoffsvia/bird/" + time + "/" + target.properties.bin + "/";
+            url = "/dropoffsvia/bird/" + time;
           }
 
           console.log(url);

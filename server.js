@@ -27,21 +27,6 @@ function serve(store, done) {
 
     // METRICS
 
-    // target
-    server.route({
-      method: "GET",
-      path: "/target/{lng}/{lat}",
-      handler: (request, h) => {
-        var bin = h3.geoToH3(+request.params.lat, +request.params.lng, 9);
-
-        var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
-          bin: bin
-        });
-
-        return geo;
-      }
-    });
-
     // vehicles
     server.route({
       method: "GET",
@@ -173,39 +158,54 @@ function serve(store, done) {
     //       to meet UI needs with respect to hex targeting
     server.route({
       method: "GET",
-      path: "/pickupsvia/{provider}/{time}/{bin}/",
+      path: "/pickupsvia/{provider}/{time}",
       handler: (request, h) => {
         return new Promise(function(resolve, reject) {
           const provider = request.params.provider;
           const time = request.params.time;
-          const bin = request.params.bin;
 
           var data = turf.featureCollection([]);
+          var matrix = {};
 
           store
             .createReadStream({
-              gte: provider + "!pickupsvia!" + bin,
-              lt: provider + "!pickupsvia!" + bin + "?"
+              gt: provider + "!pickupsvia",
+              lt: provider + "!pickupsvia?"
             })
             .pipe(
               through2.obj((item, enc, next) => {
                 const key = item.key.split("!");
                 const keyTime = key[2];
-                const keyBin = key[3];
+                const a = key[3];
+                const b = key[4];
 
                 if (time === keyTime) {
-                  var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
-                    value: item.value
-                  });
+                  if (!matrix[a]) {
+                    matrix[a] = turf.polygon([h3.h3ToGeoBoundary(a, true)], {
+                      bin: a,
+                      value: 0
+                    });
+                  }
 
-                  // fuzz
-                  if (geo.properties.value < 2) geo.properties.value = 3;
-                  data.features.push(geo);
+                  if (!matrix[a].properties[b]) {
+                    matrix[a].properties[b] = 1;
+                  } else {
+                    matrix[a].properties[b]++;
+                  }
                 }
                 next();
               })
             )
             .on("finish", () => {
+              Object.keys(matrix).forEach(a => {
+                var f = matrix[a];
+                // fuzz
+                Object.keys(f.properties).forEach(b => {
+                  if (b !== "bin" && f.properties[b] < 3) f.properties[b] = 3;
+                  if (b !== "bin") f.properties.value++;
+                });
+                data.features.push(matrix[a]);
+              });
               resolve(data);
             });
         });
@@ -215,39 +215,54 @@ function serve(store, done) {
     // dropoffsvia
     server.route({
       method: "GET",
-      path: "/dropoffsvia/{provider}/{time}/{bin}/",
+      path: "/dropoffsvia/{provider}/{time}",
       handler: (request, h) => {
         return new Promise(function(resolve, reject) {
           const provider = request.params.provider;
           const time = request.params.time;
-          const bin = request.params.bin;
 
           var data = turf.featureCollection([]);
+          var matrix = {};
 
           store
             .createReadStream({
-              gte: provider + "!dropoffsvia!" + bin,
-              lt: provider + "!dropoffsvia!" + bin + "?"
+              gt: provider + "!dropoffsvia",
+              lt: provider + "!dropoffsvia?"
             })
             .pipe(
               through2.obj((item, enc, next) => {
                 const key = item.key.split("!");
                 const keyTime = key[2];
-                const keyBin = key[3];
+                const a = key[3];
+                const b = key[4];
 
                 if (time === keyTime) {
-                  var geo = turf.polygon([h3.h3ToGeoBoundary(keyBin, true)], {
-                    value: item.value
-                  });
+                  if (!matrix[a]) {
+                    matrix[a] = turf.polygon([h3.h3ToGeoBoundary(a, true)], {
+                      bin: a,
+                      value: 0
+                    });
+                  }
 
-                  // fuzz
-                  if (geo.properties.value < 2) geo.properties.value = 3;
-                  data.features.push(geo);
+                  if (!matrix[a].properties[b]) {
+                    matrix[a].properties[b] = 1;
+                  } else {
+                    matrix[a].properties[b]++;
+                  }
                 }
                 next();
               })
             )
             .on("finish", () => {
+              Object.keys(matrix).forEach(a => {
+                var f = matrix[a];
+                // fuzz
+                Object.keys(f.properties).forEach(b => {
+                  if (b !== "bin" && f.properties[b] < 3) f.properties[b] = 3;
+                  if (b !== "bin") f.properties.value++;
+                });
+                data.features.push(matrix[a]);
+              });
               resolve(data);
             });
         });
