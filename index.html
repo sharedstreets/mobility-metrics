@@ -43,6 +43,7 @@
         <div>metric</div>
         <select id="metric">
           <option value=""></option>
+          <option value="streets">streets</option>
           <option value="vehicles">vehicles</option>
           <option value="pickups">pickups</option>
           <option value="dropoffs">dropoffs</option>
@@ -63,9 +64,6 @@
       <div>
         <div>minute</div>
         <input id="minute" type="text" value="" placeholder="00,15,30,45" />
-      </div>
-      <div>
-        <button id="target">target</button>
       </div>
       <div>
         <button id="clear">clear</button>
@@ -119,8 +117,8 @@
         });
 
         map.addLayer({
-          id: "target",
-          type: "fill",
+          id: "streets",
+          type: "line",
           source: {
             type: "geojson",
             data: {
@@ -130,8 +128,22 @@
           },
           layout: {},
           paint: {
-            "fill-color": "#f0f",
-            "fill-opacity": 0.6
+            "line-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "quantile"],
+              1,
+              "#f1eef6",
+              2,
+              "#d7b5d8",
+              3,
+              "#df65b0",
+              4,
+              "#dd1c77",
+              5,
+              "#980043"
+            ],
+            "line-width": 10
           }
         });
 
@@ -160,24 +172,9 @@
             type: "FeatureCollection",
             features: []
           });
-          /*map.getSource("target").setData({
-            type: "FeatureCollection",
-            features: []
-          });*/
 
           $("#download").empty();
         }
-
-        var target = "";
-        map.on("click", function(e) {
-          $.getJSON("/target/" + e.lngLat.lng + "/" + e.lngLat.lat, function(
-            data
-          ) {
-            target = data;
-            map.getSource("target").setData(target);
-            update();
-          });
-        });
 
         update();
 
@@ -194,20 +191,15 @@
             .toString();
           if (minute.length === 1) minute = "0" + minute;
 
-          if (
-            !target &&
-            (metric === "pickupsvia" || metric === "dropoffsvia")
-          ) {
-            alert("select a target on the map");
-            return;
-          }
-
           var time = date;
           if (hour.length) time += "-" + hour;
           if (minute.length) time += "-" + minute;
 
           var url;
 
+          if (metric === "streets") {
+            url = "/streets/bird/" + time;
+          }
           if (metric === "vehicles") {
             url = "/vehicles/bird/" + time;
           }
@@ -218,12 +210,10 @@
             url = "/dropoffs/bird/" + time;
           }
           if (metric === "pickupsvia") {
-            url =
-              "/pickupsvia/bird/" + time + "/" + target.properties.bin + "/";
+            url = "/pickupsvia/bird/" + time;
           }
           if (metric === "dropoffsvia") {
-            url =
-              "/dropoffsvia/bird/" + time + "/" + target.properties.bin + "/";
+            url = "/dropoffsvia/bird/" + time;
           }
 
           console.log(url);
