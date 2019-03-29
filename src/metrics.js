@@ -1,8 +1,8 @@
-const turf = require('@turf/turf')
+const turf = require("@turf/turf");
 const queue = require("d3-queue").queue;
 const h3 = require("h3-js");
 const moment = require("moment");
-const request = require('request');
+const request = require("request");
 
 const Z = 9;
 
@@ -117,40 +117,64 @@ Metrics.prototype.vehicles = function(trip, times, provider, done) {
 Metrics.prototype.streets = function(trip, times, provider, done) {
   var shsts = new Set();
 
-  var line = turf.lineString(trip.route.features.map(ping => {
-    return ping.geometry.coordinates
-  }))
+  var line = turf.lineString(
+    trip.route.features.map(ping => {
+      return ping.geometry.coordinates;
+    })
+  );
 
   var opts = {
-    url: 'https://api.sharedstreets.io/v0.1.0/match/geoms?&includeStreetnames=false&lengthTolerance=0.2&bearingTolerance=20&searchRadius=25&auth=bdd23fa1-7ac5-4158-b354-22ec946bb575&ignoreDirection=true&snapToIntersections=true',
+    url:
+      "https://api.sharedstreets.io/v0.1.0/match/geoms?&includeStreetnames=false&lengthTolerance=0.2&bearingTolerance=20&searchRadius=25&auth=bdd23fa1-7ac5-4158-b354-22ec946bb575&ignoreDirection=true&snapToIntersections=true",
     body: JSON.stringify(line),
     headers: {
       "Content-type": "application/json; charset=UTF-8"
     }
-  }
+  };
 
   request.post(opts, (err, res, body) => {
-    var q = queue(1)
-    var data = JSON.parse(body)
+    var qedge = queue(1);
+    var data = JSON.parse(body);
     if (data.matched) {
-      data.matched.features.forEach(f =>{
-        q.defer(cb=>{
-          var id = provider + "!streets!" + time + "!" + f.properties.referenceId;
+      data.matched.features.forEach(f => {
+        qedge.defer(edgecb => {
+          var qtime = queue(1);
+          times.forEach(time => {
+            qtime.defer(timecb => {
+              var id =
+                provider + "!streets!" + time + "!" + f.properties.referenceId;
 
-          this.store.get(id, (err, record) => {
-            if (!record) record = 1;
-            else record++;
+              this.store.put(
+                "geo!" + f.properties.referenceId,
+                JSON.stringify(f.geometry),
+                err => {
+                  this.store.get(id, (err, record) => {
+                    if (!record) {
+                      record = 1;
+                    } else record++;
 
-            this.store.put(id, record, err => {
-              if (err) throw err;
-              timecb();
+                    this.store.put(id, record, err => {
+                      if (err) throw err;
+
+                      timecb();
+                    });
+                  });
+                }
+              );
             });
           });
-        })
-      })
-    }
-    done()
-  })
+
+          qtime.awaitAll(() => {
+            edgecb();
+          });
+        });
+      });
+
+      qedge.awaitAll(() => {
+        done();
+      });
+    } else done();
+  });
 };
 
 Metrics.prototype.pickups = function(trip, times, provider, done) {

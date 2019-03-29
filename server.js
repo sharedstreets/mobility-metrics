@@ -27,6 +27,51 @@ function serve(store, done) {
 
     // METRICS
 
+    // streets
+    server.route({
+      method: "GET",
+      path: "/streets/{provider}/{time}",
+      handler: (request, h) => {
+        return new Promise(function(resolve, reject) {
+          const provider = request.params.provider;
+          const time = request.params.time;
+
+          var data = turf.featureCollection([]);
+
+          store
+            .createReadStream({
+              gte: provider + "!streets",
+              lt: provider + "!streets?"
+            })
+            .pipe(
+              through2.obj((item, enc, next) => {
+                const key = item.key.split("!");
+                const keyTime = key[2];
+                const keyRef = key[3];
+
+                if (time === keyTime) {
+                  // lookup from geometry cache
+                  store.get("geo!" + keyRef, (err, geom) => {
+                    geom = JSON.parse(geom);
+                    var geo = turf.lineString(geom.coordinates, {
+                      value: item.value,
+                      bin: keyRef
+                    });
+                    // fuzz
+                    if (item.value < 3) geo.properties.value = 3;
+                    data.features.push(geo);
+                    next();
+                  });
+                } else next();
+              })
+            )
+            .on("finish", () => {
+              resolve(data);
+            });
+        });
+      }
+    });
+
     // vehicles
     server.route({
       method: "GET",
@@ -56,7 +101,7 @@ function serve(store, done) {
                   });
 
                   // fuzz
-                  if (geo.properties.value < 2) geo.properties.value = 3;
+                  if (geo.properties.value < 3) geo.properties.value = 3;
                   data.features.push(geo);
                 }
                 next();
@@ -98,7 +143,7 @@ function serve(store, done) {
                   });
 
                   // fuzz
-                  if (geo.properties.value < 2) geo.properties.value = 3;
+                  if (geo.properties.value < 3) geo.properties.value = 3;
                   data.features.push(geo);
                 }
                 next();
@@ -140,7 +185,7 @@ function serve(store, done) {
                   });
 
                   // fuzz
-                  if (geo.properties.value < 2) geo.properties.value = 3;
+                  if (geo.properties.value < 3) geo.properties.value = 3;
                   data.features.push(geo);
                 }
                 next();
