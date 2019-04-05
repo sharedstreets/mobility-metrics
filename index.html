@@ -9,6 +9,7 @@
     />
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
     <script src="https://unpkg.com/simple-statistics@7.0.1/dist/simple-statistics.min.js"></script>
     <link
       rel="stylesheet"
@@ -133,17 +134,46 @@
               ["linear"],
               ["get", "quantile"],
               1,
-              "#f1eef6",
+              "#edf8fb",
               2,
-              "#d7b5d8",
+              "#b2e2e2",
               3,
-              "#df65b0",
+              "#66c2a4",
               4,
-              "#dd1c77",
+              "#2ca25f",
               5,
-              "#980043"
+              "#006d2c"
             ],
-            "line-width": 10
+            "line-width": [
+              "interpolate",
+              ["linear"],
+              ["get", "quantile"],
+              1,
+              1,
+              2,
+              2,
+              3,
+              5,
+              4,
+              6,
+              5,
+              8
+            ],
+            "line-opacity": [
+              "interpolate",
+              ["linear"],
+              ["get", "quantile"],
+              1,
+              0.2,
+              2,
+              0.4,
+              3,
+              0.6,
+              4,
+              0.8,
+              5,
+              1
+            ]
           }
         });
 
@@ -254,10 +284,30 @@
                 return f;
               });
             }
-            map.getSource("bins").setData(data);
+
+            var layers = layerize(data);
+            map.getSource("bins").setData(layers.bins);
+            map.getSource("streets").setData(layers.streets);
           });
         }
       });
+
+      function layerize(data) {
+        var layers = {};
+
+        layers.streets = turf.featureCollection(
+          data.features.filter(f => {
+            return f.geometry.type === "LineString";
+          })
+        );
+        layers.bins = turf.featureCollection(
+          data.features.filter(f => {
+            return f.geometry.type === "Polygon";
+          })
+        );
+
+        return layers;
+      }
     </script>
   </body>
 </html>
