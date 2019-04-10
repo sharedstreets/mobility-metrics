@@ -144,7 +144,6 @@ Metrics.prototype.streets = function(trip, times, provider, done) {
     })
   );
 
-
   graph.match(line).then(data => {
     var qedge = queue(1);
 
