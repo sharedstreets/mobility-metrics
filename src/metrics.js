@@ -3,6 +3,27 @@ const queue = require("d3-queue").queue;
 const h3 = require("h3-js");
 const moment = require("moment");
 const request = require("request");
+const shst = require("sharedstreets");
+
+graphOpts = {
+  source: "osm/planet-181224",
+  tileHierarchy: 6
+};
+var graph = new shst.Graph(
+  {
+    type: "Polygon",
+    coordinates: [
+      [
+        [-83.17680358886719, 42.313369811689746],
+        [-82.99072265625, 42.313369811689746],
+        [-82.99072265625, 42.416359972082866],
+        [-83.17680358886719, 42.416359972082866],
+        [-83.17680358886719, 42.313369811689746]
+      ]
+    ]
+  },
+  graphOpts
+);
 
 const Z = 9;
 
@@ -123,52 +144,62 @@ Metrics.prototype.streets = function(trip, times, provider, done) {
     })
   );
 
-  var opts = {
-    url:
-      "https://api.sharedstreets.io/v0.1.0/match/geoms?&includeStreetnames=false&lengthTolerance=0.2&bearingTolerance=20&searchRadius=25&auth=bdd23fa1-7ac5-4158-b354-22ec946bb575&ignoreDirection=true&snapToIntersections=true",
-    body: JSON.stringify(line),
-    headers: {
-      "Content-type": "application/json; charset=UTF-8"
-    }
-  };
 
-  request.post(opts, (err, res, body) => {
+  graph.match(line).then(data => {
     var qedge = queue(1);
-    var data = JSON.parse(body);
-    if (data.matched) {
-      data.matched.features.forEach(f => {
-        qedge.defer(edgecb => {
-          var qtime = queue(1);
-          times.forEach(time => {
-            qtime.defer(timecb => {
-              var id =
-                provider + "!streets!" + time + "!" + f.properties.referenceId;
 
-              this.store.put(
-                "geo!" + f.properties.referenceId,
-                JSON.stringify(f.geometry),
-                err => {
-                  this.store.get(id, (err, record) => {
-                    if (!record) {
-                      record = 1;
-                    } else record++;
+    // todo: throw err if segments not equal to linestrings count
+    if (
+      data &&
+      data.segments &&
+      data.matchedPath &&
+      data.matchedPath.geometry &&
+      data.matchedPath.geometry.coordinates &&
+      data.matchedPath.geometry.coordinates.length === data.segments.length
+    ) {
+      data.segments
+        .map((segment, s) => {
+          return turf.lineString(data.matchedPath.geometry.coordinates[s], {
+            referenceId: segment.referenceId
+          });
+        })
+        .forEach(f => {
+          qedge.defer(edgecb => {
+            var qtime = queue(1);
+            times.forEach(time => {
+              qtime.defer(timecb => {
+                var id =
+                  provider +
+                  "!streets!" +
+                  time +
+                  "!" +
+                  f.properties.referenceId;
 
-                    this.store.put(id, record, err => {
-                      if (err) throw err;
+                this.store.put(
+                  "geo!" + f.properties.referenceId,
+                  JSON.stringify(f.geometry),
+                  err => {
+                    this.store.get(id, (err, record) => {
+                      if (!record) {
+                        record = 1;
+                      } else record++;
 
-                      timecb();
+                      this.store.put(id, record, err => {
+                        if (err) throw err;
+
+                        timecb();
+                      });
                     });
-                  });
-                }
-              );
+                  }
+                );
+              });
+            });
+
+            qtime.awaitAll(() => {
+              edgecb();
             });
           });
-
-          qtime.awaitAll(() => {
-            edgecb();
-          });
         });
-      });
 
       qedge.awaitAll(() => {
         done();
