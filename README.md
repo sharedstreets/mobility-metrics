@@ -6,33 +6,33 @@ This repository is a reference implementation of the [Micromobility Metrics Spec
 
 ## API
 
-### GET /vehicles/{provider}/{time}
+### GET /streetvolumes/{provider}/{time}
 
-Returns counts of vehicles per zone.
+Returns counts of vehicles on a street during a time window
+
+### GET /zonalvolumes/{provider}/{time}
+
+Returns counts of vehicles in a zone during a time window
 
 ### GET /utilization/{provider}/{time}
 
-Returns a metric describing how much vehicles are used compared to idle per zone
+Returns a percentage of vehicles that were used versus idle over a window of time in a zone
 
 ### GET /availability/{provider}/{time}
 
-Returns a metric describing how much vehicles are idle compared to used per zone
+Returns a the ratio of vehicles that were available to users in each part of the city
 
 ### GET /pickups/{provider}/{time}
 
-Returns counts of trips that started in each zone
+Returns volume of trips that started in a zone or on a street during a time window
 
 ### GET /dropoffs/{provider}/{time}
 
-Returns counts of trips that ended in each zone
+Returns volume of trips that ended in a zone or on a street during a time window
 
-### GET /pickupsvia/{provider}/{time}/{bin}/
+### GET /flowmatrix/{provider}/{time}/{bin}/
 
-Returns counts of trips for each zone that originated in the target zone
-
-### GET /dropoffsvia/{provider}/{time}/{bin}/
-
-Returns counts of trips for each zone that ended in the target zone
+Returns trips that travel from one selected zone of the city to another zone of the city, sometimes referred to as origin/destination data
 
 
 ## install
