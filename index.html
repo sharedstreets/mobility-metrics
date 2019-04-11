@@ -2,15 +2,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>SharedStreets Micromobility</title>
+    <title>Mobility Metrics</title>
     <meta
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
     <script src="https://unpkg.com/simple-statistics@7.0.1/dist/simple-statistics.min.js"></script>
+    <script>if (window.module) module = window.module;</script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.css"
@@ -39,6 +41,7 @@
     </style>
   </head>
   <body>
+    <h1>Mobility Metrics</h1>
     <div id="controls">
       <div>
         <div>metric</div>
@@ -225,25 +228,25 @@
           if (hour.length) time += "-" + hour;
           if (minute.length) time += "-" + minute;
 
-          var url;
+          var url = 'http://localhost:5000';
 
           if (metric === "streets") {
-            url = "/streets/bird/" + time;
+            url += "/streets/bird/" + time;
           }
           if (metric === "vehicles") {
-            url = "/vehicles/bird/" + time;
+            url += "/vehicles/bird/" + time;
           }
           if (metric === "pickups") {
-            url = "/pickups/bird/" + time;
+            url += "/pickups/bird/" + time;
           }
           if (metric === "dropoffs") {
-            url = "/dropoffs/bird/" + time;
+            url += "/dropoffs/bird/" + time;
           }
           if (metric === "pickupsvia") {
-            url = "/pickupsvia/bird/" + time;
+            url += "/pickupsvia/bird/" + time;
           }
           if (metric === "dropoffsvia") {
-            url = "/dropoffsvia/bird/" + time;
+            url += "/dropoffsvia/bird/" + time;
           }
 
           console.log(url);

@@ -34,13 +34,19 @@ var Metrics = function(store) {
 // PROCESS EVENTS
 
 Metrics.prototype.change = function(change, provider, done) {
+  var d = new Date(Math.round(change.event_time) * 1000);
+  var times = [day(d), hour(d), quarter(d)];
+
   var q = queue(1);
 
   q.defer(cb => {
-    this.utilization(trip, null, provider, cb);
+    this.events(change, times, provider, cb);
   });
   q.defer(cb => {
-    this.availability(trip, null, provider, cb);
+    this.utilization(change, times, provider, cb);
+  });
+  q.defer(cb => {
+    this.availability(change, times, provider, cb);
   });
 
   q.awaitAll(() => {
@@ -79,6 +85,31 @@ Metrics.prototype.trip = function(trip, provider, done) {
 };
 
 // AGGREGATORS
+
+Metrics.prototype.events = function(change, times, provider, done) {
+  var qtime = queue(1)
+
+  times.forEach(time => {
+    qtime.defer(timecb => {
+      var id = provider + "!events!" + time + "!" + change.event_type;
+
+      this.store.get(id, (err, record) => {
+        if (!record) record = 1;
+        else record++;
+
+        this.store.put(id, record, err => {
+          console.log(id, record)
+          if (err) throw err;
+          timecb();
+        });
+      });
+    })
+  })
+
+  qtime.awaitAll(()=>{
+    done();
+  })
+};
 
 Metrics.prototype.utilization = function(change, times, provider, done) {
   // todo: WIP, refactoring window selection on this metric

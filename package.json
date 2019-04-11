@@ -4,7 +4,8 @@
     "test": "npm run lint; tap -R spec test/*.test.js",
     "server": "node server.js",
     "backfill": "rm -rf data; mkdir data; node --experimental-modules src/backfill.js",
-    "dump": "node src/dump.js"
+    "dump": "node src/dump.js",
+    "electron": "electron ."
   },
   "dependencies": {
     "@oclif/config": "^1.12.12",
@@ -21,6 +22,7 @@
     "untildify": "^3.0.3"
   },
   "devDependencies": {
+    "electron": "^4.1.4",
     "prettier": "^1.16.4",
     "tap": "^12.6.0"
   }

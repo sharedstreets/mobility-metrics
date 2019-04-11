@@ -62,3 +62,6 @@ typings/
 
 # default data dir
 data
+
+# sharedstreets-js cache
+shst
