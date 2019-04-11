@@ -40,8 +40,8 @@ Returns trips that travel from one selected zone of the city to another zone of 
 Setup project and install dependencies.
 
 ```sh
-git clone https://github.com/sharedstreets/micromobility-metrics-specification.git
-cd micromobility-metrics-specification
+git clone https://github.com/sharedstreets/micromobility-micromobility-connector.git
+cd micromobility-micromobility-connector
 npm install
 ```
 
