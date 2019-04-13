@@ -7,12 +7,19 @@
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+    <script>
+      if (typeof module === "object") {
+        window.module = module;
+        module = undefined;
+      }
+    </script>
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
     <script src="https://unpkg.com/simple-statistics@7.0.1/dist/simple-statistics.min.js"></script>
-    <script>if (window.module) module = window.module;</script>
+    <script>
+      if (window.module) module = window.module;
+    </script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.css"
@@ -42,6 +49,7 @@
   </head>
   <body>
     <h1>Mobility Metrics</h1>
+
     <div id="controls">
       <div>
         <div>metric</div>
@@ -59,7 +67,7 @@
       </div>
       <div>
         <div>date</div>
-        <input id="date" type="date" value="2018-08-17" />
+        <input id="date" type="date" value="2018-11-10" />
       </div>
       <div>
         <div>hour</div>
@@ -76,6 +84,13 @@
         <div id="legend"></div>
       </div>
       <div id="download"></div>
+      <div id="events">
+        <div id="available"></div>
+        <div id="removed"></div>
+        <div id="reserved"></div>
+        <div id="unavailable"></div>
+      </div>
+      <div id="hover"></div>
     </div>
     <div id="map"></div>
     <script>
@@ -83,7 +98,7 @@
         "pk.eyJ1IjoibW9yZ2FuaGVybG9ja2VyIiwiYSI6Ii1zLU4xOWMifQ.FubD68OEerk74AYCLduMZQ";
       var map = new mapboxgl.Map({
         container: "map",
-        style: "mapbox://styles/mapbox/dark-v9",
+        style: "mapbox://styles/mapbox/light-v9",
         center: [-83.06900024414062, 42.348395259793],
         zoom: 12
       });
@@ -180,20 +195,39 @@
           }
         });
 
+        map.on('click', 'bins', function(e) {
+          var metric = $("#metric option:selected").val();
+          $('#hover').text(metric + ': '+ e.features[0].properties.value)
+        })
+        map.on('mouseleave', 'bins', function(e) {
+          $('#hover').empty()
+        })
+        map.on('click', 'streets', function(e) {
+          var metric = $("#metric option:selected").val();
+          $('#hover').text(metric + ': '+ e.features[0].properties.value)
+        })
+        map.on('mouseleave', 'streets', function(e) {
+          $('#hover').empty()
+        })
+
+
         $("#metric").on("change", function(data) {
           update();
         });
 
         $("#date").on("change", function(data) {
           update();
+          updateEvents();
         });
 
         $("#hour").on("change", function(data) {
           update();
+          updateEvents();
         });
 
         $("#minutes").on("change", function(data) {
           update();
+          updateEvents();
         });
 
         $("#clear").on("click", function(data) {
@@ -210,6 +244,35 @@
         }
 
         update();
+        updateEvents();
+
+        function updateEvents() {
+          $("#available").empty()
+          $("#removed").empty()
+          $("#reserved").empty()
+          $("#unavailable").empty()
+
+          var date = $("#date").val();
+          var hour = $("#hour")
+            .val()
+            .toString();
+          if (hour.length === 1) hour = "0" + hour;
+          var minute = $("#minute")
+            .val()
+            .toString();
+          if (minute.length === 1) minute = "0" + minute;
+
+          var time = date;
+          if (hour.length) time += "-" + hour;
+          if (minute.length) time += "-" + minute;
+          var eventsURL = "http://localhost:5000/events/bird/" + time;
+
+          $.getJSON(eventsURL, function(data) {
+            Object.keys(data).forEach(d => {
+              $("#" + d).text(d + ": " + data[d]);
+            });
+          });
+        }
 
         function update() {
           clearQuery();
@@ -228,7 +291,7 @@
           if (hour.length) time += "-" + hour;
           if (minute.length) time += "-" + minute;
 
-          var url = 'http://localhost:5000';
+          var url = "http://localhost:5000";
 
           if (metric === "streets") {
             url += "/streets/bird/" + time;
@@ -248,8 +311,6 @@
           if (metric === "dropoffsvia") {
             url += "/dropoffsvia/bird/" + time;
           }
-
-          console.log(url);
 
           $.getJSON(url, function(data) {
             if (data.features.length) {

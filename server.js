@@ -27,6 +27,41 @@ function serve(store, done) {
 
     // METRICS
 
+    // events
+    server.route({
+      method: "GET",
+      path: "/events/{provider}/{time}",
+      handler: (request, h) => {
+        return new Promise(function(resolve, reject) {
+          const provider = request.params.provider;
+          const time = request.params.time;
+
+          var data = {};
+
+          store
+            .createReadStream({
+              gte: provider + "!events",
+              lt: provider + "!events?"
+            })
+            .pipe(
+              through2.obj((item, enc, next) => {
+                const key = item.key.split("!");
+                const keyTime = key[2];
+                const keyType = key[3];
+
+                if (time === keyTime) {
+                  data[keyType] = item.value;
+                  next();
+                } else next();
+              })
+            )
+            .on("finish", () => {
+              resolve(data);
+            });
+        });
+      }
+    });
+
     // streets
     server.route({
       method: "GET",

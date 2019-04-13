@@ -1,11 +1,17 @@
 {
+  "name": "mobility-metrics",
+  "description": "A tool for working with mobility data",
+  "author": "SharedStreets",
+  "version": "0.0.1",
   "scripts": {
     "lint": "prettier '{,!(node_modules)/**/}*.js' index.html --write",
     "test": "npm run lint; tap -R spec test/*.test.js",
     "server": "node server.js",
     "backfill": "rm -rf data; mkdir data; node --experimental-modules src/backfill.js",
     "dump": "node src/dump.js",
-    "electron": "electron ."
+    "electron": "electron .",
+    "pack": "build --dir",
+    "dist": "build"
   },
   "dependencies": {
     "@oclif/config": "^1.12.12",
@@ -17,13 +23,28 @@
     "level": "^4.0.0",
     "level-mem": "^3.0.1",
     "moment": "^2.24.0",
-    "sharedstreets": "^0.11.1-8",
     "through2": "^3.0.1",
     "untildify": "^3.0.3"
   },
   "devDependencies": {
     "electron": "^4.1.4",
+    "electron-builder": "^20.39.0",
     "prettier": "^1.16.4",
     "tap": "^12.6.0"
+  },
+  "build": {
+    "appId": "com.mobility.metrics",
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": "NSIS"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
   }
 }

@@ -87,7 +87,7 @@ Metrics.prototype.trip = function(trip, provider, done) {
 // AGGREGATORS
 
 Metrics.prototype.events = function(change, times, provider, done) {
-  var qtime = queue(1)
+  var qtime = queue(1);
 
   times.forEach(time => {
     qtime.defer(timecb => {
@@ -98,17 +98,16 @@ Metrics.prototype.events = function(change, times, provider, done) {
         else record++;
 
         this.store.put(id, record, err => {
-          console.log(id, record)
           if (err) throw err;
           timecb();
         });
       });
-    })
-  })
+    });
+  });
 
-  qtime.awaitAll(()=>{
+  qtime.awaitAll(() => {
     done();
-  })
+  });
 };
 
 Metrics.prototype.utilization = function(change, times, provider, done) {

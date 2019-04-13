@@ -9,8 +9,8 @@ var store = level(path.join(__dirname, "../data"));
 var metrics = new Metrics(store);
 var tripCount = 0;
 var changeCount = 0;
-var epoch = 1541874002
-var start = epoch - 60 * 60 * 24 * 10;
+var epoch = 1541874002;
+var start = epoch - 60 * 60 * 24 * 2;
 var stop = epoch;
 
 var tripStream = through2.obj((trip, enc, next) => {
@@ -24,20 +24,20 @@ var tripStream = through2.obj((trip, enc, next) => {
 var changeStream = through2.obj((change, enc, next) => {
   metrics.change(change, provider, () => {
     changeCount++;
-    //log();
+    log();
     next();
   });
 });
 
-//tripStream.on("finish", () => {
+tripStream.on("finish", () => {
   bird.changes(changeStream, start, stop);
-//});
+});
 
 changeStream.on("finish", () => {
   console.log("complete.");
 });
 
-//bird.trips(tripStream, start, stop);
+bird.trips(tripStream, start, stop);
 
 function log() {
   process.stdout.clearLine();
