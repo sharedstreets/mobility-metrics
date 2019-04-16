@@ -15,7 +15,7 @@ const backfill = async function() {
     while (days--) {
       const current = day.clone().subtract(days, "day");
       console.log("building: ", current.format("YYYY-MM-DD"));
-      var data = await summarize(current.format("YYYY-MM-DD"));
+      await summarize(current.format("YYYY-MM-DD"));
     }
     resolve();
   });

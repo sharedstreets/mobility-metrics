@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const mkdirp = require("mkdirp");
 const turf = require("@turf/turf");
 const moment = require("moment");
 const shst = require("sharedstreets");
@@ -38,19 +39,20 @@ var Z = 9;
 
 const summarize = function(day, done) {
   return new Promise(async (resolve, reject) => {
+    var cachePath = path.join(__dirname + "./../cache", day);
+    if (!fs.existsSync(cachePath)) {
+      console.log("  caching...");
+      await cache(day);
+    }
+
+    console.log("  summarizing...");
     providers.forEach(async provider => {
-      var cachePath = path.join(__dirname + "./../cache", day);
-      cachePath = path.join(cachePath, provider);
+      var cacheProviderPath = path.join(cachePath, provider);
 
-      if (!fs.existsSync(cachePath)) {
-        console.log("  caching...");
-        await cache(day);
-      }
-
-      console.log("  summarizing...");
+      console.log("    " + provider +'...');
 
       var trips = fs
-        .readFileSync(path.join(cachePath, "trips.json"))
+        .readFileSync(path.join(cacheProviderPath, "trips.json"))
         .toString()
         .split("\n")
         .filter(line => {
@@ -58,7 +60,7 @@ const summarize = function(day, done) {
         })
         .map(JSON.parse);
       var changes = fs
-        .readFileSync(path.join(cachePath, "changes.json"))
+        .readFileSync(path.join(cacheProviderPath, "changes.json"))
         .toString()
         .split("\n")
         .filter(line => {
@@ -112,12 +114,10 @@ const summarize = function(day, done) {
         });
 
         // sharedstreets aggregation
-        /*try {
+        /*console.log('matching')
         var match = await graph.matchTrace(trip);
-        console.log(match);
-      } catch (err) {
-        console.log(err);
-      }*/
+        console.log('matched')
+        console.log(match);*/
       });
 
       // build state intervals
@@ -184,7 +184,13 @@ const summarize = function(day, done) {
         current = current.add(15, "minutes");
       }
 
-      resolve(stats);
+      var summaryPath = path.join(__dirname + "./../data", day);
+      mkdirp.sync(summaryPath);
+      summaryFilePath = path.join(summaryPath, provider + ".json");
+
+      fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
+
+      resolve();
     });
   });
 };
