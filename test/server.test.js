@@ -2,7 +2,6 @@ const test = require("tap").test;
 const path = require("path");
 const fork = require("child_process").fork;
 const request = require("request");
-const mem = require("level-mem");
 const serve = require("../server.js");
 
 test("server", t => {
@@ -12,7 +11,7 @@ test("server", t => {
 });
 
 test("server module", t => {
-  serve(null, async (err, server) => {
+  serve(async (err, server) => {
     await server.stop();
     t.end();
   });

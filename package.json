@@ -3,8 +3,9 @@
     "lint": "prettier '{,!(node_modules)/**/}*.js' index.html --write",
     "test": "npm run lint; tap -R spec test/*.test.js",
     "server": "node server.js",
-    "backfill": "rm -rf data; mkdir data; node --experimental-modules src/backfill.js",
-    "dump": "node src/dump.js"
+    "backfill": "",
+    "clear-cache": "rm -rf ./cache",
+    "clear-metrics": "rm -rf data"
   },
   "dependencies": {
     "@oclif/config": "^1.12.12",
@@ -15,8 +16,10 @@
     "inert": "^5.1.2",
     "level": "^4.0.0",
     "level-mem": "^3.0.1",
+    "mkdirp": "^0.5.1",
     "moment": "^2.24.0",
-    "sharedstreets": "^0.11.1-8",
+    "rimraf": "^2.6.3",
+    "sharedstreets": "^0.11.1-9",
     "through2": "^3.0.1",
     "untildify": "^3.0.3"
   },
