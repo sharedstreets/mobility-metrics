@@ -38,6 +38,8 @@ const cache = async function(dayString) {
     var providersQ = queue(1);
     providers.forEach(provider => {
       providersQ.defer(providersCb => {
+        console.log("    " + provider.name + "...");
+
         var cacheDayProviderPath = path.join(
           cacheDayPath,
           "./" + provider.name

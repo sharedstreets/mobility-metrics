@@ -25,9 +25,11 @@ function trips(stream, start, stop) {
       var data = JSON.parse(body);
 
       // write any returned trips to stream
-      data.data.trips.forEach(trip => {
-        stream.write(trip);
-      });
+      if (data.data && data.data.trips) {
+        data.data.trips.forEach(trip => {
+          stream.write(trip);
+        });
+      }
 
       // continue scan if another page is present
       if (data.links && data.links.next) {

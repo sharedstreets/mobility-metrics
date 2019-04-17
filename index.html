@@ -54,10 +54,6 @@
         margin-right: 25px;
         margin-top: auto;
       }
-      #export-all {
-        padding-top: 30px;
-        padding-bottom: 150px;
-      }
       #date {
         font-size: 20px;
         margin-left: 10px;
@@ -76,7 +72,7 @@
       <nav class="level">
         <div class="level-item has-text-centered">
           <h3 class="subtitle is-4">Date:</h3>
-          <input id="date" type="date" class="re-query" value="2018-11-09" />
+          <input id="date" type="date" class="re-query" value="2018-11-10" />
         </div>
         <div class="level-item has-text-centered">
           <h3 class="subtitle is-4">Provider:</h3>
@@ -380,7 +376,9 @@
 
     <div id="export-all" class="tile">
       <div class="tile is-vertical is-4">
-        <a class="button is-success is-medium export">Export All</a>
+        <a id="export-all" class="button is-success is-medium export"
+          >Export All</a
+        >
       </div>
     </div>
 
@@ -457,6 +455,10 @@
 
           $("#minute-slider").on("change", () => {
             $("#minute-value").text($("#minute-slider").val());
+          });
+
+          $("#export-all").on("click", () => {
+            exportAll();
           });
 
           setTimeout(() => {
@@ -545,6 +547,22 @@
               .getSource("bins")
               .setData(turf.featureCollection([]));
         }
+      }
+
+      function exportAll() {
+        var date = $("#date").val();
+        var provider = $("#provider option:selected")
+          .val()
+          .toLowerCase();
+        var fileName = date + "-" + provider + ".json";
+
+        var a = document.createElement("a");
+        var file = new Blob([JSON.stringify(data)], {
+          type: "application/json"
+        });
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+        a.click();
       }
     </script>
   </body>
