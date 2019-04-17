@@ -37,8 +37,15 @@
         margin-right: -50px;
       }
       .map {
-        height: 300px;
+        height: 350px;
         background-color: #f7f7f7;
+      }
+      .map-box {
+        position: relative;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        height: 350px;
       }
       .timecheck {
         margin-right: 10px;
@@ -69,13 +76,17 @@
       <nav class="level">
         <div class="level-item has-text-centered">
           <h3 class="subtitle is-4">Date:</h3>
-          <input id="date" type="date" />
+          <input id="date" type="date" class="re-query" value="2018-11-09" />
         </div>
         <div class="level-item has-text-centered">
           <h3 class="subtitle is-4">Provider:</h3>
           <div class="select">
-            <select id="provider">
+            <select id="provider" class="re-query">
               <option>Bird</option>
+              <option>Lime</option>
+              <option>Jump</option>
+              <option>Scoot</option>
+              <option>Spin</option>
             </select>
           </div>
         </div>
@@ -84,19 +95,19 @@
         <div class="level-item has-text-centered">
           <div>
             <p class="heading">Total Vehicles</p>
-            <p class="title">0</p>
+            <p id="totalVehicles" class="title">?</p>
           </div>
         </div>
         <div class="level-item has-text-centered">
           <div>
             <p class="heading">Active Vehicles</p>
-            <p class="title">0</p>
+            <p id="totalActiveVehicles" class="title">?</p>
           </div>
         </div>
         <div class="level-item has-text-centered">
           <div>
             <p class="heading">Total Trips</p>
-            <p class="title">0</p>
+            <p id="totalTrips" class="title">?</p>
           </div>
         </div>
       </nav>
@@ -104,19 +115,19 @@
         <div class="level-item has-text-centered">
           <div>
             <p class="heading">Total Distance</p>
-            <p class="title">0 mi</p>
+            <p id="totalDistance" class="title">?</p>
           </div>
         </div>
         <div class="level-item has-text-centered">
           <div>
             <p class="heading">Avg Distance Per Vehicle</p>
-            <p class="title">0.0 mi</p>
+            <p id="avgDistancePerVehicle" class="title">?</p>
           </div>
         </div>
         <div class="level-item has-text-centered">
           <div>
             <p class="heading">Avg Vehicle Utilization</p>
-            <p class="title">0%</p>
+            <p id="avgVehicleUtilization" class="title">?</p>
           </div>
         </div>
       </nav>
@@ -124,19 +135,19 @@
         <div class="level-item has-text-centered">
           <div>
             <p class="heading">Avg Trips Per Vehicle</p>
-            <p class="title">0.0</p>
+            <p id="avgTripsPerVehicle" class="title">?</p>
           </div>
         </div>
         <div class="level-item has-text-centered">
           <div>
             <p class="heading">Avg Trip Distance</p>
-            <p class="title">0.0 mi</p>
+            <p id="avgTripDistance" class="title">?</p>
           </div>
         </div>
         <div class="level-item has-text-centered">
           <div>
             <p class="heading">Avg Trip Duration</p>
-            <p class="title">0.0 min</p>
+            <p id="avgTripDuration" class="title">?</p>
           </div>
         </div>
       </nav>
@@ -147,32 +158,44 @@
     <nav class="level">
       <div class="level-item has-text-centered">
         <div>
-          <p class="heading"><input class="timecheck" type="checkbox" />Hour</p>
+          <p class="heading">
+            <input
+              id="hour-checkbox"
+              class="timecheck re-render"
+              type="checkbox"
+            />Hour
+          </p>
           <input
-            class="slider is-fullwidth"
+            id="hour-slider"
+            class="slider is-fullwidth re-render"
             step="1"
             min="0"
             max="24"
             value="12"
             type="range"
           />
-          <p id="hour">12</p>
+          <p id="hour-value">12</p>
         </div>
       </div>
       <div class="level-item has-text-centered">
         <div>
           <p class="heading">
-            <input class="timecheck" type="checkbox" />Minute
+            <input
+              id="minute-checkbox"
+              class="timecheck re-render"
+              type="checkbox"
+            />Minute
           </p>
           <input
-            class="slider is-fullwidth"
+            id="minute-slider"
+            class="slider is-fullwidth re-render"
             step="15"
             min="0"
             max="45"
             value="0"
             type="range"
           />
-          <p id="hour">00</p>
+          <p id="minute-value">00</p>
         </div>
       </div>
     </nav>
@@ -183,18 +206,29 @@
       <div class="tile is-vertical is-4">
         <div class="control">
           <label class="radio">
-            <input type="radio" name="activity-radio" checked />
+            <input
+              id="activity-streets"
+              class="re-render"
+              type="radio"
+              name="activity-radio"
+              checked
+            />
             Streets
           </label>
           <label class="radio">
-            <input type="radio" name="activity-radio" />
+            <input
+              id="activity-bins"
+              class="re-render"
+              type="radio"
+              name="activity-radio"
+            />
             Bins
           </label>
         </div>
-        <a class="button is-link export">Export</a>
+        <a id="activity-export" class="button is-link export">Export</a>
       </div>
-      <div class="tile is-vertical is-8 map has-text-centered">
-        Map
+      <div class="tile is-vertical is-8 map">
+        <div id="activity-map" class="map-box"></div>
       </div>
     </div>
 
@@ -205,18 +239,29 @@
       <div class="tile is-vertical is-4">
         <div class="control">
           <label class="radio">
-            <input type="radio" name="availability-radio" checked />
+            <input
+              id="availability-points"
+              class="re-render"
+              type="radio"
+              name="availability-radio"
+              checked
+            />
             Points
           </label>
           <label class="radio">
-            <input type="radio" name="availability-radio" />
+            <input
+              id="availability-bins"
+              class="re-render"
+              type="radio"
+              name="availability-radio"
+            />
             Bins
           </label>
         </div>
-        <a class="button is-link export">Export</a>
+        <a id="availability-export" class="button is-link export">Export</a>
       </div>
-      <div class="tile is-vertical is-8 map has-text-centered">
-        Map
+      <div class="tile is-vertical is-8 map">
+        <div id="availability-map" class="map-box"></div>
       </div>
     </div>
 
@@ -227,18 +272,29 @@
       <div class="tile is-vertical is-4">
         <div class="control">
           <label class="radio">
-            <input type="radio" name="onstreet-radio" checked />
+            <input
+              id="onstreet-points"
+              class="re-render"
+              type="radio"
+              name="onstreet-radio"
+              checked
+            />
             Points
           </label>
           <label class="radio">
-            <input type="radio" name="onstreet-radio" />
+            <input
+              id="onstreet-bins"
+              class="re-render"
+              type="radio"
+              name="onstreet-radio"
+            />
             Bins
           </label>
         </div>
-        <a class="button is-link export">Export</a>
+        <a id="onstreet-export" class="button is-link export">Export</a>
       </div>
-      <div class="tile is-vertical is-8 map has-text-centered">
-        Map
+      <div class="tile is-vertical is-8 map">
+        <div id="onstreet-map" class="map-box"></div>
       </div>
     </div>
 
@@ -249,18 +305,29 @@
       <div class="tile is-vertical is-4">
         <div class="control">
           <label class="radio">
-            <input type="radio" name="pickups-radio" checked />
+            <input
+              id="pickups-points"
+              class="re-render"
+              type="radio"
+              name="pickups-radio"
+              checked
+            />
             Points
           </label>
           <label class="radio">
-            <input type="radio" name="pickups-radio" />
+            <input
+              id="pickups-bins"
+              class="re-render"
+              type="radio"
+              name="pickups-radio"
+            />
             Bins
           </label>
         </div>
-        <a class="button is-link export">Export</a>
+        <a id="pickups-export" class="button is-link export">Export</a>
       </div>
-      <div class="tile is-vertical is-8 map has-text-centered">
-        Map
+      <div class="tile is-vertical is-8 map">
+        <div id="pickups-map" class="map-box"></div>
       </div>
     </div>
 
@@ -271,18 +338,29 @@
       <div class="tile is-vertical is-4">
         <div class="control">
           <label class="radio">
-            <input type="radio" name="dropoffs-radio" checked />
+            <input
+              id="dropoffs-points"
+              class="re-render"
+              type="radio"
+              name="dropoffs-radio"
+              checked
+            />
             Points
           </label>
           <label class="radio">
-            <input type="radio" name="dropoffs-radio" />
+            <input
+              id="dropoffs-bins"
+              class="re-render"
+              type="radio"
+              name="dropoffs-radio"
+            />
             Bins
           </label>
         </div>
-        <a class="button is-link export">Export</a>
+        <a id="dropoffs-export" class="button is-link export">Export</a>
       </div>
-      <div class="tile is-vertical is-8 map has-text-centered">
-        Map
+      <div class="tile is-vertical is-8 map">
+        <div id="dropoffs-map" class="map-box"></div>
       </div>
     </div>
 
@@ -291,20 +369,10 @@
     <h2 class="subtitle is-4">Flows</h2>
     <div class="tile">
       <div class="tile is-vertical is-4">
-        <div class="control">
-          <label class="radio">
-            <input type="radio" name="flows-radio" checked />
-            Points
-          </label>
-          <label class="radio">
-            <input type="radio" name="flows-radio" />
-            Bins
-          </label>
-        </div>
-        <a class="button is-link export">Export</a>
+        <a id="flows-export" class="button is-link export">Export</a>
       </div>
-      <div class="tile is-vertical is-8 map has-text-centered">
-        Map
+      <div class="tile is-vertical is-8 map">
+        <div id="flows-map" class="map-box"></div>
       </div>
     </div>
 
@@ -312,13 +380,117 @@
 
     <div id="export-all" class="tile">
       <div class="tile is-vertical is-4">
-        <a class="button is-primary export">Export All</a>
+        <a class="button is-success is-medium export">Export All</a>
       </div>
     </div>
 
     <script>
       mapboxgl.accessToken =
         "pk.eyJ1IjoibW9yZ2FuaGVybG9ja2VyIiwiYSI6Ii1zLU4xOWMifQ.FubD68OEerk74AYCLduMZQ";
+
+      var data;
+
+      var maps = {
+        "activity-map": null,
+        "availability-map": null,
+        "onstreet-map": null,
+        "pickups-map": null,
+        "dropoffs-map": null,
+        "flows-map": null
+      };
+      $(() => {
+        Object.keys(maps).forEach(map => {
+          maps[map] = new mapboxgl.Map({
+            container: map,
+            style: "mapbox://styles/mapbox/light-v9",
+            center: [-83.06900024414062, 42.348395259793],
+            zoom: 12
+          });
+        });
+
+        $(".re-query").on("change", () => {
+          query();
+        });
+
+        $(".re-render").on("change", () => {
+          render();
+        });
+
+        $("#hour-slider").on("change", () => {
+          $("#hour-value").text($("#hour-slider").val());
+        });
+
+        $("#minute-slider").on("change", () => {
+          $("#minute-value").text($("#minute-slider").val());
+        });
+
+        setTimeout(() => {
+          query();
+        }, 1000);
+      });
+
+      function query() {
+        var date = $("#date").val();
+        var provider = $("#provider option:selected")
+          .val()
+          .toLowerCase();
+        var url = "/" + date + "/" + provider;
+        console.log(url);
+
+        /*$.getJSON(url, function(result) {
+          console.log(result)
+          data = result
+          render()
+        })*/
+
+        fetch(url)
+          .then(response => {
+            return response.json();
+          })
+          .then(function(json) {
+            data = json;
+            render();
+          })
+          .catch(err => {
+            data = undefined;
+            render();
+          });
+      }
+
+      function render() {
+        if (!data) {
+          $("#totalVehicles").text("?");
+          $("#totalActiveVehicles").text("?");
+          $("#totalTrips").text("?");
+          $("#totalDistance").text("?");
+          $("#avgDistancePerVehicle").text("?");
+          $("#avgTripsPerVehicle").text("?");
+          $("#avgTripDistance").text("?");
+          $("#avgTripDuration").text("?");
+        } else {
+          $("#totalVehicles").text(data.totalVehicles);
+          $("#totalActiveVehicles").text(data.totalActiveVehicles);
+          $("#totalTrips").text(data.totalTrips);
+          $("#totalDistance").text(Math.round(data.totalDistance) + " mi");
+          $("#avgDistancePerVehicle").text(
+            data.averageVehicleDistance.toFixed(2) + " mi"
+          );
+          $("#avgTripsPerVehicle").text(data.averageTrips.toFixed(2));
+          $("#avgTripDistance").text(
+            data.averageTripDistance.toFixed(2) + " mi"
+          );
+          $("#avgTripDuration").text(
+            Math.floor(data.averageTripDuration) +
+              "m " +
+              Math.round(
+                (data.averageTripDuration -
+                  Math.floor(data.averageTripDuration)) *
+                  60
+              ) +
+              "s"
+          );
+        }
+      }
     </script>
   </body>
 </html>

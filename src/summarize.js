@@ -68,9 +68,11 @@ const summarize = function(day, done) {
         })
         .map(JSON.parse);
 
-      var vehicles = new Set();
+      var totalVehicles = new Set();
+      var totalActiveVehicles = new Set();
       var stats = {
         totalVehicles: 0,
+        totalActiveVehicles: 0,
         totalTrips: 0,
         totalDistance: 0,
         totalDuration: 0,
@@ -84,9 +86,10 @@ const summarize = function(day, done) {
           streets: {}
         }
       };
-      var matchCount = 0;
+
       for (let trip of trips) {
-        vehicles.add(trip.vehicle_id);
+        totalVehicles.add(trip.vehicle_id);
+        totalActiveVehicles.add(trip.vehicle_id);
 
         // convert to miles
         trip.trip_distance = trip.trip_distance * 0.000621371;
@@ -94,17 +97,17 @@ const summarize = function(day, done) {
         trip.trip_duration = trip.trip_duration / 60;
 
         // summary stats
-        stats.totalVehicles = vehicles.size;
+        stats.totalActiveVehicles = totalActiveVehicles.size;
         stats.totalTrips++;
         stats.totalDistance += trip.trip_distance;
         stats.totalDuration += trip.trip_duration;
         stats.averageVehicleDistance =
-          stats.totalDistance / stats.totalVehicles;
+          stats.totalDistance / stats.totalActiveVehicles;
         stats.averageVehicleDuration =
-          stats.totalDuration / stats.totalVehicles;
+          stats.totalDuration / stats.totalActiveVehicles;
         stats.averageTripDistance = stats.totalDistance / stats.totalTrips;
         stats.averageTripDuration = stats.totalDuration / stats.totalTrips;
-        stats.averageTrips = stats.totalTrips / stats.totalVehicles;
+        stats.averageTrips = stats.totalTrips / stats.totalActiveVehicles;
 
         // h3 aggregation
         var bins = new Set();
@@ -148,9 +151,6 @@ const summarize = function(day, done) {
               .forEach(f => {
                 stats.geometry.streets[f.geometryId] = f;
               });
-
-            matchCount++;
-            console.log(matchCount + " / " + trips.length);
           }
         } catch (e) {}
       }
@@ -159,6 +159,8 @@ const summarize = function(day, done) {
       var states = {};
       changes.forEach(change => {
         if (!states[change.vehicle_id]) {
+          totalVehicles.add(change.vehicle_id);
+          stats.totalVehicles = totalVehicles.size;
           states[change.vehicle_id] = [];
         }
         states[change.vehicle_id].push(change);

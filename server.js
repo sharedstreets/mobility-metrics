@@ -37,7 +37,7 @@ function serve(done) {
     // summary
     server.route({
       method: "GET",
-      path: "/{provider}/{time}",
+      path: "/{time}/{provider}",
       handler: (request, h) => {
         const provider = request.params.provider;
         const time = request.params.time;
