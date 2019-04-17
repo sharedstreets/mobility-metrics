@@ -21,6 +21,13 @@ function serve(done) {
         return h.file(path.join(__dirname, "./index.html"));
       }
     });
+    server.route({
+      method: "GET",
+      path: "/shst-logo.jpg",
+      handler: (request, h) => {
+        return h.file(path.join(__dirname, "./shst-logo.jpg"));
+      }
+    });
 
     // METRICS
 

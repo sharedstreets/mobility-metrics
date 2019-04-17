@@ -1,0 +1,41 @@
+{
+  "boundary":  [
+    0.0,
+    0.0,
+    1.0,
+    1.0
+  ],
+  "providers": {
+    "bird": {
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
+    },
+    "jump": {
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
+    },
+    "lime": {
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
+    },
+    "scoot": {
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
+    },
+    "spin": {
+      "name": "bird",
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
+    },
+  }
+}
