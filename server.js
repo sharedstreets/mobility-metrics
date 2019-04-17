@@ -53,7 +53,7 @@ function serve(done) {
 }
 
 if (require.main === module) {
-  serve(null, () => {});
+  serve(() => {});
 }
 
 module.exports = serve;

@@ -23,7 +23,6 @@ const backfill = async function() {
 
 const clearDir = async function(dir) {
   return new Promise((resolve, reject) => {
-    console.log();
     rimraf(dir, () => {
       resolve();
     });

@@ -30,15 +30,15 @@ var graph = new shst.Graph(
       ]
     ]
   },
-  graphOpts,
-  null,
-  "ped"
+  graphOpts
 );
 
 var Z = 9;
 
 const summarize = function(day, done) {
   return new Promise(async (resolve, reject) => {
+    await graph.buildGraph();
+
     var cachePath = path.join(__dirname + "./../cache", day);
     if (!fs.existsSync(cachePath)) {
       console.log("  caching...");
@@ -49,7 +49,7 @@ const summarize = function(day, done) {
     providers.forEach(async provider => {
       var cacheProviderPath = path.join(cachePath, provider);
 
-      console.log("    " + provider +'...');
+      console.log("    " + provider + "...");
 
       var trips = fs
         .readFileSync(path.join(cacheProviderPath, "trips.json"))
@@ -78,10 +78,14 @@ const summarize = function(day, done) {
         activity: {
           streets: {},
           bins: {}
+        },
+        geometry: {
+          bins: {},
+          streets: {}
         }
       };
-
-      trips.forEach(async trip => {
+      var matchCount = 0;
+      for (let trip of trips) {
         vehicles.add(trip.vehicle_id);
 
         // convert to miles
@@ -114,11 +118,42 @@ const summarize = function(day, done) {
         });
 
         // sharedstreets aggregation
-        /*console.log('matching')
-        var match = await graph.matchTrace(trip);
-        console.log('matched')
-        console.log(match);*/
-      });
+        var refs = new Set();
+        try {
+          var line = turf.lineString(
+            trip.route.features.map(pt => {
+              return pt.geometry.coordinates;
+            })
+          );
+
+          var match = await graph.matchTrace(line);
+          if (
+            match &&
+            match.segments &&
+            match.matchedPath &&
+            match.matchedPath.geometry &&
+            match.matchedPath.geometry.coordinates &&
+            match.matchedPath.geometry.coordinates.length ===
+              match.segments.length
+          ) {
+            match.segments
+              .map((segment, s) => {
+                return turf.lineString(
+                  match.matchedPath.geometry.coordinates[s],
+                  {
+                    geometryId: segment.geometryId
+                  }
+                );
+              })
+              .forEach(f => {
+                stats.geometry.streets[f.geometryId] = f;
+              });
+
+            matchCount++;
+            console.log(matchCount + " / " + trips.length);
+          }
+        } catch (e) {}
+      }
 
       // build state intervals
       var states = {};

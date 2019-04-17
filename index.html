@@ -21,293 +21,297 @@
     />
     <style>
       body {
-        margin: 0;
-        padding: 0;
+        padding-left: 25%;
+        padding-right: 25%;
+        padding-top: 10px;
       }
-      #controls {
-        padding-right: 80%;
+      .daily-summary {
+        background-color: #f7f7f7;
+        padding: 15px;
+        margin-left: -50px;
+        margin-right: -50px;
+      }
+      .map {
+        height: 300px;
+        background-color: #f7f7f7;
+      }
+      .timecheck {
+        margin-right: 10px;
+      }
+      .export {
+        margin-right: 25px;
+        margin-top: auto;
+      }
+      #export-all {
+        padding-top: 30px;
+        padding-bottom: 150px;
+      }
+      #date {
+        font-size: 20px;
         margin-left: 10px;
-        heigh: 100%;
       }
-      #map {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        margin-left: 20%;
-        width: 100%;
+      #provider {
+        margin-left: 10px;
       }
     </style>
   </head>
   <body>
-    <div id="controls">
-      <div>
-        <div>metric</div>
-        <select id="metric">
-          <option value=""></option>
-          <option value="streets">streets</option>
-          <option value="vehicles">vehicles</option>
-          <option value="pickups">pickups</option>
-          <option value="dropoffs">dropoffs</option>
-          <option value="pickupsvia">pickups via</option>
-          <option value="dropoffsvia">dropoffs via</option>
-          <option value="availability">availability</option>
-          <option value="utilization">utilization</option>
-        </select>
-      </div>
-      <div>
-        <div>date</div>
-        <input id="date" type="date" value="2018-08-17" />
-      </div>
-      <div>
-        <div>hour</div>
-        <input id="hour" type="number" step="1" value="" placeholder="00-23" />
-      </div>
-      <div>
-        <div>minute</div>
-        <input id="minute" type="text" value="" placeholder="00,15,30,45" />
-      </div>
-      <div>
-        <button id="clear">clear</button>
-      </div>
-      <div>
-        <div id="legend"></div>
-      </div>
-      <div id="download"></div>
+    <h1 class="title is-3">SharedStreets Mobility Metrics</h1>
+    <div class="daily-summary">
+      <h2 class="subtitle is-4">Daily Summary</h2>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <h3 class="subtitle is-4">Date:</h3>
+          <input id="date" type="date" />
+        </div>
+        <div class="level-item has-text-centered">
+          <h3 class="subtitle is-4">Provider:</h3>
+          <div class="select">
+            <select id="provider">
+              <option>Bird</option>
+            </select>
+          </div>
+        </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Vehicles</p>
+            <p class="title">0</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Active Vehicles</p>
+            <p class="title">0</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Trips</p>
+            <p class="title">0</p>
+          </div>
+        </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Distance</p>
+            <p class="title">0 mi</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Distance Per Vehicle</p>
+            <p class="title">0.0 mi</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Vehicle Utilization</p>
+            <p class="title">0%</p>
+          </div>
+        </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Trips Per Vehicle</p>
+            <p class="title">0.0</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Trip Distance</p>
+            <p class="title">0.0 mi</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Trip Duration</p>
+            <p class="title">0.0 min</p>
+          </div>
+        </div>
+      </nav>
     </div>
-    <div id="map"></div>
+    <hr />
+
+    <h2 class="subtitle is-6">Time Filter</h2>
+    <nav class="level">
+      <div class="level-item has-text-centered">
+        <div>
+          <p class="heading"><input class="timecheck" type="checkbox" />Hour</p>
+          <input
+            class="slider is-fullwidth"
+            step="1"
+            min="0"
+            max="24"
+            value="12"
+            type="range"
+          />
+          <p id="hour">12</p>
+        </div>
+      </div>
+      <div class="level-item has-text-centered">
+        <div>
+          <p class="heading">
+            <input class="timecheck" type="checkbox" />Minute
+          </p>
+          <input
+            class="slider is-fullwidth"
+            step="15"
+            min="0"
+            max="45"
+            value="0"
+            type="range"
+          />
+          <p id="hour">00</p>
+        </div>
+      </div>
+    </nav>
+    <hr />
+
+    <h2 class="subtitle is-4">Activity</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input type="radio" name="activity-radio" checked />
+            Streets
+          </label>
+          <label class="radio">
+            <input type="radio" name="activity-radio" />
+            Bins
+          </label>
+        </div>
+        <a class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map has-text-centered">
+        Map
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Availability</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input type="radio" name="availability-radio" checked />
+            Points
+          </label>
+          <label class="radio">
+            <input type="radio" name="availability-radio" />
+            Bins
+          </label>
+        </div>
+        <a class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map has-text-centered">
+        Map
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">On Street</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input type="radio" name="onstreet-radio" checked />
+            Points
+          </label>
+          <label class="radio">
+            <input type="radio" name="onstreet-radio" />
+            Bins
+          </label>
+        </div>
+        <a class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map has-text-centered">
+        Map
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Pick Ups</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input type="radio" name="pickups-radio" checked />
+            Points
+          </label>
+          <label class="radio">
+            <input type="radio" name="pickups-radio" />
+            Bins
+          </label>
+        </div>
+        <a class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map has-text-centered">
+        Map
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Drop Offs</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input type="radio" name="dropoffs-radio" checked />
+            Points
+          </label>
+          <label class="radio">
+            <input type="radio" name="dropoffs-radio" />
+            Bins
+          </label>
+        </div>
+        <a class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map has-text-centered">
+        Map
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Flows</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input type="radio" name="flows-radio" checked />
+            Points
+          </label>
+          <label class="radio">
+            <input type="radio" name="flows-radio" />
+            Bins
+          </label>
+        </div>
+        <a class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map has-text-centered">
+        Map
+      </div>
+    </div>
+
+    <hr />
+
+    <div id="export-all" class="tile">
+      <div class="tile is-vertical is-4">
+        <a class="button is-primary export">Export All</a>
+      </div>
+    </div>
+
     <script>
       mapboxgl.accessToken =
         "pk.eyJ1IjoibW9yZ2FuaGVybG9ja2VyIiwiYSI6Ii1zLU4xOWMifQ.FubD68OEerk74AYCLduMZQ";
-      var map = new mapboxgl.Map({
-        container: "map",
-        style: "mapbox://styles/mapbox/dark-v9",
-        center: [-83.06900024414062, 42.348395259793],
-        zoom: 12
-      });
-
-      map.on("load", function() {
-        map.addLayer({
-          id: "bins",
-          type: "fill",
-          source: {
-            type: "geojson",
-            data: {
-              type: "FeatureCollection",
-              features: []
-            }
-          },
-          layout: {},
-          paint: {
-            "fill-color": [
-              "interpolate",
-              ["linear"],
-              ["get", "quantile"],
-              1,
-              "#f1eef6",
-              2,
-              "#d7b5d8",
-              3,
-              "#df65b0",
-              4,
-              "#dd1c77",
-              5,
-              "#980043"
-            ],
-            "fill-opacity": 0.4
-          }
-        });
-
-        map.addLayer({
-          id: "streets",
-          type: "line",
-          source: {
-            type: "geojson",
-            data: {
-              type: "FeatureCollection",
-              features: []
-            }
-          },
-          layout: {},
-          paint: {
-            "line-color": [
-              "interpolate",
-              ["linear"],
-              ["get", "quantile"],
-              1,
-              "#edf8fb",
-              2,
-              "#b2e2e2",
-              3,
-              "#66c2a4",
-              4,
-              "#2ca25f",
-              5,
-              "#006d2c"
-            ],
-            "line-width": [
-              "interpolate",
-              ["linear"],
-              ["get", "quantile"],
-              1,
-              1,
-              2,
-              2,
-              3,
-              5,
-              4,
-              6,
-              5,
-              8
-            ],
-            "line-opacity": [
-              "interpolate",
-              ["linear"],
-              ["get", "quantile"],
-              1,
-              0.2,
-              2,
-              0.4,
-              3,
-              0.6,
-              4,
-              0.8,
-              5,
-              1
-            ]
-          }
-        });
-
-        $("#metric").on("change", function(data) {
-          update();
-        });
-
-        $("#date").on("change", function(data) {
-          update();
-        });
-
-        $("#hour").on("change", function(data) {
-          update();
-        });
-
-        $("#minutes").on("change", function(data) {
-          update();
-        });
-
-        $("#clear").on("click", function(data) {
-          clearQuery();
-        });
-
-        function clearQuery() {
-          map.getSource("bins").setData({
-            type: "FeatureCollection",
-            features: []
-          });
-
-          $("#download").empty();
-        }
-
-        update();
-
-        function update() {
-          clearQuery();
-          var metric = $("#metric option:selected").val();
-          var date = $("#date").val();
-          var hour = $("#hour")
-            .val()
-            .toString();
-          if (hour.length === 1) hour = "0" + hour;
-          var minute = $("#minute")
-            .val()
-            .toString();
-          if (minute.length === 1) minute = "0" + minute;
-
-          var time = date;
-          if (hour.length) time += "-" + hour;
-          if (minute.length) time += "-" + minute;
-
-          var url;
-
-          if (metric === "streets") {
-            url = "/streets/bird/" + time;
-          }
-          if (metric === "vehicles") {
-            url = "/vehicles/bird/" + time;
-          }
-          if (metric === "pickups") {
-            url = "/pickups/bird/" + time;
-          }
-          if (metric === "dropoffs") {
-            url = "/dropoffs/bird/" + time;
-          }
-          if (metric === "pickupsvia") {
-            url = "/pickupsvia/bird/" + time;
-          }
-          if (metric === "dropoffsvia") {
-            url = "/dropoffsvia/bird/" + time;
-          }
-
-          console.log(url);
-
-          $.getJSON(url, function(data) {
-            if (data.features.length) {
-              data.features.forEach(f => {
-                f.properties.value = +f.properties.value;
-              });
-
-              var blob =
-                "text/json;charset=utf-8," +
-                encodeURIComponent(JSON.stringify(data));
-
-              $(
-                '<a href="data:' +
-                  blob +
-                  '" download="' +
-                  metric +
-                  "-" +
-                  time +
-                  '.json">Export</a>'
-              ).appendTo("#download");
-
-              var stats = data.features.map(f => {
-                return f.properties.value;
-              });
-
-              var groups = 5;
-
-              var legend = "";
-              legend += "max: ";
-              legend += ss.max(stats);
-              $("#legend").text(legend);
-              data.features = data.features.map(f => {
-                var quantile = ss.quantileRank(stats, f.properties.value);
-                f.properties.quantile = Math.floor(quantile * 5) + 1;
-                return f;
-              });
-            }
-
-            var layers = layerize(data);
-            map.getSource("bins").setData(layers.bins);
-            map.getSource("streets").setData(layers.streets);
-          });
-        }
-      });
-
-      function layerize(data) {
-        var layers = {};
-
-        layers.streets = turf.featureCollection(
-          data.features.filter(f => {
-            return f.geometry.type === "LineString";
-          })
-        );
-        layers.bins = turf.featureCollection(
-          data.features.filter(f => {
-            return f.geometry.type === "Polygon";
-          })
-        );
-
-        return layers;
-      }
     </script>
   </body>
 </html>
