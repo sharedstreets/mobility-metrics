@@ -119,6 +119,12 @@ const summarize = function(day, done) {
           );
           bins.add(bin);
         });
+        bins.forEach(bin => {
+          var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
+            bin: bin
+          });
+          stats.geometry.bins[bin] = geo;
+        });
 
         // sharedstreets aggregation
         var refs = new Set();
@@ -149,7 +155,7 @@ const summarize = function(day, done) {
                 );
               })
               .forEach(f => {
-                stats.geometry.streets[f.geometryId] = f;
+                stats.geometry.streets[f.properties.geometryId] = f;
               });
           }
         } catch (e) {}

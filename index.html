@@ -408,24 +408,60 @@
           });
         });
 
-        $(".re-query").on("change", () => {
-          query();
-        });
-
-        $(".re-render").on("change", () => {
-          render();
-        });
-
-        $("#hour-slider").on("change", () => {
-          $("#hour-value").text($("#hour-slider").val());
-        });
-
-        $("#minute-slider").on("change", () => {
-          $("#minute-value").text($("#minute-slider").val());
-        });
-
+        // setup map layers
         setTimeout(() => {
-          query();
+          maps["activity-map"].addLayer({
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: {
+              "line-color": "#f0f",
+              "line-width": 1.5,
+              "line-opacity": 0.8
+            }
+          });
+
+          maps["activity-map"].addLayer({
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: {
+              "fill-outline-color": "#f0f",
+              "fill-color": "#f0f",
+              "fill-opacity": 0.1
+            }
+          });
+
+          $(".re-query").on("change", () => {
+            query();
+          });
+
+          $(".re-render").on("change", () => {
+            render();
+          });
+
+          $("#hour-slider").on("change", () => {
+            $("#hour-value").text($("#hour-slider").val());
+          });
+
+          $("#minute-slider").on("change", () => {
+            $("#minute-value").text($("#minute-slider").val());
+          });
+
+          setTimeout(() => {
+            query();
+          }, 1000);
         }, 1000);
       });
 
@@ -436,12 +472,6 @@
           .toLowerCase();
         var url = "/" + date + "/" + provider;
         console.log(url);
-
-        /*$.getJSON(url, function(result) {
-          console.log(result)
-          data = result
-          render()
-        })*/
 
         fetch(url)
           .then(response => {
@@ -489,6 +519,31 @@
               ) +
               "s"
           );
+
+          var streets = turf.featureCollection(
+            Object.keys(data.geometry.streets).map(key => {
+              return data.geometry.streets[key];
+            })
+          );
+
+          var bins = turf.featureCollection(
+            Object.keys(data.geometry.bins).map(key => {
+              return data.geometry.bins[key];
+            })
+          );
+
+          if ($("#activity-streets:checked").val()) {
+            maps["activity-map"].getSource("streets").setData(streets);
+          } else
+            maps["activity-map"]
+              .getSource("streets")
+              .setData(turf.featureCollection([]));
+          if ($("#activity-bins:checked").val()) {
+            maps["activity-map"].getSource("bins").setData(bins);
+          } else
+            maps["activity-map"]
+              .getSource("bins")
+              .setData(turf.featureCollection([]));
         }
       }
     </script>
