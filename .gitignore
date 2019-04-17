@@ -64,3 +64,6 @@ typings/
 data
 shst
 cache
+
+# config
+config.json
