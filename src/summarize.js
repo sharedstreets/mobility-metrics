@@ -3,42 +3,19 @@ const path = require("path");
 const mkdirp = require("mkdirp");
 const turf = require("@turf/turf");
 const moment = require("moment");
-const shst = require("sharedstreets");
 const h3 = require("h3-js");
 const cache = require("./cache");
+const config = require("../config.json");
 
 // import all providers
-const providersPath = path.join(__dirname, "./providers");
-const providers = fs.readdirSync(providersPath).map(providerFile => {
-  return providerFile.split(".js")[0];
+const providers = Object.keys(config.providers).filter(provider => {
+  return config.providers[provider].enabled;
 });
-
-graphOpts = {
-  source: "osm/planet-181224",
-  tileHierarchy: 6
-};
-var graph = new shst.Graph(
-  {
-    type: "Polygon",
-    coordinates: [
-      [
-        [-83.17680358886719, 42.313369811689746],
-        [-82.99072265625, 42.313369811689746],
-        [-82.99072265625, 42.416359972082866],
-        [-83.17680358886719, 42.416359972082866],
-        [-83.17680358886719, 42.313369811689746]
-      ]
-    ]
-  },
-  graphOpts
-);
 
 var Z = 9;
 
-const summarize = function(day, done) {
+const summarize = function(day, graph) {
   return new Promise(async (resolve, reject) => {
-    await graph.buildGraph();
-
     var cachePath = path.join(__dirname + "./../cache", day);
     if (!fs.existsSync(cachePath)) {
       console.log("  caching...");

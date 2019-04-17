@@ -19,7 +19,7 @@
     "mkdirp": "^0.5.1",
     "moment": "^2.24.0",
     "rimraf": "^2.6.3",
-    "sharedstreets": "^0.11.1-14",
+    "sharedstreets": "^0.11.1-15",
     "through2": "^3.0.1",
     "untildify": "^3.0.3"
   },

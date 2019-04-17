@@ -4,17 +4,22 @@ const mkdirp = require("mkdirp");
 const queue = require("d3-queue").queue;
 const through2 = require("through2");
 const moment = require("moment");
+const config = require("../config.json");
 
 const cachePath = path.join(__dirname, "./../cache");
 
-// import all providers
+// import all enabled providers
 const providersPath = path.join(__dirname, "./providers");
-const providers = fs.readdirSync(providersPath).map(providerFile => {
-  return {
-    name: providerFile.split(".js")[0],
-    query: require(path.join(providersPath, providerFile))
-  };
-});
+const providers = Object.keys(config.providers)
+  .filter(provider => {
+    return config.providers[provider].enabled;
+  })
+  .map(provider => {
+    return {
+      name: provider,
+      query: require(path.join(providersPath, provider))
+    };
+  });
 
 const cache = async function(dayString) {
   return new Promise((resolve, reject) => {
