@@ -13,6 +13,8 @@ function serve(done) {
   const init = async () => {
     await server.register(require("inert"));
 
+    // FRONTEND
+
     // ui
     server.route({
       method: "GET",
@@ -21,6 +23,7 @@ function serve(done) {
         return h.file(path.join(__dirname, "./index.html"));
       }
     });
+    // logo
     server.route({
       method: "GET",
       path: "/shst-logo.jpg",
@@ -31,18 +34,20 @@ function serve(done) {
 
     // METRICS
 
-    // streets
+    // summary
     server.route({
       method: "GET",
-      path: "/streets/{provider}/{time}",
+      path: "/{provider}/{time}",
       handler: (request, h) => {
-        return new Promise(function(resolve, reject) {
-          const provider = request.params.provider;
-          const time = request.params.time;
+        const provider = request.params.provider;
+        const time = request.params.time;
 
-          // grab data for provider from day
-          resolve(data);
-        });
+        var dataPath = path.join(
+          __dirname,
+          "./data/" + time + "/" + provider + ".json"
+        );
+
+        return h.file(dataPath);
       }
     });
 
