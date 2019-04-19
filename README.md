@@ -21,7 +21,7 @@ Setup project and install dependencies.
 
 ```sh
 git clone https://github.com/sharedstreets/sharedstreets-mobility-metrics.git
-cdsharedstreets-mobility-metrics
+cd sharedstreets-mobility-metrics
 npm install
 ```
 
