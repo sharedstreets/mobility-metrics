@@ -66,3 +66,26 @@ Runs a linter, prettier, and auto-formats code to meet consistent style, while c
 ```sh
 npm run lint
 ```
+
+## metrics
+
+Note: These metrics currently work within the bounds and limitations of MDS. 
+
+Daily summary:
+Total vehicles: Total number of vehicles that were on the street at any time during the specified day. This includes all vehicles that were available, unavailable or reserved according to the event types specified here. 
+Active vehicles: Total number of vehicles that completed at least one trip during the specified day. (Trips)
+Total trips: Total number of trips taken throughout the specified day. 
+Total trips distance: Total miles traveled by any vehicles throughout the specified day. (trip_distance)
+Vehicle Utilization: Total vehicle on-street time divided by total trip duration for all vehicles
+Average distance per vehicle: Total trips distance, divided by active vehicles
+Average trips per active vehicle: Total trips, divided by active vehicles
+Average trip distance: Total trips distance, divided by total trips
+Average trip duration: total trips duration, divided by total trips
+
+Time Filtered:
+Trip Volume: The number of vehicles that moved over a street or in a zone during the time window specified.
+Availability: The maximum number of vehicles that were available to users during the time window specified.
+On-street: The maximum number of vehicles that are on the street and available or unavailable during the time window specified.
+Pickups: The total number of trips that began during a time window
+Dropoffs: The total number of trips that ended during a time window
+Flows (O/D pairs): The number of trips that went from one area of the city to another area of the city, sometimes referred to as origin/destination data or “O/D pairs”
