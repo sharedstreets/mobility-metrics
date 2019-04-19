@@ -1,38 +1,18 @@
 # sharedstreets-micromobility-connector
 ---
 
-This repository is a reference implementation of the [Micromobility Metrics Specification](https://github.com/sharedstreets/micromobility-metrics-specification). This software is capable of reliably calculating micromobility metrics and exposing them through a set of dashboards.
+SharedStreets Mobility Metrics is an open source server and frontend for ingestion and analysis of MDS mobility data. It is capable of reading raw MDS data in memory and aggregating useful & privacy-protecting metrics for longterm storage and analysis.
 
 
 ## API
 
-### GET /streetvolumes/{provider}/{time}
+### GET /
 
-Returns counts of vehicles on a street during a time window
+Serves a dashboard for viewing and exporting metrics
 
-### GET /zonalvolumes/{provider}/{time}
+### GET /{YYYY-MM-DD}/{provider}
 
-Returns counts of vehicles in a zone during a time window
-
-### GET /utilization/{provider}/{time}
-
-Returns a percentage of vehicles that were used versus idle over a window of time in a zone
-
-### GET /availability/{provider}/{time}
-
-Returns a the ratio of vehicles that were available to users in each part of the city
-
-### GET /pickups/{provider}/{time}
-
-Returns volume of trips that started in a zone or on a street during a time window
-
-### GET /dropoffs/{provider}/{time}
-
-Returns volume of trips that ended in a zone or on a street during a time window
-
-### GET /flowmatrix/{provider}/{time}/{bin}/
-
-Returns trips that travel from one selected zone of the city to another zone of the city, sometimes referred to as origin/destination data
+Returns a daily summary of all statistics for a provider. This endpoint powers the builtin dashboard, and can be used for custom reporting and modeling.
 
 
 ## install
@@ -45,37 +25,39 @@ cd micromobility-micromobility-connector
 npm install
 ```
 
+## config
+
+A `config.json` file is required to run Mobility Metrics. Enable providers and set credentials through this file. This file is used to store access tokens - **handle with care**. See `config.template.json` for a starter config.
+
+
 ## backfill
 
-Run a script to backfill a datastore of metrics.
+Run a script to backfill a datastore of metrics. Configure this command in cron for automated daily imports.
 
 ```sh
-npm run backfill
+# --day = target backfill date in YYYY-MM-DD format
+# --days = number of days prior to target to also backfill
+node src/backfill.js --day 2018-11-10 --days 1; npm run clear-cache;
 ```
+
 
 ## server
 
 Runs a server that is capable of powering the JSON API and UI. (localhost:5000 by default)
 
 ```sh
-npm run start
+npm start
 ```
 
-## dump
-
-Prints out a raw dump of all metrics stored in the database. Useful for debugging.
-
-```sh
-npm run dump
-```
 
 ## test
 
-Run a comprehensive test suite across the project. Auto-formats code using linter.
+Run a comprehensive test suite across the project. Auto-formats code using linter. (Note: tests provider endpoints, and requires config with up to date credentials)
 
 ```sh
 npm test
 ```
+
 
 ## lint
 

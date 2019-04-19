@@ -31,6 +31,50 @@ function serve(done) {
         return h.file(path.join(__dirname, "./shst-logo.jpg"));
       }
     });
+    server.route({
+      method: "GET",
+      path: "/bulma.css",
+      handler: (request, h) => {
+        return h.file(path.join(__dirname, "./assets/bulma.css"));
+      }
+    });
+    server.route({
+      method: "GET",
+      path: "/jquery.min.js",
+      handler: (request, h) => {
+        return h.file(path.join(__dirname, "./assets/jquery.min.js"));
+      }
+    });
+    server.route({
+      method: "GET",
+      path: "/mapbox-gl.css",
+      handler: (request, h) => {
+        return h.file(path.join(__dirname, "./assets/mapbox-gl.css"));
+      }
+    });
+    server.route({
+      method: "GET",
+      path: "/mapbox-gl.js",
+      handler: (request, h) => {
+        return h.file(path.join(__dirname, "./assets/mapbox-gl.js"));
+      }
+    });
+    server.route({
+      method: "GET",
+      path: "/simple-statistics.min.js",
+      handler: (request, h) => {
+        return h.file(
+          path.join(__dirname, "./assets/simple-statistics.min.js")
+        );
+      }
+    });
+    server.route({
+      method: "GET",
+      path: "/turf.min.js",
+      handler: (request, h) => {
+        return h.file(path.join(__dirname, "./assets/turf.min.js"));
+      }
+    });
 
     // METRICS
 
