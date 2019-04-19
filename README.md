@@ -20,8 +20,8 @@ Returns a daily summary of all statistics for a provider. This endpoint powers t
 Setup project and install dependencies.
 
 ```sh
-git clone https://github.com/sharedstreets/micromobility-micromobility-connector.git
-cd micromobility-micromobility-connector
+git clone https://github.com/sharedstreets/sharedstreets-mobility-metrics.git
+cdsharedstreets-mobility-metrics
 npm install
 ```
 
