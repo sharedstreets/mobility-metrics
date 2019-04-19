@@ -2,15 +2,14 @@ const fs = require("fs");
 const request = require("request");
 const config = require("./../../config.json");
 
-var provider = config.providers.bird;
+var provider = config.providers.jump;
 
 function trips(stream, start, stop) {
   var opts = {
     url: provider.trips + "?start_time=" + start + "&end_time=" + stop,
     headers: {
       "Content-Type": "application/json",
-      "APP-Version": "3.0.0",
-      Authorization: "Bird " + provider.token
+      Authorization: "Bearer " + provider.token
     }
   };
 
@@ -26,12 +25,14 @@ function trips(stream, start, stop) {
       var data = JSON.parse(body);
 
       // write any returned trips to stream
-      data.data.trips.forEach(trip => {
-        stream.write(trip);
-      });
+      if (data.data && data.data.trips) {
+        data.data.trips.forEach(trip => {
+          stream.write(trip);
+        });
+      }
 
       // continue scan if another page is present
-      if (data.links.next) {
+      if (data.links && data.links.next) {
         opts.url = data.links.next;
         scan(opts, cb);
       } else {
@@ -46,8 +47,7 @@ function changes(stream, start, stop) {
     url: provider.status_changes + "?start_time=" + start + "&end_time=" + stop,
     headers: {
       "Content-Type": "application/json",
-      "APP-Version": "3.0.0",
-      Authorization: "Bird " + provider.token
+      Authorization: "Bearer " + provider.token
     }
   };
 
@@ -67,7 +67,7 @@ function changes(stream, start, stop) {
       });
 
       // continue scan if another page is present
-      if (data.links.next) {
+      if (data.links && data.links.next) {
         opts.url = data.links.next;
         scan(opts, cb);
       } else {

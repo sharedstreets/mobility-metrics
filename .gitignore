@@ -60,5 +60,10 @@ typings/
 # next.js build output
 .next
 
-# default data dir
+# default data dirs
 data
+shst
+cache
+
+# config
+config.json

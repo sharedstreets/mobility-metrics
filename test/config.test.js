@@ -1,14 +1,22 @@
 const test = require("tap").test;
-const config = require("../src/config.js");
+const config = require("../config.json");
 
-test("config - bird", t => {
-  config("bird", (err, conf) => {
-    t.notOk(err, "loaded config without error");
-    t.ok(conf, "loaded config");
-    t.ok(conf.token, "has token");
-    t.ok(conf.trips, "has trips url");
-    t.ok(conf.changes, "has changes url");
+test("config", t => {
+  t.equal(config.boundary.length, 4, "has valid boundary bbox");
 
-    t.end();
+  Object.keys(config.providers).forEach(provider => {
+    if (config.providers[provider].enabled) {
+      t.ok(
+        config.providers[provider].trips.length,
+        provider + " has trips url"
+      );
+      t.ok(
+        config.providers[provider].status_changes.length,
+        provider + " has status_changes url"
+      );
+      t.ok(config.providers[provider].token.length, provider + " has token");
+    }
   });
+
+  t.end();
 });
