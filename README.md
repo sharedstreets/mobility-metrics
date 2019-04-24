@@ -105,4 +105,4 @@ Note: These metrics currently work within the bounds and limitations of MDS.
 
 **Dropoffs:** The total number of trips that ended during a time window
 
-**Flows (O/D pairs):** The number of trips that went from one area of the city to another area of the city, sometimes referred to as origin/destination data or “O/D pairs”
+**Flows:** The number of trips that went from one area of the city to another area of the city, sometimes referred to as origin/destination data or “O/D pairs”
