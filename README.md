@@ -81,7 +81,7 @@ Note: These metrics currently work within the bounds and limitations of MDS.
 
 **Total trips distance:** Total miles traveled by any vehicles throughout the specified day. (trip_distance)
 
-**Vehicle Utilization:** Total vehicle on-street time divided by total trip duration for all vehicles
+**Vehicle Utilization:** Percentage of vehicles that were active over the course of a day.
 
 **Average distance per vehicle:** Total trips distance, divided by active vehicles
 
