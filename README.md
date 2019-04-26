@@ -79,7 +79,7 @@ npm run lint
 
 **Total trips distance:** Total miles traveled by any vehicles throughout the specified day. (trip_distance)
 
-**Vehicle Utilization:** Total vehicle on-street time divided by total trip duration for all vehicles
+**Vehicle Utilization:** Percentage of vehicles that were active over the course of a day.
 
 **Average distance per vehicle:** Total trips distance, divided by active vehicles
 
@@ -103,4 +103,4 @@ npm run lint
 
 **Dropoffs:** The total number of trips that ended during a time window
 
-**Flows (O/D pairs):** The number of trips that went from one area of the city to another area of the city, sometimes referred to as origin/destination data or “O/D pairs”
+**Flows:** The number of trips that went from one area of the city to another area of the city, sometimes referred to as origin/destination data or “O/D pairs”
