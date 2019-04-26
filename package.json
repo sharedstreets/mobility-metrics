@@ -3,9 +3,8 @@
     "lint": "prettier '{,!(node_modules)/**/}*.js' index.html --write",
     "test": "npm run lint; tap -R spec test/*.test.js",
     "server": "node server.js",
-    "backfill": "",
     "clear-cache": "rm -rf ./cache",
-    "clear-metrics": "rm -rf data"
+    "clear-metrics": "rm -rf ./data"
   },
   "dependencies": {
     "@oclif/config": "^1.12.12",

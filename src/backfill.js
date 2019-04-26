@@ -6,6 +6,7 @@ const summarize = require("./summarize");
 
 var argv = require("minimist")(process.argv.slice(2));
 
+const debug = process.debug;
 const day = moment(argv.day, "YYYY-MM-DD");
 var days = +argv.days;
 
@@ -54,5 +55,6 @@ const clearDir = async function(dir) {
 };
 
 backfill().then(() => {
+  if (debug) rimraf.sync(path.join(__dirname, "./../cache"));
   console.log("\ncompleted backfill");
 });

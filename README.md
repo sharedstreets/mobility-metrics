@@ -37,7 +37,7 @@ Run a script to backfill a datastore of metrics. Configure this command in cron 
 ```sh
 # --day = target backfill date in YYYY-MM-DD format
 # --days = number of days prior to target to also backfill
-node src/backfill.js --day 2018-11-10 --days 1; npm run clear-cache;
+node src/backfill.js --day 2018-11-10 --days 1;
 ```
 
 
@@ -69,15 +69,13 @@ npm run lint
 
 # Metrics
 
-Note: These metrics currently work within the bounds and limitations of MDS. 
-
 ## Daily summary:
 
-**Total vehicles:** Total number of vehicles that were on the street at any time during the specified day. This includes all vehicles that were available, unavailable or reserved according to the event types specified here. 
+**Total vehicles:** Total number of vehicles that were on the street at any time during the specified day. This includes all vehicles that were available, unavailable or reserved according to the event types specified here.
 
 **Active vehicles:** Total number of vehicles that completed at least one trip during the specified day. (Trips)
 
-**Total trips:** Total number of trips taken throughout the specified day. 
+**Total trips:** Total number of trips taken throughout the specified day.
 
 **Total trips distance:** Total miles traveled by any vehicles throughout the specified day. (trip_distance)
 
