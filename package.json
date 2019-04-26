@@ -6,6 +6,9 @@
     "clear-cache": "rm -rf ./cache",
     "clear-metrics": "rm -rf ./data"
   },
+  "engines": {
+    "node": ">=11.0.0"
+  },
   "dependencies": {
     "@oclif/config": "^1.12.12",
     "@turf/turf": "^5.1.6",
