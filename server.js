@@ -3,6 +3,7 @@ const path = require("path");
 const through2 = require("through2");
 const h3 = require("h3-js");
 const turf = require("@turf/turf");
+const config = require("./config.json");
 
 function serve(done) {
   const server = Hapi.server({
@@ -31,6 +32,7 @@ function serve(done) {
         return h.file(path.join(__dirname, "./shst-logo.jpg"));
       }
     });
+    // src assets
     server.route({
       method: "GET",
       path: "/bulma.css",
@@ -73,6 +75,26 @@ function serve(done) {
       path: "/turf.min.js",
       handler: (request, h) => {
         return h.file(path.join(__dirname, "./assets/turf.min.js"));
+      }
+    });
+
+    // boundary
+    server.route({
+      method: "GET",
+      path: "/boundary",
+      handler: (request, h) => {
+        return config.boundary;
+      }
+    });
+
+    // providers
+    server.route({
+      method: "GET",
+      path: "/providers",
+      handler: (request, h) => {
+        return Object.keys(config.providers).filter(p => {
+          return config.providers[p].enabled;
+        });
       }
     });
 
