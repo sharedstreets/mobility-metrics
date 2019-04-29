@@ -87,6 +87,15 @@ function serve(done) {
       }
     });
 
+    // center
+    server.route({
+      method: "GET",
+      path: "/center",
+      handler: (request, h) => {
+        return config.center;
+      }
+    });
+
     // providers
     server.route({
       method: "GET",

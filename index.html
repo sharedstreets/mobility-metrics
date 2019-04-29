@@ -345,11 +345,18 @@
       };
 
       $(() => {
+        fetch('/center')
+          .then(response => {
+            return response.json();
+          })
+          .then(function(center) {
+
+
         Object.keys(maps).forEach(map => {
           maps[map] = new mapboxgl.Map({
             container: map,
             style: "mapbox://styles/mapbox/light-v9",
-            center: [-83.0508041381836, 42.33735673444584],
+            center: center,
             zoom: 12
           });
         });
@@ -557,6 +564,7 @@
             query();
           }, 1000);
         }, 1000);
+        })
       });
 
       function query() {
