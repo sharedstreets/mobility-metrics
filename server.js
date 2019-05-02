@@ -101,7 +101,7 @@ function serve(done) {
       method: "GET",
       path: "/providers",
       handler: (request, h) => {
-        return Object.keys(config.providers).filter(p => {
+        return Object.keys(config.providers || {}).filter(p => {
           return config.providers[p].enabled;
         });
       }
