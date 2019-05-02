@@ -83,7 +83,7 @@ function serve(done) {
       method: "GET",
       path: "/boundary",
       handler: (request, h) => {
-        return config.boundary;
+        return config.boundary || [0, 0, 0, 0];
       }
     });
 
@@ -92,7 +92,7 @@ function serve(done) {
       method: "GET",
       path: "/center",
       handler: (request, h) => {
-        return config.center;
+        return config.center || [0, 0];
       }
     });
 
