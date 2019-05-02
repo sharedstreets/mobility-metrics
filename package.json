@@ -1,7 +1,7 @@
 {
   "version": "1.1.1",
   "scripts": {
-    "lint": "prettier '{,!(node_modules)/**/}*.js' index.html --write",
+    "lint": "prettier config.template.json '{,!(node_modules)/**/}*.js' index.html --write",
     "test": "npm run lint; tap -R spec test/*.test.js",
     "server": "node server.js",
     "clear-cache": "rm -rf ./cache",
