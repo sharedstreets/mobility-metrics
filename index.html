@@ -445,183 +445,261 @@
 
             // setup map layers
             setTimeout(() => {
-              maps["trip-volume-map"].addLayer({
-                id: "streets",
-                type: "line",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
-                },
-                layout: {
-                  "line-join": "round",
-                  "line-cap": "round"
-                },
-                paint: {
-                  "line-color": "#f0f",
-                  "line-width": 1.5,
-                  "line-opacity": 0.35
-                }
-              });
-              maps["trip-volume-map"].addLayer({
-                id: "bins",
-                type: "fill",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
-                },
-                layout: {},
-                paint: {
-                  "fill-outline-color": "#f0f",
-                  "fill-color": "#f0f",
-                  "fill-opacity": 0.1
-                }
-              });
+              var colors = [
+                "#feebe2",
+                "#fbb4b9",
+                "#f768a1",
+                "#c51b8a",
+                "#7a0177"
+              ];
 
-              maps["availability-map"].addLayer({
-                id: "streets",
-                type: "line",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
-                },
-                layout: {
-                  "line-join": "round",
-                  "line-cap": "round"
-                },
-                paint: {
-                  "line-color": "#f0f",
-                  "line-width": 1.5,
-                  "line-opacity": 0.35
-                }
-              });
-              maps["availability-map"].addLayer({
-                id: "bins",
-                type: "fill",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
-                },
-                layout: {},
-                paint: {
-                  "fill-outline-color": "#f0f",
-                  "fill-color": "#f0f",
-                  "fill-opacity": 0.1
-                }
-              });
+              const binPaint = {
+                "fill-outline-color": "#000",
+                "fill-color": [
+                  "interpolate",
+                  ["linear"],
+                  ["get", "quantile"],
+                  1,
+                  colors[0],
+                  2,
+                  colors[1],
+                  3,
+                  colors[2],
+                  4,
+                  colors[3],
+                  5,
+                  colors[4]
+                ],
+                "fill-opacity": 0.4
+              };
 
-              maps["onstreet-map"].addLayer({
-                id: "streets",
-                type: "line",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
-                },
-                layout: {
-                  "line-join": "round",
-                  "line-cap": "round"
-                },
-                paint: {
-                  "line-color": "#f0f",
-                  "line-width": 1.5,
-                  "line-opacity": 0.35
-                }
-              });
-              maps["onstreet-map"].addLayer({
-                id: "bins",
-                type: "fill",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
-                },
-                layout: {},
-                paint: {
-                  "fill-outline-color": "#f0f",
-                  "fill-color": "#f0f",
-                  "fill-opacity": 0.1
-                }
-              });
+              const streetPaint = {
+                "line-color": [
+                  "interpolate",
+                  ["linear"],
+                  ["get", "quantile"],
+                  1,
+                  colors[0],
+                  2,
+                  colors[1],
+                  3,
+                  colors[2],
+                  4,
+                  colors[3],
+                  5,
+                  colors[4]
+                ],
+                "line-width": [
+                  "interpolate",
+                  ["linear"],
+                  ["get", "quantile"],
+                  1,
+                  2,
+                  2,
+                  3,
+                  3,
+                  2.5,
+                  4,
+                  3,
+                  5,
+                  4
+                ],
+                "line-opacity": 0.65
+              };
 
-              maps["pickups-map"].addLayer({
-                id: "streets",
-                type: "line",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
-                },
-                layout: {
-                  "line-join": "round",
-                  "line-cap": "round"
-                },
-                paint: {
-                  "line-color": "#f0f",
-                  "line-width": 1.5,
-                  "line-opacity": 0.35
+              var layers = maps["trip-volume-map"].getStyle().layers;
+              // Find the index of the first symbol layer in the map style
+              var firstSymbolId;
+              for (var i = 0; i < layers.length; i++) {
+                if (layers[i].type === "symbol") {
+                  firstSymbolId = layers[i].id;
+                  break;
                 }
-              });
-              maps["pickups-map"].addLayer({
-                id: "bins",
-                type: "fill",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
+              }
+              maps["trip-volume-map"].addLayer(
+                {
+                  id: "streets",
+                  type: "line",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {
+                    "line-join": "round",
+                    "line-cap": "round"
+                  },
+                  paint: streetPaint
                 },
-                layout: {},
-                paint: {
-                  "fill-outline-color": "#f0f",
-                  "fill-color": "#f0f",
-                  "fill-opacity": 0.1
-                }
-              });
+                firstSymbolId
+              );
+              maps["trip-volume-map"].addLayer(
+                {
+                  id: "bins",
+                  type: "fill",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {},
+                  paint: binPaint
+                },
+                firstSymbolId
+              );
 
-              maps["dropoffs-map"].addLayer({
-                id: "streets",
-                type: "line",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
+              maps["availability-map"].addLayer(
+                {
+                  id: "streets",
+                  type: "line",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {
+                    "line-join": "round",
+                    "line-cap": "round"
+                  },
+                  paint: streetPaint
                 },
-                layout: {
-                  "line-join": "round",
-                  "line-cap": "round"
+                firstSymbolId
+              );
+              maps["availability-map"].addLayer(
+                {
+                  id: "bins",
+                  type: "fill",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {},
+                  paint: binPaint
                 },
-                paint: {
-                  "line-color": "#f0f",
-                  "line-width": 1.5,
-                  "line-opacity": 0.35
-                }
-              });
-              maps["dropoffs-map"].addLayer({
-                id: "bins",
-                type: "fill",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
-                },
-                layout: {},
-                paint: {
-                  "fill-outline-color": "#f0f",
-                  "fill-color": "#f0f",
-                  "fill-opacity": 0.1
-                }
-              });
+                firstSymbolId
+              );
 
-              maps["flows-map"].addLayer({
-                id: "pairs",
-                type: "line",
-                source: {
-                  type: "geojson",
-                  data: turf.featureCollection([])
+              maps["onstreet-map"].addLayer(
+                {
+                  id: "streets",
+                  type: "line",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {
+                    "line-join": "round",
+                    "line-cap": "round"
+                  },
+                  paint: streetPaint
                 },
-                layout: {
-                  "line-join": "round",
-                  "line-cap": "round"
+                firstSymbolId
+              );
+              maps["onstreet-map"].addLayer(
+                {
+                  id: "bins",
+                  type: "fill",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {},
+                  paint: binPaint
                 },
-                paint: {
-                  "line-color": "#f0f",
-                  "line-width": 1.5,
-                  "line-opacity": 0.65
-                }
-              });
+                firstSymbolId
+              );
+
+              maps["pickups-map"].addLayer(
+                {
+                  id: "streets",
+                  type: "line",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {
+                    "line-join": "round",
+                    "line-cap": "round"
+                  },
+                  paint: streetPaint
+                },
+                firstSymbolId
+              );
+              maps["pickups-map"].addLayer(
+                {
+                  id: "bins",
+                  type: "fill",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {},
+                  paint: binPaint
+                },
+                firstSymbolId
+              );
+
+              maps["dropoffs-map"].addLayer(
+                {
+                  id: "streets",
+                  type: "line",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {
+                    "line-join": "round",
+                    "line-cap": "round"
+                  },
+                  paint: streetPaint
+                },
+                firstSymbolId
+              );
+              maps["dropoffs-map"].addLayer(
+                {
+                  id: "bins",
+                  type: "fill",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {},
+                  paint: binPaint
+                },
+                firstSymbolId
+              );
+
+              maps["flows-map"].addLayer(
+                {
+                  id: "pairs",
+                  type: "line",
+                  source: {
+                    type: "geojson",
+                    data: turf.featureCollection([])
+                  },
+                  layout: {
+                    "line-join": "round",
+                    "line-cap": "round"
+                  },
+                  paint: {
+                    "line-color": colors[4],
+                    "line-width": [
+                      "interpolate",
+                      ["linear"],
+                      ["get", "quantile"],
+                      1,
+                      1.5,
+                      2.25,
+                      2,
+                      3,
+                      3.75,
+                      4,
+                      5,
+                      5,
+                      7
+                    ],
+                    "line-opacity": 0.4
+                  }
+                },
+                firstSymbolId
+              );
 
               $("#hour-checkbox").on("change", () => {
                 if (!$("#hour-checkbox").prop("checked")) {
@@ -819,6 +897,7 @@
                 geojson["trip-volume"].features.push(feature);
               }
             );
+            categorize(geojson["trip-volume"]);
             maps["trip-volume-map"]
               .getSource("streets")
               .setData(geojson["trip-volume"]);
@@ -830,6 +909,7 @@
                 data.tripVolumes.bins[timeLevel][time][bin];
               geojson["trip-volume"].features.push(feature);
             });
+            categorize(geojson["trip-volume"]);
             maps["trip-volume-map"]
               .getSource("bins")
               .setData(geojson["trip-volume"]);
@@ -849,6 +929,7 @@
                 }
               }
             );
+            categorize(geojson["availability"]);
             maps["availability-map"]
               .getSource("streets")
               .setData(geojson["availability"]);
@@ -864,6 +945,7 @@
                 geojson["availability"].features.push(feature);
               }
             );
+            categorize(geojson["availability"]);
             maps["availability-map"]
               .getSource("bins")
               .setData(geojson["availability"]);
@@ -881,6 +963,7 @@
                 geojson["onstreet"].features.push(feature);
               }
             });
+            categorize(geojson["onstreet"]);
             maps["onstreet-map"]
               .getSource("streets")
               .setData(geojson["onstreet"]);
@@ -892,6 +975,7 @@
                 data.onstreet.bins[timeLevel][time][bin];
               geojson["onstreet"].features.push(feature);
             });
+            categorize(geojson["onstreet"]);
             maps["onstreet-map"].getSource("bins").setData(geojson["onstreet"]);
           }
 
@@ -907,6 +991,7 @@
                 geojson["pickups"].features.push(feature);
               }
             });
+            categorize(geojson["pickups"]);
             maps["pickups-map"]
               .getSource("streets")
               .setData(geojson["pickups"]);
@@ -918,6 +1003,7 @@
                 data.onstreet.bins[timeLevel][time][bin];
               geojson["pickups"].features.push(feature);
             });
+            categorize(geojson["pickups"]);
             maps["pickups-map"].getSource("bins").setData(geojson["pickups"]);
           }
 
@@ -933,6 +1019,7 @@
                 geojson["dropoffs"].features.push(feature);
               }
             });
+            categorize(geojson["dropoffs"]);
             maps["dropoffs-map"]
               .getSource("streets")
               .setData(geojson["dropoffs"]);
@@ -944,6 +1031,7 @@
                 data.dropoffs.bins[timeLevel][time][bin];
               geojson["dropoffs"].features.push(feature);
             });
+            categorize(geojson["dropoffs"]);
             maps["dropoffs-map"].getSource("bins").setData(geojson["dropoffs"]);
           }
 
@@ -953,6 +1041,7 @@
             feature.properties.value = data.flows.pairs[timeLevel][time][pair];
             geojson["flows"].features.push(feature);
           });
+          categorize(geojson["flows"]);
           maps["flows-map"].getSource("pairs").setData(geojson["flows"]);
         }
       }
@@ -1032,9 +1121,19 @@
         var fileName = time + "-" + provider + "-" + layer + ".json";
 
         var a = document.createElement("a");
+
+        // clear quantile styling data
+        geojson[layer].features.forEach(f => {
+          delete f.properties.quantile;
+        });
+
         var file = new Blob([JSON.stringify(geojson[layer])], {
           type: "application/json"
         });
+
+        // recompute quantiles
+        categorize(geojson[layer]);
+
         a.href = URL.createObjectURL(file);
         a.download = fileName;
         a.click();
@@ -1054,6 +1153,17 @@
         a.href = URL.createObjectURL(file);
         a.download = fileName;
         a.click();
+      }
+
+      function categorize(fc) {
+        var stats = fc.features.map(f => {
+          return f.properties.value;
+        });
+
+        fc.features.forEach(f => {
+          var quantile = ss.quantileRank(stats, f.properties.value);
+          f.properties.quantile = Math.floor(quantile * 5) + 1;
+        });
       }
     </script>
   </body>
