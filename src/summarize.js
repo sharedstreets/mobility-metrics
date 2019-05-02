@@ -471,7 +471,14 @@ async function pickups(stats, trips, pointMatcher) {
     );
     if (matches.length) {
       var ref = matches[0].geometryId;
-      // todo: cache geometry from ref
+      // cache geometry from ref
+      var geo = JSON.parse(
+        JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+      );
+      geo.properties = {
+        ref: ref
+      };
+      stats.geometry.streets[ref] = geo;
 
       // populate time bins
       if (!stats.pickups.streets.day[timeBins.day]) {
@@ -559,6 +566,14 @@ async function dropoffs(stats, trips, pointMatcher) {
     );
     if (matches.length) {
       var ref = matches[0].geometryId;
+      // cache geometry from ref
+      var geo = JSON.parse(
+        JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+      );
+      geo.properties = {
+        ref: ref
+      };
+      stats.geometry.streets[ref] = geo;
 
       // populate time bins
       if (!stats.dropoffs.streets.day[timeBins.day]) {
@@ -768,6 +783,14 @@ async function availability(stats, states, day, pointMatcher) {
         );
         if (matches.length) {
           var ref = matches[0].geometryId;
+          // cache geometry from ref
+          var geo = JSON.parse(
+            JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+          );
+          geo.properties = {
+            ref: ref
+          };
+          stats.geometry.streets[ref] = geo;
 
           // bootstrap ref
           if (
@@ -942,6 +965,14 @@ async function onstreet(stats, states, day, pointMatcher) {
         );
         if (matches.length) {
           var ref = matches[0].geometryId;
+          // cache geometry from ref
+          var geo = JSON.parse(
+            JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+          );
+          geo.properties = {
+            ref: ref
+          };
+          stats.geometry.streets[ref] = geo;
 
           // bootstrap ref
           if (
