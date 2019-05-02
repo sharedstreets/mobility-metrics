@@ -13,7 +13,7 @@ const providers = Object.keys(config.providers).filter(provider => {
 });
 
 var Z = 9;
-var min = 3;
+var privacyMinimum = config.privacyMinimum || 3;
 
 const summarize = async function(day, shst, graph, pointMatcher) {
   return new Promise(async (resolve, reject) => {
@@ -324,7 +324,7 @@ async function tripVolumes(stats, trips, graph) {
   Object.keys(stats.tripVolumes.bins.day).forEach(day => {
     Object.keys(stats.tripVolumes.bins.day[day]).forEach(bin => {
       var val = stats.tripVolumes.bins.day[day][bin];
-      if (val < min) {
+      if (val < privacyMinimum) {
         delete stats.tripVolumes.bins.day[day][bin];
       }
     });
@@ -339,7 +339,7 @@ async function tripVolumes(stats, trips, graph) {
   Object.keys(stats.tripVolumes.bins.hour).forEach(hour => {
     Object.keys(stats.tripVolumes.bins.hour[hour]).forEach(bin => {
       var val = stats.tripVolumes.bins.hour[hour][bin];
-      if (val < min) {
+      if (val < privacyMinimum) {
         delete stats.tripVolumes.bins.hour[hour][bin];
       }
     });
@@ -354,7 +354,7 @@ async function tripVolumes(stats, trips, graph) {
   Object.keys(stats.tripVolumes.bins.minute).forEach(minute => {
     Object.keys(stats.tripVolumes.bins.minute[minute]).forEach(bin => {
       var val = stats.tripVolumes.bins.minute[minute][bin];
-      if (val < min) {
+      if (val < privacyMinimum) {
         delete stats.tripVolumes.bins.minute[minute][bin];
       }
     });
@@ -370,7 +370,7 @@ async function tripVolumes(stats, trips, graph) {
   Object.keys(stats.tripVolumes.streets.day).forEach(day => {
     Object.keys(stats.tripVolumes.streets.day[day]).forEach(street => {
       var val = stats.tripVolumes.streets.day[day][street];
-      if (val < min) {
+      if (val < privacyMinimum) {
         delete stats.tripVolumes.streets.day[day][street];
       }
     });
@@ -385,7 +385,7 @@ async function tripVolumes(stats, trips, graph) {
   Object.keys(stats.tripVolumes.streets.hour).forEach(hour => {
     Object.keys(stats.tripVolumes.streets.hour[hour]).forEach(street => {
       var val = stats.tripVolumes.streets.hour[hour][street];
-      if (val < min) {
+      if (val < privacyMinimum) {
         delete stats.tripVolumes.streets.hour[hour][street];
       }
     });
@@ -400,7 +400,7 @@ async function tripVolumes(stats, trips, graph) {
   Object.keys(stats.tripVolumes.streets.minute).forEach(minute => {
     Object.keys(stats.tripVolumes.streets.minute[minute]).forEach(street => {
       var val = stats.tripVolumes.streets.minute[minute][street];
-      if (val < min) {
+      if (val < privacyMinimum) {
         delete stats.tripVolumes.streets.minute[minute][street];
       }
     });
@@ -649,7 +649,7 @@ function flows(stats, trips) {
   Object.keys(stats.flows.pairs.day).forEach(day => {
     Object.keys(stats.flows.pairs.day[day]).forEach(pair => {
       var val = stats.flows.pairs.day[day][pair];
-      if (val < min) {
+      if (val < privacyMinimum) {
         delete stats.flows.pairs.day[day][pair];
       }
     });
@@ -664,7 +664,7 @@ function flows(stats, trips) {
   Object.keys(stats.flows.pairs.hour).forEach(hour => {
     Object.keys(stats.flows.pairs.hour[hour]).forEach(pair => {
       var val = stats.flows.pairs.hour[hour][pair];
-      if (val < min) {
+      if (val < privacyMinimum) {
         delete stats.flows.pairs.hour[hour][pair];
       }
     });
@@ -679,7 +679,7 @@ function flows(stats, trips) {
   Object.keys(stats.flows.pairs.minute).forEach(minute => {
     Object.keys(stats.flows.pairs.minute[minute]).forEach(pair => {
       var val = stats.flows.pairs.minute[minute][pair];
-      if (val < min) {
+      if (val < privacyMinimum) {
         delete stats.flows.pairs.minute[minute][pair];
       }
     });
