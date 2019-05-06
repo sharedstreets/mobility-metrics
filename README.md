@@ -1,7 +1,12 @@
-# sharedstreets-micromobility-connector
+# Mobility Metrics
 ---
 
 SharedStreets Mobility Metrics is an open source server and frontend for ingestion and analysis of MDS mobility data. It is capable of reading raw MDS data in memory and aggregating useful & privacy-protecting metrics for longterm storage and analysis.
+
+## Requirements
+
+- OSX or Linux (Support for Windows coming soon via docker)
+- Node.js v11
 
 
 ## API
@@ -15,7 +20,7 @@ Serves a dashboard for viewing and exporting metrics
 Returns a daily summary of all statistics for a provider. This endpoint powers the builtin dashboard, and can be used for custom reporting and modeling.
 
 
-## install
+## Install
 
 Setup project and install dependencies.
 
@@ -25,12 +30,12 @@ cd sharedstreets-mobility-metrics
 npm install
 ```
 
-## config
+## Configuration
 
 A `config.json` file is required to run Mobility Metrics. Enable providers and set credentials through this file. This file is used to store access tokens - **handle with care**. See `config.template.json` for a starter config.
 
 
-## backfill
+## Backfill
 
 Run a script to backfill a datastore of metrics. Configure this command in cron for automated daily imports.
 
@@ -41,7 +46,7 @@ node src/backfill.js --day 2018-11-10 --days 1;
 ```
 
 
-## server
+## Server
 
 Runs a server that is capable of powering the JSON API and UI. (localhost:5000 by default)
 
@@ -50,7 +55,7 @@ npm start
 ```
 
 
-## test
+## Test
 
 Run a comprehensive test suite across the project. Auto-formats code using linter. (Note: tests provider endpoints, and requires config with up to date credentials)
 
@@ -59,7 +64,7 @@ npm test
 ```
 
 
-## lint
+## Lint
 
 Runs a linter, prettier, and auto-formats code to meet consistent style, while checking for syntax errors.
 
