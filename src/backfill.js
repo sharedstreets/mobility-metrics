@@ -8,7 +8,7 @@ const config = require("../config.json");
 
 var argv = require("minimist")(process.argv.slice(2));
 
-const debug = process.debug;
+const debug = argv.debug;
 const day = moment(argv.day, "YYYY-MM-DD");
 var days = +argv.days;
 

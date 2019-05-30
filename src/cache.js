@@ -21,6 +21,11 @@ const providers = Object.keys(config.providers)
     };
   });
 
+providers.push({
+  name: "all",
+  query: require(path.join(providersPath, "all"))
+});
+
 const cache = async function(dayString) {
   return new Promise((resolve, reject) => {
     var day = moment(dayString, "YYYY-MM-DD");

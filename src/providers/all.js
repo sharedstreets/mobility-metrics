@@ -4,12 +4,12 @@ const mkdirp = require("mkdirp");
 const queue = require("d3-queue").queue;
 const through2 = require("through2");
 const moment = require("moment");
-const config = require("../config.json");
+const config = require("../../config.json");
 
-const cachePath = path.join(__dirname, "./../cache");
+const cachePath = path.join(__dirname, "../../cache");
 
 // import all enabled providers
-const providersPath = path.join(__dirname, "./providers");
+const providersPath = __dirname;
 const providers = Object.keys(config.providers)
   .filter(provider => {
     return config.providers[provider].enabled;
@@ -38,7 +38,9 @@ function trips(stream, start, stop) {
     });
   });
 
-  providersQ.awaitAll(() => {});
+  providersQ.awaitAll(() => {
+    stream.end();
+  });
 }
 
 function changes(stream, start, stop) {
@@ -58,7 +60,9 @@ function changes(stream, start, stop) {
     });
   });
 
-  providersQ.awaitAll(() => {});
+  providersQ.awaitAll(() => {
+    stream.end();
+  });
 }
 
 module.exports.trips = trips;
