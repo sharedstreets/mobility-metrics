@@ -1001,7 +1001,7 @@
             Object.keys(data.pickups.bins[timeLevel][time]).forEach(bin => {
               var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
               feature.properties.value =
-                data.onstreet.bins[timeLevel][time][bin];
+                data.pickups.bins[timeLevel][time][bin];
               geojson["pickups"].features.push(feature);
             });
             categorize(geojson["pickups"]);
