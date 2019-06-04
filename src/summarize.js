@@ -17,180 +17,176 @@ var Z = 9;
 var privacyMinimum = config.privacyMinimum || 3;
 
 const summarize = async function(day, shst, graph, pointMatcher) {
-  return new Promise(async (resolve, reject) => {
-    var cachePath = path.join(__dirname + "./../cache", day);
-    if (!fs.existsSync(cachePath)) {
-      console.log("  caching...");
-      await cache(day);
-    }
+  var cachePath = path.join(__dirname + "./../cache", day);
+  if (!fs.existsSync(cachePath)) {
+    console.log("  caching...");
+    await cache(day);
+  }
 
-    console.log("  summarizing...");
-    for (let provider of providers) {
-      var cacheProviderPath = path.join(cachePath, provider);
+  console.log("  summarizing...");
+  for (let provider of providers) {
+    var cacheProviderPath = path.join(cachePath, provider);
 
-      console.log("    " + provider + "...");
+    console.log("    " + provider + "...");
 
-      var trips = fs
-        .readFileSync(path.join(cacheProviderPath, "trips.json"))
-        .toString()
-        .split("\n")
-        .filter(line => {
-          return line.length;
-        })
-        .map(JSON.parse);
-      var changes = fs
-        .readFileSync(path.join(cacheProviderPath, "changes.json"))
-        .toString()
-        .split("\n")
-        .filter(line => {
-          return line.length;
-        })
-        .map(JSON.parse);
+    var trips = fs
+      .readFileSync(path.join(cacheProviderPath, "trips.json"))
+      .toString()
+      .split("\n")
+      .filter(line => {
+        return line.length;
+      })
+      .map(JSON.parse);
+    var changes = fs
+      .readFileSync(path.join(cacheProviderPath, "changes.json"))
+      .toString()
+      .split("\n")
+      .filter(line => {
+        return line.length;
+      })
+      .map(JSON.parse);
 
-      var totalVehicles = new Set();
-      var totalActiveVehicles = new Set();
-      var stats = {
-        totalVehicles: 0,
-        totalActiveVehicles: 0,
-        totalTrips: 0,
-        totalDistance: 0,
-        totalDuration: 0,
-        geometry: {
-          bins: {},
-          streets: {},
-          pairs: {}
+    var totalVehicles = new Set();
+    var totalActiveVehicles = new Set();
+    var stats = {
+      totalVehicles: 0,
+      totalActiveVehicles: 0,
+      totalTrips: 0,
+      totalDistance: 0,
+      totalDuration: 0,
+      geometry: {
+        bins: {},
+        streets: {},
+        pairs: {}
+      },
+      tripVolumes: {
+        bins: {
+          day: {},
+          hour: {},
+          minute: {}
         },
-        tripVolumes: {
-          bins: {
-            day: {},
-            hour: {},
-            minute: {}
-          },
-          streets: {
-            day: {},
-            hour: {},
-            minute: {}
-          }
-        },
-        pickups: {
-          bins: {
-            day: {},
-            hour: {},
-            minute: {}
-          },
-          streets: {
-            day: {},
-            hour: {},
-            minute: {}
-          }
-        },
-        dropoffs: {
-          bins: {
-            day: {},
-            hour: {},
-            minute: {}
-          },
-          streets: {
-            day: {},
-            hour: {},
-            minute: {}
-          }
-        },
-        flows: {
-          pairs: {
-            day: {},
-            hour: {},
-            minute: {}
-          }
-        },
-        availability: {
-          bins: {
-            day: {},
-            hour: {},
-            minute: {}
-          },
-          streets: {
-            day: {},
-            hour: {},
-            minute: {}
-          }
-        },
-        onstreet: {
-          bins: {
-            day: {},
-            hour: {},
-            minute: {}
-          },
-          streets: {
-            day: {},
-            hour: {},
-            minute: {}
-          }
+        streets: {
+          day: {},
+          hour: {},
+          minute: {}
         }
-      };
-
-      for (let trip of trips) {
-        totalVehicles.add(trip.vehicle_id);
-        totalActiveVehicles.add(trip.vehicle_id);
-
-        // convert to miles
-        trip.trip_distance = trip.trip_distance * 0.000621371;
-        // convert to minutes
-        trip.trip_duration = trip.trip_duration / 60;
-
-        // summary stats
-        stats.totalActiveVehicles = totalActiveVehicles.size;
-        stats.totalTrips++;
-        stats.totalDistance += trip.trip_distance;
-        stats.totalDuration += trip.trip_duration;
-        stats.averageVehicleDistance =
-          stats.totalDistance / stats.totalActiveVehicles;
-        stats.averageVehicleDuration =
-          stats.totalDuration / stats.totalActiveVehicles;
-        stats.averageTripDistance = stats.totalDistance / stats.totalTrips;
-        stats.averageTripDuration = stats.totalDuration / stats.totalTrips;
-        stats.averageTrips = stats.totalTrips / stats.totalActiveVehicles;
+      },
+      pickups: {
+        bins: {
+          day: {},
+          hour: {},
+          minute: {}
+        },
+        streets: {
+          day: {},
+          hour: {},
+          minute: {}
+        }
+      },
+      dropoffs: {
+        bins: {
+          day: {},
+          hour: {},
+          minute: {}
+        },
+        streets: {
+          day: {},
+          hour: {},
+          minute: {}
+        }
+      },
+      flows: {
+        pairs: {
+          day: {},
+          hour: {},
+          minute: {}
+        }
+      },
+      availability: {
+        bins: {
+          day: {},
+          hour: {},
+          minute: {}
+        },
+        streets: {
+          day: {},
+          hour: {},
+          minute: {}
+        }
+      },
+      onstreet: {
+        bins: {
+          day: {},
+          hour: {},
+          minute: {}
+        },
+        streets: {
+          day: {},
+          hour: {},
+          minute: {}
+        }
       }
+    };
 
-      // build state histories for each vehicle
-      var states = {};
-      changes.forEach(change => {
-        if (!states[change.vehicle_id]) {
-          totalVehicles.add(change.vehicle_id);
-          stats.totalVehicles = totalVehicles.size;
-          states[change.vehicle_id] = [];
-        }
-        states[change.vehicle_id].push(change);
-      });
-      // sort by time
-      Object.keys(states).forEach(id => {
-        states[id] = states[id].sort((a, b) => {
-          return a.event_time - b.event_time;
-        });
-      });
+    for (let trip of trips) {
+      totalVehicles.add(trip.vehicle_id);
+      totalActiveVehicles.add(trip.vehicle_id);
 
-      console.log("      trip volumes...");
-      await tripVolumes(stats, trips, graph);
-      console.log("      pickups...");
-      await pickups(stats, trips, pointMatcher);
-      console.log("      dropoffs...");
-      await dropoffs(stats, trips, pointMatcher);
-      console.log("      flows...");
-      flows(stats, trips);
-      console.log("      availability...");
-      await availability(stats, states, day, pointMatcher);
-      console.log("      onstreet...");
-      await onstreet(stats, states, day, pointMatcher);
+      // convert to miles
+      trip.trip_distance = trip.trip_distance * 0.000621371;
+      // convert to minutes
+      trip.trip_duration = trip.trip_duration / 60;
 
-      var summaryPath = path.join(__dirname + "./../data", day);
-      mkdirp.sync(summaryPath);
-      summaryFilePath = path.join(summaryPath, provider + ".json");
-
-      fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
-
-      resolve();
+      // summary stats
+      stats.totalActiveVehicles = totalActiveVehicles.size;
+      stats.totalTrips++;
+      stats.totalDistance += trip.trip_distance;
+      stats.totalDuration += trip.trip_duration;
+      stats.averageVehicleDistance =
+        stats.totalDistance / stats.totalActiveVehicles;
+      stats.averageVehicleDuration =
+        stats.totalDuration / stats.totalActiveVehicles;
+      stats.averageTripDistance = stats.totalDistance / stats.totalTrips;
+      stats.averageTripDuration = stats.totalDuration / stats.totalTrips;
+      stats.averageTrips = stats.totalTrips / stats.totalActiveVehicles;
     }
-  });
+
+    // build state histories for each vehicle
+    var states = {};
+    changes.forEach(change => {
+      if (!states[change.vehicle_id]) {
+        totalVehicles.add(change.vehicle_id);
+        stats.totalVehicles = totalVehicles.size;
+        states[change.vehicle_id] = [];
+      }
+      states[change.vehicle_id].push(change);
+    });
+    // sort by time
+    Object.keys(states).forEach(id => {
+      states[id] = states[id].sort((a, b) => {
+        return a.event_time - b.event_time;
+      });
+    });
+
+    console.log("      trip volumes...");
+    await tripVolumes(stats, trips, graph);
+    console.log("      pickups...");
+    await pickups(stats, trips, pointMatcher);
+    console.log("      dropoffs...");
+    await dropoffs(stats, trips, pointMatcher);
+    console.log("      flows...");
+    flows(stats, trips);
+    console.log("      availability...");
+    await availability(stats, states, day, pointMatcher);
+    console.log("      onstreet...");
+    await onstreet(stats, states, day, pointMatcher);
+
+    var summaryPath = path.join(__dirname + "./../data", day);
+    mkdirp.sync(summaryPath);
+    summaryFilePath = path.join(summaryPath, provider + ".json");
+
+    fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
+  }
 };
 
 function getTimeBins(timestamp) {

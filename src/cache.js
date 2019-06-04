@@ -75,20 +75,41 @@ const cache = async function(dayString) {
           next();
         });
 
+        tripStream.on("error", (err) => {
+          providersCb(new Error(`cannot query ${provider.name} trips: ${err.message}`));
+        });
         tripStream.on("finish", () => {
-          provider.query.changes(changeStream, start, stop);
+          try {
+            provider.query.changes(changeStream, start, stop);
+          }
+          catch (err) {
+            changeStream.destroy(err);
+          }
         });
 
+        changeStream.on("error", (err) => {
+          providersCb(new Error(`cannot query ${provider.name} changes: ${err.message}`));
+        });
         changeStream.on("finish", () => {
           providersCb();
         });
 
-        provider.query.trips(tripStream, start, stop);
+        try {
+          provider.query.trips(tripStream, start, stop);
+        }
+        catch (err) {
+          tripStream.destroy(err);
+        }
       });
     });
 
-    providersQ.awaitAll(() => {
-      resolve();
+    providersQ.awaitAll((err) => {
+      if (err) {
+        reject(err);
+      }
+      else {
+        resolve();
+      }
     });
   });
 };

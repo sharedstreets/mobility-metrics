@@ -15,25 +15,22 @@ var days = +argv.days;
 const store = path.join(__dirname, "./../data");
 
 const backfill = async function() {
-  return new Promise(async (resolve, reject) => {
-    const envelope = turf.bboxPolygon(config.boundary).geometry;
+  const envelope = turf.bboxPolygon(config.boundary).geometry;
 
-    // get graph
-    const graphOpts = {
-      source: "osm/planet-181224",
-      tileHierarchy: 6
-    };
-    var graph = new shst.Graph(envelope, graphOpts);
-    await graph.buildGraph();
-    var pointMatcher = new shst.PointMatcher(envelope, graphOpts);
+  // get graph
+  const graphOpts = {
+    source: "osm/planet-181224",
+    tileHierarchy: 6
+  };
+  var graph = new shst.Graph(envelope, graphOpts);
+  await graph.buildGraph();
+  var pointMatcher = new shst.PointMatcher(envelope, graphOpts);
 
-    while (days--) {
-      const current = day.clone().subtract(days, "day");
-      console.log("building: ", current.format("YYYY-MM-DD"));
-      await summarize(current.format("YYYY-MM-DD"), shst, graph, pointMatcher);
-    }
-    resolve();
-  });
+  while (days--) {
+    const current = day.clone().subtract(days, "day");
+    console.log("building: ", current.format("YYYY-MM-DD"));
+    await summarize(current.format("YYYY-MM-DD"), shst, graph, pointMatcher);
+  }
 };
 
 const clearDir = async function(dir) {
@@ -47,4 +44,6 @@ const clearDir = async function(dir) {
 backfill().then(() => {
   if (debug) rimraf.sync(path.join(__dirname, "./../cache"));
   console.log("\ncompleted backfill");
+}).catch(err => {
+  console.error(err.message);
 });
