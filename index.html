@@ -7,12 +7,12 @@
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <script src="mapbox-gl.js"></script>
-    <script src="jquery.min.js"></script>
-    <script src="turf.min.js"></script>
-    <script src="simple-statistics.min.js"></script>
-    <link rel="stylesheet" href="bulma.css" />
-    <link href="mapbox-gl.css" rel="stylesheet" />
+    <script src="public/mapbox-gl.js"></script>
+    <script src="public/jquery.min.js"></script>
+    <script src="public/turf.min.js"></script>
+    <script src="public/simple-statistics.min.js"></script>
+    <link href="public/bulma.css" rel="stylesheet" />
+    <link href="public/mapbox-gl.css" rel="stylesheet" />
     <style>
       body {
         padding-left: 25%;
@@ -72,12 +72,13 @@
       <nav class="level">
         <div class="level-item has-text-centered">
           <h3 class="subtitle is-4">Date:</h3>
-          <input id="date" type="date" class="re-query" value="2018-11-10" />
+          <input id="date" type="date" class="re-query" value="2019-06-04" />
         </div>
         <div class="level-item has-text-centered">
           <h3 class="subtitle is-4">Provider:</h3>
           <div class="select">
             <select id="provider" class="re-query">
+              <option>Custom</option>
               <option>All</option>
               <option>Bird</option>
               <option>Lime</option>
@@ -430,16 +431,14 @@
       };
 
       $(() => {
-        fetch("/center")
-          .then(response => {
-            return response.json();
-          })
-          .then(function(center) {
             Object.keys(maps).forEach(map => {
               maps[map] = new mapboxgl.Map({
                 container: map,
                 style: "mapbox://styles/mapbox/light-v9",
-                center: center,
+                center: [
+                  -121.49076461791991,
+                  38.57917134260395
+                ],
                 zoom: 12
               });
             });
@@ -792,7 +791,6 @@
                 query();
               }, 1000);
             }, 1000);
-          });
       });
 
       function query() {
@@ -801,7 +799,7 @@
         var provider = $("#provider option:selected")
           .val()
           .toLowerCase();
-        var url = "/" + date + "/" + provider;
+        var url = "public/data/" + date + "/" + provider + '.json';
         console.log(url);
 
         fetch(url)
