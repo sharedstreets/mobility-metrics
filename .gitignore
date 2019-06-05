@@ -61,7 +61,6 @@ typings/
 .next
 
 # default data dirs
-data
 shst
 cache
 
