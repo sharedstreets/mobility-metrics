@@ -5,7 +5,7 @@ SharedStreets Mobility Metrics is an open source server and frontend for ingesti
 
 ## Requirements
 
-- OSX or Linux (Support for Windows coming soon via docker)
+- OSX or Linux (docker or WSL is recommended for Windows users)
 - Node.js v11
 - Valid MDS credentials for at least one live MDS Provider API
 
