@@ -194,7 +194,7 @@ const summarize = async function(day, shst, graph, pointMatcher) {
 };
 
 function getTimeBins(timestamp) {
-  var time = moment(timestamp, "X");
+  var time = moment(timestamp, "x");
   var minutes = +time.minutes();
   var formattedMinutes = "00";
   if (minutes >= 15) formattedMinutes = "15";
