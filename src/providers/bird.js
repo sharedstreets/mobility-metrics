@@ -14,14 +14,20 @@ function trips(stream, start, stop) {
     }
   };
 
-  scan(opts, () => {
-    stream.end();
+  scan(opts, (err) => {
+    if (err)
+      stream.destroy(err);
+    else
+      stream.end();
   });
 
   // recursive scan across
   function scan(opts, cb) {
     request.get(opts, (err, res, body) => {
-      if (err) throw err;
+      if (err) {
+        cb(err);
+        return;
+      }
 
       var data = JSON.parse(body);
 
@@ -51,14 +57,20 @@ function changes(stream, start, stop) {
     }
   };
 
-  scan(opts, () => {
-    stream.end();
+  scan(opts, (err) => {
+    if (err)
+      stream.destroy(err);
+    else
+      stream.end();
   });
 
   // recursive scan across
   function scan(opts, cb) {
     request.get(opts, (err, res, body) => {
-      if (err) throw err;
+      if (err) {
+        cb(err);
+        return;
+      }
 
       var data = JSON.parse(body);
       // write any returned changes to stream
