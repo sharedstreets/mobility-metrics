@@ -1,33 +1,44 @@
 {
   "boundary": [0.0, 0.0, 1.0, 1.0],
-  "center": [0, 0],
   "privacyMinimum": 3,
   "providers": {
-    "bird": {
+    "Synth": {
+      "type": "local",
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": true
+    },
+    "Bird": {
+      "type": "mds",
       "trips": "",
       "status_changes": "",
       "token": "",
       "enabled": false
     },
-    "jump": {
+    "Jump": {
+      "type": "mds",
       "trips": "",
       "status_changes": "",
       "token": "",
       "enabled": false
     },
-    "lime": {
+    "Lime": {
+      "type": "mds",
       "trips": "",
       "status_changes": "",
       "token": "",
       "enabled": false
     },
-    "scoot": {
+    "Scoot": {
+      "type": "mds",
       "trips": "",
       "status_changes": "",
       "token": "",
       "enabled": false
     },
-    "spin": {
+    "Spin": {
+      "type": "mds",
       "trips": "",
       "status_changes": "",
       "token": "",
