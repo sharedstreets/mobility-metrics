@@ -38,8 +38,13 @@ const cache = async function(dayString) {
       path.join(cacheDayProviderPath, "./changes.json")
     );
 
-    await mds.trips(provider, cacheDayProviderTripsStream, start, stop);
-    await mds.changes(provider, cacheDayProviderChangesStream, start, stop);
+    if (provider.type === 'mds') {
+      await mds.trips(provider, cacheDayProviderTripsStream, start, stop);
+      await mds.changes(provider, cacheDayProviderChangesStream, start, stop);
+    } else if (provider.type === 'local') {
+      await local.trips(provider, cacheDayProviderTripsStream, start, stop);
+      await local.changes(provider, cacheDayProviderChangesStream, start, stop);
+    }
   }
 };
 
