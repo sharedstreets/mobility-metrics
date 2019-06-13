@@ -2,77 +2,80 @@ const fs = require("fs");
 const request = require("request");
 const config = require("./../../config.json");
 
-var provider = config.providers.bird;
-
-function trips(stream, start, stop) {
-  var opts = {
-    url: provider.trips + "?start_time=" + start + "&end_time=" + stop,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: provider.token
-    }
-  };
-
-  scan(opts, () => {
-    stream.end();
-  });
-
-  // recursive scan across
-  function scan(opts, cb) {
-    request.get(opts, (err, res, body) => {
-      if (err) throw err;
-
-      var data = JSON.parse(body);
-
-      // write any returned trips to stream
-      data.data.trips.forEach(trip => {
-        stream.write(trip);
-      });
-
-      // continue scan if another page is present
-      if (data.links.next) {
-        opts.url = data.links.next;
-        scan(opts, cb);
-      } else {
-        cb();
+async function trips(provider, stream, start, stop) {
+  return new Promise((resolve, reject) => {
+    var opts = {
+      url: provider.trips + "?start_time=" + start + "&end_time=" + stop,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: provider.token
       }
+    };
+
+    // recursive scan across
+    function scan(opts, done) {
+      request.get(opts, (err, res, body) => {
+        if (err) throw err;
+
+        var data = JSON.parse(body);
+
+        // write any returned trips to stream
+        for (let trip of data.data.trips) {
+          stream.write(JSON.stringify(trip) + "\n");
+        }
+
+        // continue scan if another page is present
+        if (data.links.next) {
+          opts.url = data.links.next;
+          scan(opts, done);
+        } else {
+          done();
+        }
+      });
+    }
+
+    scan(opts, () => {
+      resolve();
     });
-  }
+  });
 }
 
-function changes(stream, start, stop) {
-  var opts = {
-    url: provider.status_changes + "?start_time=" + start + "&end_time=" + stop,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: provider.token
-    }
-  };
-
-  scan(opts, () => {
-    stream.end();
-  });
-
-  // recursive scan across
-  function scan(opts, cb) {
-    request.get(opts, (err, res, body) => {
-      if (err) throw err;
-
-      var data = JSON.parse(body);
-      // write any returned changes to stream
-      data.data.status_changes.forEach(change => {
-        stream.write(change);
-      });
-
-      // continue scan if another page is present
-      if (data.links.next) {
-        opts.url = data.links.next;
-        scan(opts, cb);
-      } else {
-        cb();
+async function changes(provider, stream, start, stop) {
+  return new Promise((resolve, reject) => {
+    var opts = {
+      url:
+        provider.status_changes + "?start_time=" + start + "&end_time=" + stop,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: provider.token
       }
+    };
+
+    // recursive scan across
+    function scan(opts, done) {
+      request.get(opts, (err, res, body) => {
+        if (err) throw err;
+        var data = JSON.parse(body);
+
+        // write any returned changes to stream
+        for (let change of data.data.status_changes) {
+          stream.write(JSON.stringify(change) + "\n");
+        }
+
+        // continue scan if another page is present
+        if (data.links.next) {
+          opts.url = data.links.next;
+          scan(opts, done);
+        } else {
+          done();
+        }
+      });
+    }
+
+    scan(opts, () => {
+      resolve();
     });
-  }
+  });
 }
 
 module.exports.trips = trips;
