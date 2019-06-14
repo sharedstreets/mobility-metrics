@@ -6,7 +6,6 @@ const through2 = require("through2");
 const moment = require("moment");
 const local = require("./providers/local");
 const mds = require("./providers/mds");
-//const all require('./all')
 const config = require("../config.json");
 
 const cachePath = path.join(__dirname, "./../cache");

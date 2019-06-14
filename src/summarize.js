@@ -11,7 +11,6 @@ const config = require("../config.json");
 const providers = Object.keys(config.providers).filter(provider => {
   return config.providers[provider].enabled;
 });
-providers.push("all");
 
 var Z = 9;
 var privacyMinimum = config.privacyMinimum || 3;
