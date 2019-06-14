@@ -18,6 +18,7 @@ async function trips(provider, stream, start, stop) {
             var trip = JSON.parse(data);
             trip.start_time = trip.start_time / 1000;
             trip.end_time = trip.end_time / 1000;
+
             if (trip.start_time >= start && trip.start_time < stop) {
               stream.write(JSON.stringify(trip) + "\n");
             }

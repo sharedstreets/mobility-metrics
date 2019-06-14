@@ -29,8 +29,8 @@ const summarize = async function(day, shst, graph, pointMatcher) {
 
       console.log("    " + provider + "...");
 
-      fs.writeFileSync(path.join(cacheProviderPath, "trips.json"), "");
-      fs.writeFileSync(path.join(cacheProviderPath, "changes.json"), "");
+      fs.appendFileSync(path.join(cacheProviderPath, "trips.json"), "");
+      fs.appendFileSync(path.join(cacheProviderPath, "changes.json"), "");
 
       var trips = fs
         .readFileSync(path.join(cacheProviderPath, "trips.json"))

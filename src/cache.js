@@ -10,7 +10,9 @@ const config = require("../config.json");
 
 const cachePath = path.join(__dirname, "./../cache");
 
-const providers = Object.keys(config.providers);
+const providers = Object.keys(config.providers).filter(provider => {
+  return config.providers[provider].enabled;
+});
 
 const cache = async function(dayString) {
   var day = moment(dayString, "YYYY-MM-DD");
@@ -37,10 +39,10 @@ const cache = async function(dayString) {
       path.join(cacheDayProviderPath, "./changes.json")
     );
 
-    if (provider.type === 'mds') {
+    if (provider.type === "mds") {
       await mds.trips(provider, cacheDayProviderTripsStream, start, stop);
       await mds.changes(provider, cacheDayProviderChangesStream, start, stop);
-    } else if (provider.type === 'local') {
+    } else if (provider.type === "local") {
       await local.trips(provider, cacheDayProviderTripsStream, start, stop);
       await local.changes(provider, cacheDayProviderChangesStream, start, stop);
     }
