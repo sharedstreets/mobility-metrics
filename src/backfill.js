@@ -25,12 +25,12 @@ const backfill = async function() {
     };
     var graph = new shst.Graph(envelope, graphOpts);
     await graph.buildGraph();
-    var pointMatcher = new shst.PointMatcher(envelope, graphOpts);
+    //var pointMatcher = new shst.Graph(envelope, graphOpts);
 
     while (days--) {
       const current = day.clone().subtract(days, "day");
       console.log("building: ", current.format("YYYY-MM-DD"));
-      await summarize(current.format("YYYY-MM-DD"), shst, graph, pointMatcher);
+      await summarize(current.format("YYYY-MM-DD"), shst, graph, graph); //, pointMatcher);
     }
     resolve();
   });

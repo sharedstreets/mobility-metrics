@@ -467,7 +467,7 @@ async function pickups(stats, trips, pointMatcher) {
     });
 
     // sharedstreets aggregation
-    var matches = await pointMatcher.getPointCandidates(
+    var matches = await pointMatcher.matchPoint(
       trip.route.features[0],
       null,
       1
@@ -562,7 +562,7 @@ async function dropoffs(stats, trips, pointMatcher) {
     });
 
     // sharedstreets aggregation
-    var matches = await pointMatcher.getPointCandidates(
+    var matches = await pointMatcher.matchPoint(
       trip.route.features[trip.route.features.length - 1],
       null,
       1
@@ -779,7 +779,7 @@ async function availability(stats, states, day, pointMatcher) {
         }
 
         // availability street refs
-        var matches = await pointMatcher.getPointCandidates(
+        var matches = await pointMatcher.matchPoint(
           lastAvailable.event_location,
           null,
           1
@@ -961,7 +961,7 @@ async function onstreet(stats, states, day, pointMatcher) {
         }
 
         // onstreet street refs
-        var matches = await pointMatcher.getPointCandidates(
+        var matches = await pointMatcher.matchPoint(
           lastAvailable.event_location,
           null,
           1

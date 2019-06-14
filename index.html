@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>SharedStreets Micromobility</title>
+    <title>SharedStreets Mobility Metrics</title>
     <meta
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
@@ -72,12 +72,13 @@
       <nav class="level">
         <div class="level-item has-text-centered">
           <h3 class="subtitle is-4">Date:</h3>
-          <input id="date" type="date" class="re-query" value="2018-11-10" />
+          <input id="date" type="date" class="re-query" value="2019-06-11" />
         </div>
         <div class="level-item has-text-centered">
           <h3 class="subtitle is-4">Provider:</h3>
           <div class="select">
             <select id="provider" class="re-query">
+              <option>Synth</option>
               <option>All</option>
               <option>Bird</option>
               <option>Lime</option>
@@ -810,9 +811,10 @@
           })
           .then(function(json) {
             data = json;
-            render();
+            //render();
           })
           .catch(err => {
+            debugger;
             data = undefined;
             render();
           });
