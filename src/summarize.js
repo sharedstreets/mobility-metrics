@@ -4,6 +4,7 @@ const mkdirp = require("mkdirp");
 const turf = require("@turf/turf");
 const moment = require("moment");
 const h3 = require("h3-js");
+const md5 = require("md5");
 const cache = require("./cache");
 const config = require("../config.json");
 
@@ -12,10 +13,12 @@ const providers = Object.keys(config.providers).filter(provider => {
   return config.providers[provider].enabled;
 });
 
+providers.push("All");
+
 var Z = 9;
 var privacyMinimum = config.privacyMinimum || 3;
 
-const summarize = async function(day, shst, graph, pointMatcher) {
+const summarize = async function(day, shst, graph, matchCache) {
   return new Promise(async (resolve, reject) => {
     var cachePath = path.join(__dirname + "./../cache", day);
     if (!fs.existsSync(cachePath)) {
@@ -172,26 +175,25 @@ const summarize = async function(day, shst, graph, pointMatcher) {
       });
 
       console.log("      trip volumes...");
-      await tripVolumes(stats, trips, graph);
+      await tripVolumes(stats, trips, graph, matchCache);
       console.log("      pickups...");
-      await pickups(stats, trips, pointMatcher);
+      await pickups(stats, trips, graph, matchCache);
       console.log("      dropoffs...");
-      await dropoffs(stats, trips, pointMatcher);
+      await dropoffs(stats, trips, graph, matchCache);
       console.log("      flows...");
       flows(stats, trips);
       console.log("      availability...");
-      await availability(stats, states, day, pointMatcher);
+      await availability(stats, states, day, graph, matchCache);
       console.log("      onstreet...");
-      await onstreet(stats, states, day, pointMatcher);
+      await onstreet(stats, states, day, graph, matchCache);
 
       var summaryPath = path.join(__dirname + "./../data", day);
       mkdirp.sync(summaryPath);
       summaryFilePath = path.join(summaryPath, provider + ".json");
 
       fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
-
-      resolve();
     }
+    resolve();
   });
 };
 
@@ -210,7 +212,7 @@ function getTimeBins(timestamp) {
   };
 }
 
-async function tripVolumes(stats, trips, graph) {
+async function tripVolumes(stats, trips, graph, matchCache) {
   for (let trip of trips) {
     var bins = new Set();
     trip.route.features.forEach(ping => {
@@ -268,7 +270,7 @@ async function tripVolumes(stats, trips, graph) {
       })
     );
 
-    var match = await graph.matchTrace(line);
+    match = await graph.matchTrace(line);
 
     if (
       match &&
@@ -416,7 +418,7 @@ async function tripVolumes(stats, trips, graph) {
   });
 }
 
-async function pickups(stats, trips, pointMatcher) {
+async function pickups(stats, trips, graph, matchCache) {
   // h3 aggregation
   for (let trip of trips) {
     var bins = new Set();
@@ -467,16 +469,12 @@ async function pickups(stats, trips, pointMatcher) {
     });
 
     // sharedstreets aggregation
-    var matches = await pointMatcher.matchPoint(
-      trip.route.features[0],
-      null,
-      1
-    );
+    var matches = await graph.matchPoint(trip.route.features[0], null, 1);
     if (matches.length) {
       var ref = matches[0].geometryId;
       // cache geometry from ref
       var geo = JSON.parse(
-        JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+        JSON.stringify(graph.tileIndex.featureIndex.get(ref))
       );
       geo.properties = {
         ref: ref
@@ -511,7 +509,7 @@ async function pickups(stats, trips, pointMatcher) {
   }
 }
 
-async function dropoffs(stats, trips, pointMatcher) {
+async function dropoffs(stats, trips, graph, matchCache) {
   // h3 aggregation
   for (let trip of trips) {
     var bins = new Set();
@@ -562,7 +560,7 @@ async function dropoffs(stats, trips, pointMatcher) {
     });
 
     // sharedstreets aggregation
-    var matches = await pointMatcher.matchPoint(
+    var matches = await graph.matchPoint(
       trip.route.features[trip.route.features.length - 1],
       null,
       1
@@ -571,7 +569,7 @@ async function dropoffs(stats, trips, pointMatcher) {
       var ref = matches[0].geometryId;
       // cache geometry from ref
       var geo = JSON.parse(
-        JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+        JSON.stringify(graph.tileIndex.featureIndex.get(ref))
       );
       geo.properties = {
         ref: ref
@@ -715,7 +713,7 @@ function flows(stats, trips) {
   });
 }
 
-async function availability(stats, states, day, pointMatcher) {
+async function availability(stats, states, day, graph, matchCache) {
   // playback times
   // foreach 15 min:
   // foreach vehicle state:
@@ -779,7 +777,7 @@ async function availability(stats, states, day, pointMatcher) {
         }
 
         // availability street refs
-        var matches = await pointMatcher.matchPoint(
+        var matches = await graph.matchPoint(
           lastAvailable.event_location,
           null,
           1
@@ -788,7 +786,7 @@ async function availability(stats, states, day, pointMatcher) {
           var ref = matches[0].geometryId;
           // cache geometry from ref
           var geo = JSON.parse(
-            JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+            JSON.stringify(graph.tileIndex.featureIndex.get(ref))
           );
           geo.properties = {
             ref: ref
@@ -902,7 +900,7 @@ async function availability(stats, states, day, pointMatcher) {
   });
 }
 
-async function onstreet(stats, states, day, pointMatcher) {
+async function onstreet(stats, states, day, graph, matchCache) {
   // playback times
   // foreach 15 min:
   // foreach vehicle state:
@@ -961,7 +959,7 @@ async function onstreet(stats, states, day, pointMatcher) {
         }
 
         // onstreet street refs
-        var matches = await pointMatcher.matchPoint(
+        var matches = await graph.matchPoint(
           lastAvailable.event_location,
           null,
           1
@@ -970,7 +968,7 @@ async function onstreet(stats, states, day, pointMatcher) {
           var ref = matches[0].geometryId;
           // cache geometry from ref
           var geo = JSON.parse(
-            JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+            JSON.stringify(graph.tileIndex.featureIndex.get(ref))
           );
           geo.properties = {
             ref: ref

@@ -25,6 +25,10 @@ const cache = async function(dayString) {
   const start = Math.round(+day.format("X"));
 
   const cacheDayPath = path.join(cachePath, "./" + day.format("YYYY-MM-DD"));
+  const cacheDayAllPath = path.join(cacheDayPath, "./All");
+  const cacheDayAllTripsPath = path.join(cacheDayAllPath, "trips.json");
+  const cacheDayAllChangesPath = path.join(cacheDayAllPath, "changes.json");
+  mkdirp.sync(cacheDayAllPath);
 
   for (let name of providers) {
     const provider = config.providers[name];
@@ -32,11 +36,21 @@ const cache = async function(dayString) {
 
     var cacheDayProviderPath = path.join(cacheDayPath, "./" + name);
     mkdirp.sync(cacheDayProviderPath);
+
+    const cacheDayProviderTripsPath = path.join(
+      cacheDayProviderPath,
+      "./trips.json"
+    );
+    const cacheDayProvuderChangesPath = path.join(
+      cacheDayProviderPath,
+      "./changes.json"
+    );
+
     var cacheDayProviderTripsStream = fs.createWriteStream(
-      path.join(cacheDayProviderPath, "./trips.json")
+      cacheDayProviderTripsPath
     );
     var cacheDayProviderChangesStream = fs.createWriteStream(
-      path.join(cacheDayProviderPath, "./changes.json")
+      cacheDayProvuderChangesPath
     );
 
     if (provider.type === "mds") {
@@ -46,6 +60,12 @@ const cache = async function(dayString) {
       await local.trips(provider, cacheDayProviderTripsStream, start, stop);
       await local.changes(provider, cacheDayProviderChangesStream, start, stop);
     }
+
+    const tripsData = fs.readFileSync(cacheDayProviderTripsPath).toString();
+    const changesData = fs.readFileSync(cacheDayProvuderChangesPath).toString();
+
+    fs.appendFileSync(cacheDayAllTripsPath, tripsData);
+    fs.appendFileSync(cacheDayAllChangesPath, changesData);
   }
 };
 
