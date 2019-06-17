@@ -25,7 +25,7 @@ async function trips(provider, stream, start, stop) {
         }
 
         // continue scan if another page is present
-        if (data.links.next) {
+        if (data.links && data.links.next) {
           opts.url = data.links.next;
           scan(opts, done);
         } else {
@@ -63,7 +63,7 @@ async function changes(provider, stream, start, stop) {
         }
 
         // continue scan if another page is present
-        if (data.links.next) {
+        if (data.links && data.links.next) {
           opts.url = data.links.next;
           scan(opts, done);
         } else {
