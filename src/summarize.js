@@ -4,6 +4,7 @@ const mkdirp = require("mkdirp");
 const turf = require("@turf/turf");
 const moment = require("moment");
 const h3 = require("h3-js");
+const md5 = require("md5");
 const cache = require("./cache");
 const config = require("../config.json");
 
@@ -11,186 +12,193 @@ const config = require("../config.json");
 const providers = Object.keys(config.providers).filter(provider => {
   return config.providers[provider].enabled;
 });
-providers.push("all");
+
+providers.push("All");
 
 var Z = 9;
 var privacyMinimum = config.privacyMinimum || 3;
 
-const summarize = async function(day, shst, graph, pointMatcher) {
-  var cachePath = path.join(__dirname + "./../cache", day);
-  if (!fs.existsSync(cachePath)) {
-    console.log("  caching...");
-    await cache(day);
-  }
-
-  console.log("  summarizing...");
-  for (let provider of providers) {
-    var cacheProviderPath = path.join(cachePath, provider);
-
-    console.log("    " + provider + "...");
-
-    var trips = fs
-      .readFileSync(path.join(cacheProviderPath, "trips.json"))
-      .toString()
-      .split("\n")
-      .filter(line => {
-        return line.length;
-      })
-      .map(JSON.parse);
-    var changes = fs
-      .readFileSync(path.join(cacheProviderPath, "changes.json"))
-      .toString()
-      .split("\n")
-      .filter(line => {
-        return line.length;
-      })
-      .map(JSON.parse);
-
-    var totalVehicles = new Set();
-    var totalActiveVehicles = new Set();
-    var stats = {
-      totalVehicles: 0,
-      totalActiveVehicles: 0,
-      totalTrips: 0,
-      totalDistance: 0,
-      totalDuration: 0,
-      geometry: {
-        bins: {},
-        streets: {},
-        pairs: {}
-      },
-      tripVolumes: {
-        bins: {
-          day: {},
-          hour: {},
-          minute: {}
-        },
-        streets: {
-          day: {},
-          hour: {},
-          minute: {}
-        }
-      },
-      pickups: {
-        bins: {
-          day: {},
-          hour: {},
-          minute: {}
-        },
-        streets: {
-          day: {},
-          hour: {},
-          minute: {}
-        }
-      },
-      dropoffs: {
-        bins: {
-          day: {},
-          hour: {},
-          minute: {}
-        },
-        streets: {
-          day: {},
-          hour: {},
-          minute: {}
-        }
-      },
-      flows: {
-        pairs: {
-          day: {},
-          hour: {},
-          minute: {}
-        }
-      },
-      availability: {
-        bins: {
-          day: {},
-          hour: {},
-          minute: {}
-        },
-        streets: {
-          day: {},
-          hour: {},
-          minute: {}
-        }
-      },
-      onstreet: {
-        bins: {
-          day: {},
-          hour: {},
-          minute: {}
-        },
-        streets: {
-          day: {},
-          hour: {},
-          minute: {}
-        }
-      }
-    };
-
-    for (let trip of trips) {
-      totalVehicles.add(trip.vehicle_id);
-      totalActiveVehicles.add(trip.vehicle_id);
-
-      // convert to miles
-      trip.trip_distance = trip.trip_distance * 0.000621371;
-      // convert to minutes
-      trip.trip_duration = trip.trip_duration / 60;
-
-      // summary stats
-      stats.totalActiveVehicles = totalActiveVehicles.size;
-      stats.totalTrips++;
-      stats.totalDistance += trip.trip_distance;
-      stats.totalDuration += trip.trip_duration;
-      stats.averageVehicleDistance =
-        stats.totalDistance / stats.totalActiveVehicles;
-      stats.averageVehicleDuration =
-        stats.totalDuration / stats.totalActiveVehicles;
-      stats.averageTripDistance = stats.totalDistance / stats.totalTrips;
-      stats.averageTripDuration = stats.totalDuration / stats.totalTrips;
-      stats.averageTrips = stats.totalTrips / stats.totalActiveVehicles;
+const summarize = async function(day, shst, graph, matchCache) {
+  return new Promise(async (resolve, reject) => {
+    var cachePath = path.join(__dirname + "./../cache", day);
+    if (!fs.existsSync(cachePath)) {
+      console.log("  caching...");
+      await cache(day);
     }
 
-    // build state histories for each vehicle
-    var states = {};
-    changes.forEach(change => {
-      if (!states[change.vehicle_id]) {
-        totalVehicles.add(change.vehicle_id);
-        stats.totalVehicles = totalVehicles.size;
-        states[change.vehicle_id] = [];
+    console.log("  summarizing...");
+    for (let provider of providers) {
+      var cacheProviderPath = path.join(cachePath, provider);
+
+      console.log("    " + provider + "...");
+
+      fs.appendFileSync(path.join(cacheProviderPath, "trips.json"), "");
+      fs.appendFileSync(path.join(cacheProviderPath, "changes.json"), "");
+
+      var trips = fs
+        .readFileSync(path.join(cacheProviderPath, "trips.json"))
+        .toString()
+        .split("\n")
+        .filter(line => {
+          return line.length;
+        })
+        .map(JSON.parse);
+      var changes = fs
+        .readFileSync(path.join(cacheProviderPath, "changes.json"))
+        .toString()
+        .split("\n")
+        .filter(line => {
+          return line.length;
+        })
+        .map(JSON.parse);
+
+      var totalVehicles = new Set();
+      var totalActiveVehicles = new Set();
+      var stats = {
+        totalVehicles: 0,
+        totalActiveVehicles: 0,
+        totalTrips: 0,
+        totalDistance: 0,
+        totalDuration: 0,
+        geometry: {
+          bins: {},
+          streets: {},
+          pairs: {}
+        },
+        tripVolumes: {
+          bins: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
+          streets: {
+            day: {},
+            hour: {},
+            minute: {}
+          }
+        },
+        pickups: {
+          bins: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
+          streets: {
+            day: {},
+            hour: {},
+            minute: {}
+          }
+        },
+        dropoffs: {
+          bins: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
+          streets: {
+            day: {},
+            hour: {},
+            minute: {}
+          }
+        },
+        flows: {
+          pairs: {
+            day: {},
+            hour: {},
+            minute: {}
+          }
+        },
+        availability: {
+          bins: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
+          streets: {
+            day: {},
+            hour: {},
+            minute: {}
+          }
+        },
+        onstreet: {
+          bins: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
+          streets: {
+            day: {},
+            hour: {},
+            minute: {}
+          }
+        }
+      };
+
+      for (let trip of trips) {
+        totalVehicles.add(trip.vehicle_id);
+        totalActiveVehicles.add(trip.vehicle_id);
+
+        // convert to miles
+        trip.trip_distance = trip.trip_distance * 0.000621371;
+        // convert to minutes
+        trip.trip_duration = trip.trip_duration / 60;
+
+        // summary stats
+        stats.totalActiveVehicles = totalActiveVehicles.size;
+        stats.totalTrips++;
+        stats.totalDistance += trip.trip_distance;
+        stats.totalDuration += trip.trip_duration;
+        stats.averageVehicleDistance =
+          stats.totalDistance / stats.totalActiveVehicles;
+        stats.averageVehicleDuration =
+          stats.totalDuration / stats.totalActiveVehicles;
+        stats.averageTripDistance = stats.totalDistance / stats.totalTrips;
+        stats.averageTripDuration = stats.totalDuration / stats.totalTrips;
+        stats.averageTrips = stats.totalTrips / stats.totalActiveVehicles;
       }
-      states[change.vehicle_id].push(change);
-    });
-    // sort by time
-    Object.keys(states).forEach(id => {
-      states[id] = states[id].sort((a, b) => {
-        return a.event_time - b.event_time;
+
+      // build state histories for each vehicle
+      var states = {};
+      changes.forEach(change => {
+        if (!states[change.vehicle_id]) {
+          totalVehicles.add(change.vehicle_id);
+          stats.totalVehicles = totalVehicles.size;
+          states[change.vehicle_id] = [];
+        }
+        states[change.vehicle_id].push(change);
       });
-    });
+      // sort by time
+      Object.keys(states).forEach(id => {
+        states[id] = states[id].sort((a, b) => {
+          return a.event_time - b.event_time;
+        });
+      });
 
-    console.log("      trip volumes...");
-    await tripVolumes(stats, trips, graph);
-    console.log("      pickups...");
-    await pickups(stats, trips, pointMatcher);
-    console.log("      dropoffs...");
-    await dropoffs(stats, trips, pointMatcher);
-    console.log("      flows...");
-    flows(stats, trips);
-    console.log("      availability...");
-    await availability(stats, states, day, pointMatcher);
-    console.log("      onstreet...");
-    await onstreet(stats, states, day, pointMatcher);
+      console.log("      trip volumes...");
+      await tripVolumes(stats, trips, graph, matchCache);
+      console.log("      pickups...");
+      await pickups(stats, trips, graph, matchCache);
+      console.log("      dropoffs...");
+      await dropoffs(stats, trips, graph, matchCache);
+      console.log("      flows...");
+      flows(stats, trips);
+      console.log("      availability...");
+      await availability(stats, states, day, graph, matchCache);
+      console.log("      onstreet...");
+      await onstreet(stats, states, day, graph, matchCache);
 
-    var summaryPath = path.join(__dirname + "./../data", day);
-    mkdirp.sync(summaryPath);
-    summaryFilePath = path.join(summaryPath, provider + ".json");
+      var summaryPath = path.join(__dirname + "./../data", day);
+      mkdirp.sync(summaryPath);
+      summaryFilePath = path.join(summaryPath, provider + ".json");
 
-    fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
-  }
+      fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
+    }
+    resolve();
+  });
 };
 
 function getTimeBins(timestamp) {
-  var time = moment(timestamp, "x");
+  var time = moment(timestamp, "X");
   var minutes = +time.minutes();
   var formattedMinutes = "00";
   if (minutes >= 15) formattedMinutes = "15";
@@ -204,7 +212,7 @@ function getTimeBins(timestamp) {
   };
 }
 
-async function tripVolumes(stats, trips, graph) {
+async function tripVolumes(stats, trips, graph, matchCache) {
   for (let trip of trips) {
     var bins = new Set();
     trip.route.features.forEach(ping => {
@@ -262,7 +270,7 @@ async function tripVolumes(stats, trips, graph) {
       })
     );
 
-    var match = await graph.matchTrace(line);
+    match = await graph.matchTrace(line);
 
     if (
       match &&
@@ -410,7 +418,7 @@ async function tripVolumes(stats, trips, graph) {
   });
 }
 
-async function pickups(stats, trips, pointMatcher) {
+async function pickups(stats, trips, graph, matchCache) {
   // h3 aggregation
   for (let trip of trips) {
     var bins = new Set();
@@ -461,16 +469,12 @@ async function pickups(stats, trips, pointMatcher) {
     });
 
     // sharedstreets aggregation
-    var matches = await pointMatcher.getPointCandidates(
-      trip.route.features[0],
-      null,
-      1
-    );
+    var matches = await graph.matchPoint(trip.route.features[0], null, 1);
     if (matches.length) {
       var ref = matches[0].geometryId;
       // cache geometry from ref
       var geo = JSON.parse(
-        JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+        JSON.stringify(graph.tileIndex.featureIndex.get(ref))
       );
       geo.properties = {
         ref: ref
@@ -505,7 +509,7 @@ async function pickups(stats, trips, pointMatcher) {
   }
 }
 
-async function dropoffs(stats, trips, pointMatcher) {
+async function dropoffs(stats, trips, graph, matchCache) {
   // h3 aggregation
   for (let trip of trips) {
     var bins = new Set();
@@ -556,7 +560,7 @@ async function dropoffs(stats, trips, pointMatcher) {
     });
 
     // sharedstreets aggregation
-    var matches = await pointMatcher.getPointCandidates(
+    var matches = await graph.matchPoint(
       trip.route.features[trip.route.features.length - 1],
       null,
       1
@@ -565,7 +569,7 @@ async function dropoffs(stats, trips, pointMatcher) {
       var ref = matches[0].geometryId;
       // cache geometry from ref
       var geo = JSON.parse(
-        JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+        JSON.stringify(graph.tileIndex.featureIndex.get(ref))
       );
       geo.properties = {
         ref: ref
@@ -709,7 +713,7 @@ function flows(stats, trips) {
   });
 }
 
-async function availability(stats, states, day, pointMatcher) {
+async function availability(stats, states, day, graph, matchCache) {
   // playback times
   // foreach 15 min:
   // foreach vehicle state:
@@ -773,7 +777,7 @@ async function availability(stats, states, day, pointMatcher) {
         }
 
         // availability street refs
-        var matches = await pointMatcher.getPointCandidates(
+        var matches = await graph.matchPoint(
           lastAvailable.event_location,
           null,
           1
@@ -782,7 +786,7 @@ async function availability(stats, states, day, pointMatcher) {
           var ref = matches[0].geometryId;
           // cache geometry from ref
           var geo = JSON.parse(
-            JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+            JSON.stringify(graph.tileIndex.featureIndex.get(ref))
           );
           geo.properties = {
             ref: ref
@@ -896,7 +900,7 @@ async function availability(stats, states, day, pointMatcher) {
   });
 }
 
-async function onstreet(stats, states, day, pointMatcher) {
+async function onstreet(stats, states, day, graph, matchCache) {
   // playback times
   // foreach 15 min:
   // foreach vehicle state:
@@ -955,7 +959,7 @@ async function onstreet(stats, states, day, pointMatcher) {
         }
 
         // onstreet street refs
-        var matches = await pointMatcher.getPointCandidates(
+        var matches = await graph.matchPoint(
           lastAvailable.event_location,
           null,
           1
@@ -964,7 +968,7 @@ async function onstreet(stats, states, day, pointMatcher) {
           var ref = matches[0].geometryId;
           // cache geometry from ref
           var geo = JSON.parse(
-            JSON.stringify(pointMatcher.tileIndex.featureIndex.get(ref))
+            JSON.stringify(graph.tileIndex.featureIndex.get(ref))
           );
           geo.properties = {
             ref: ref
