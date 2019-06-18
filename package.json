@@ -11,7 +11,7 @@
     "node": ">=11.0.0"
   },
   "dependencies": {
-    "@oclif/config": "^1.12.12",
+    "@oclif/config": "^1.13.0",
     "@turf/turf": "^5.1.6",
     "byline": "^5.0.0",
     "d3-queue": "^3.0.7",
@@ -29,7 +29,7 @@
     "untildify": "^3.0.3"
   },
   "devDependencies": {
-    "prettier": "^1.16.4",
-    "tap": "^12.6.0"
+    "prettier": "^1.18.2",
+    "tap": "^12.7.0"
   }
 }
