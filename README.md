@@ -35,6 +35,15 @@ npm install
 
 A `config.json` file is required to run Mobility Metrics. Enable providers and set credentials through this file. This file is used to store access tokens - **handle with care**. See `config.template.json` for a starter config.
 
+## Provider types
+
+In your config.json file, each provider can be one of two types:
+
+- "mds"
+  - Standard MDS endpoint
+  - "trips" and "status_changes" represent HTTP endpoints
+- "local"
+  - "trips" and "status_changes" represent file paths with line delimited MDS data
 
 ## Backfill
 
