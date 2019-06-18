@@ -44,7 +44,11 @@ const clearDir = async function(dir) {
   });
 };
 
-backfill().then(() => {
-  if (!debug) rimraf.sync(path.join(__dirname, "./../cache"));
-  console.log("\ncompleted backfill");
-});
+backfill()
+  .then(() => {
+    if (!debug) rimraf.sync(path.join(__dirname, "./../cache"));
+    console.log("\ncompleted backfill");
+  })
+  .catch(err => {
+    console.error(err.message);
+  });
