@@ -1,12 +1,12 @@
 {
   "boundary": [0.0, 0.0, 1.0, 1.0],
+  "center": [0, 0],
   "privacyMinimum": 3,
   "providers": {
     "Synth": {
       "type": "local",
       "trips": "",
       "status_changes": "",
-      "token": "",
       "enabled": true
     },
     "Bird": {
