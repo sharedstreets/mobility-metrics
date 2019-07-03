@@ -30,6 +30,12 @@
         margin-left: -50px;
         margin-right: -50px;
       }
+      .weekly-summary {
+        background-color: #f7f7f7;
+        padding: 15px;
+        margin-left: -50px;
+        margin-right: -50px;
+      }
       .map {
         height: 350px;
         background-color: #f7f7f7;
@@ -67,22 +73,22 @@
     <h1 class="title is-3">
       <img class="logo" src="shst-logo.jpg" />SharedStreets Mobility Metrics
     </h1>
+    <nav class="level">
+      <div class="level-item has-text-centered">
+        <h3 class="subtitle is-4">Date:</h3>
+        <input id="date" type="date" class="re-query" value="2019-06-25" />
+      </div>
+      <div class="level-item has-text-centered">
+        <h3 class="subtitle is-4">Provider:</h3>
+        <div class="select">
+          <select id="provider" class="re-query">
+            <option>All</option>
+          </select>
+        </div>
+      </div>
+    </nav>
     <div class="daily-summary">
       <h2 class="subtitle is-4">Daily Summary</h2>
-      <nav class="level">
-        <div class="level-item has-text-centered">
-          <h3 class="subtitle is-4">Date:</h3>
-          <input id="date" type="date" class="re-query" value="2019-06-11" />
-        </div>
-        <div class="level-item has-text-centered">
-          <h3 class="subtitle is-4">Provider:</h3>
-          <div class="select">
-            <select id="provider" class="re-query">
-              <option>All</option>
-            </select>
-          </div>
-        </div>
-      </nav>
       <nav class="level">
         <div class="level-item has-text-centered">
           <div>
@@ -144,6 +150,72 @@
         </div>
       </nav>
     </div>
+
+    <div class="weekly-summary">
+      <h2 class="subtitle is-4">Weekly Summary</h2>
+
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Vehicles</p>
+            <p id="weeklyTotalVehicles" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Active Vehicles</p>
+            <p id="weeklyTotalActiveVehicles" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Trips</p>
+            <p id="weeklyTotalTrips" class="title">?</p>
+          </div>
+        </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Trip Distance</p>
+            <p id="weeklyTotalDistance" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Distance Per Vehicle</p>
+            <p id="weeklyAvgDistancePerVehicle" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Vehicle Utilization</p>
+            <p id="weeklyAvgVehicleUtilization" class="title">?</p>
+          </div>
+        </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Trips Per Active Vehicle</p>
+            <p id="weeklyTripsPerActiveVehicle" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Trip Distance</p>
+            <p id="weeklyAvgTripDistance" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Trip Duration</p>
+            <p id="weeklyAvgTripDuration" class="title">?</p>
+          </div>
+        </div>
+      </nav>
+    </div>
+
     <hr />
 
     <h2 class="subtitle is-6">Time Filter</h2>
@@ -825,6 +897,7 @@
 
       function render() {
         if (!data) {
+          // daily
           $("#totalVehicles").text("?");
           $("#totalActiveVehicles").text("?");
           $("#totalTrips").text("?");
@@ -834,7 +907,19 @@
           $("#avgTripDistance").text("?");
           $("#avgTripDuration").text("?");
           $("#avgVehicleUtilization").text("?");
+
+          // weekly
+          $("#weeklyTotalVehicles").text("?");
+          $("#weeklyTotalActiveVehicles").text("?");
+          $("#weeklyTotalTrips").text("?");
+          $("#weeklyTotalDistance").text("?");
+          $("#weeklyAvgDistancePerVehicle").text("?");
+          $("#weeklyTripsPerActiveVehicle").text("?");
+          $("#weeklyAvgTripDistance").text("?");
+          $("#weeklyAvgTripDuration").text("?");
+          $("#weeklyAvgVehicleUtilization").text("?");
         } else {
+          // daily stats
           $("#totalVehicles").text(data.totalVehicles);
           $("#totalActiveVehicles").text(data.totalActiveVehicles);
           $("#avgVehicleUtilization").text(
@@ -856,6 +941,38 @@
               Math.round(
                 (data.averageTripDuration -
                   Math.floor(data.averageTripDuration)) *
+                  60
+              ) +
+              "s"
+          );
+          console.log(data);
+          // weekly stats
+          $("#weeklyTotalVehicles").text(data.weeklyTotalVehicles);
+          $("#weeklyTotalActiveVehicles").text(data.weeklyTotalActiveVehicles);
+          $("#weeklyAvgVehicleUtilization").text(
+            Math.round(
+              (data.weeklyTotalActiveVehicles / data.weeklyTotalVehicles) * 100
+            ) + "%"
+          );
+          $("#weeklyTotalTrips").text(data.weeklyTotalTrips);
+          $("#weeklyTotalDistance").text(
+            Math.round(data.weeklyTotalDistance) + " mi"
+          );
+          $("#weeklyAvgDistancePerVehicle").text(
+            data.weeklyAverageVehicleDistance.toFixed(2) + " mi"
+          );
+          $("#weeklyTripsPerActiveVehicle").text(
+            data.weeklyAverageTrips.toFixed(2)
+          );
+          $("#weeklyAvgTripDistance").text(
+            data.weeklyAverageTripDistance.toFixed(2) + " mi"
+          );
+          $("#weeklyAvgTripDuration").text(
+            Math.floor(data.weeklyAverageTripDuration) +
+              "m " +
+              Math.round(
+                (data.weeklyAverageTripDuration -
+                  Math.floor(data.weeklyAverageTripDuration)) *
                   60
               ) +
               "s"

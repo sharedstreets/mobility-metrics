@@ -191,6 +191,39 @@ const summarize = async function(day, shst, graph, matchCache) {
       mkdirp.sync(summaryPath);
       summaryFilePath = path.join(summaryPath, provider + ".json");
 
+      // weekly
+      stats.weeklyTotalVehicles = stats.totalVehicles;
+      stats.weeklyTotalActiveVehicles = stats.totalActiveVehicles;
+      stats.weeklyTotalTrips = stats.totalTrips;
+      stats.weeklyTotalDistance = stats.totalDistance;
+      stats.weeklyTotalDuration = stats.totalDuration;
+
+      var days = 7;
+      while (days--) {
+        var d = moment(day, "YYYY-MM-DD").subtract(days, "days");
+        var dPath = path.join(__dirname + "./../data", d.format("YYYY-MM-DD"));
+        dFilePath = path.join(dPath, provider + ".json");
+
+        if (fs.existsSync(dFilePath)) {
+          var data = JSON.parse(fs.readFileSync(dFilePath).toString());
+          stats.weeklyTotalVehicles += data.weeklyTotalVehicles;
+          stats.weeklyTotalActiveVehicles += data.weeklyTotalActiveVehicles;
+          stats.weeklyTotalTrips += data.weeklyTotalTrips;
+          stats.weeklyTotalDistance += data.weeklyTotalDistance;
+          stats.weeklyTotalDuration += data.weeklyTotalDuration;
+        }
+      }
+      stats.weeklyAverageVehicleDistance =
+        stats.weeklyTotalDistance / stats.weeklyTotalActiveVehicles;
+      stats.weeklyAverageVehicleDuration =
+        stats.weeklyTotalDuration / stats.weeklyTotalActiveVehicles;
+      stats.weeklyAverageTripDistance =
+        stats.weeklyTotalDistance / stats.weeklyTotalTrips;
+      stats.weeklyAverageTripDuration =
+        stats.weeklyTotalDuration / stats.weeklyTotalTrips;
+      stats.weeklyAverageTrips =
+        stats.weeklyTotalTrips / stats.weeklyTotalActiveVehicles;
+
       fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
     }
     resolve();
