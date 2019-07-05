@@ -21,9 +21,9 @@ const backfill = async function() {
     // get graph
     const graphOpts = {
       source: "osm/planet-181224",
-      tileHierarchy: 6
+      tileHierarchy: 8
     };
-    var graph = new shst.Graph(envelope, graphOpts);
+    var graph = new shst.Graph(envelope, graphOpts, 'bike');
     await graph.buildGraph();
 
     while (days--) {
