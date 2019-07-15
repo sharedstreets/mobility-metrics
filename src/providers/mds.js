@@ -1,6 +1,5 @@
 const fs = require("fs");
 const request = require("request");
-const config = require("./../../config.json");
 
 async function trips(provider, stream, start, stop) {
   return new Promise((resolve, reject) => {

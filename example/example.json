@@ -1,0 +1,36 @@
+{
+  "boundary": [
+    -86.84881210327148,
+    36.12262352221241,
+    -86.73688888549805,
+    36.2049447642222
+  ],
+  "center": [-86.77705764770508, 36.16202793326575],
+  "privacyMinimum": 3,
+  "providers": {
+    "Flipr": {
+      "type": "local",
+      "trips": "example/data/Flipr/trips.json",
+      "status_changes": "example/data/Flipr/changes.json",
+      "enabled": true
+    },
+    "Scoob": {
+      "type": "local",
+      "trips": "example/data/Scoob/trips.json",
+      "status_changes": "example/data/Scoob/changes.json",
+      "enabled": true
+    },
+    "BikeMe": {
+      "type": "local",
+      "trips": "example/data/BikeMe/trips.json",
+      "status_changes": "example/data/BikeMe/changes.json",
+      "enabled": true
+    },
+    "Spuun": {
+      "type": "local",
+      "trips": "example/data/Spuun/trips.json",
+      "status_changes": "example/data/Spuun/changes.json",
+      "enabled": true
+    }
+  }
+}

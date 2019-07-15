@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>SharedStreets Mobility Metrics</title>
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <script src="assets/mapbox-gl.js"></script>
+    <script src="assets/jquery.min.js"></script>
+    <script src="assets/turf.min.js"></script>
+    <script src="assets/simple-statistics.min.js"></script>
+    <link rel="stylesheet" href="assets/bulma.css" />
+    <link href="mapbox-gl.css" rel="assets/stylesheet" />
+    <style>
+      body {
+        padding-left: 25%;
+        padding-right: 25%;
+        padding-top: 10px;
+      }
+      .logo {
+        height: 45px;
+        margin: -12px;
+        padding-right: 10px;
+      }
+      .daily-summary {
+        background-color: #f7f7f7;
+        padding: 15px;
+        margin-left: -50px;
+        margin-right: -50px;
+      }
+      .weekly-summary {
+        background-color: #f7f7f7;
+        padding: 15px;
+        margin-left: -50px;
+        margin-right: -50px;
+      }
+      .map {
+        height: 350px;
+        background-color: #f7f7f7;
+      }
+      .map-box {
+        position: relative;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        height: 350px;
+      }
+      .timecheck {
+        margin-right: 10px;
+      }
+      .export {
+        margin-right: 25px;
+        margin-top: auto;
+      }
+      #export-all {
+        margin-bottom: 50px;
+      }
+      .info {
+        margin: 7px;
+      }
+      #date {
+        font-size: 20px;
+        margin-left: 10px;
+      }
+      #provider {
+        margin-left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="title is-3">
+      <img class="logo" src="assets/shst-logo.jpg" />SharedStreets Mobility
+      Metrics
+    </h1>
+    <nav class="level">
+      <div class="level-item has-text-centered">
+        <h3 class="subtitle is-4">Date: {{day}}</h3>
+      </div>
+      <div class="level-item has-text-centered">
+        <h3 class="subtitle is-4">Provider: {{provider}}</h3>
+      </div>
+    </nav>
+    <div class="daily-summary">
+      <h2 class="subtitle is-4">Daily Summary</h2>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Vehicles</p>
+            <p id="totalVehicles" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Active Vehicles</p>
+            <p id="totalActiveVehicles" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Trips</p>
+            <p id="totalTrips" class="title">?</p>
+          </div>
+        </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Trip Distance</p>
+            <p id="totalDistance" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Distance Per Vehicle</p>
+            <p id="avgDistancePerVehicle" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Vehicle Utilization</p>
+            <p id="avgVehicleUtilization" class="title">?</p>
+          </div>
+        </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Trips Per Active Vehicle</p>
+            <p id="tripsPerActiveVehicle" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Trip Distance</p>
+            <p id="avgTripDistance" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Trip Duration</p>
+            <p id="avgTripDuration" class="title">?</p>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <div class="weekly-summary">
+      <h2 class="subtitle is-4">Weekly Summary</h2>
+
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Vehicles</p>
+            <p id="weeklyTotalVehicles" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Active Vehicles</p>
+            <p id="weeklyTotalActiveVehicles" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Trips</p>
+            <p id="weeklyTotalTrips" class="title">?</p>
+          </div>
+        </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Total Trip Distance</p>
+            <p id="weeklyTotalDistance" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Distance Per Vehicle</p>
+            <p id="weeklyAvgDistancePerVehicle" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Vehicle Utilization</p>
+            <p id="weeklyAvgVehicleUtilization" class="title">?</p>
+          </div>
+        </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Trips Per Active Vehicle</p>
+            <p id="weeklyTripsPerActiveVehicle" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Trip Distance</p>
+            <p id="weeklyAvgTripDistance" class="title">?</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Avg Trip Duration</p>
+            <p id="weeklyAvgTripDuration" class="title">?</p>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-6">Time Filter</h2>
+    <nav class="level">
+      <div class="level-item has-text-centered">
+        <div>
+          <p class="heading">
+            <input
+              id="hour-checkbox"
+              class="timecheck re-render"
+              type="checkbox"
+            />Hour
+          </p>
+          <input
+            id="hour-slider"
+            class="slider is-fullwidth re-render"
+            step="1"
+            min="0"
+            max="24"
+            value="12"
+            type="range"
+          />
+          <p id="hour-value">12pm-1pm</p>
+        </div>
+      </div>
+      <div class="level-item has-text-centered">
+        <div>
+          <p class="heading">
+            <input
+              id="minute-checkbox"
+              class="timecheck re-render"
+              type="checkbox"
+            />Minute
+          </p>
+          <input
+            id="minute-slider"
+            class="slider is-fullwidth re-render"
+            step="15"
+            min="0"
+            max="45"
+            value="0"
+            type="range"
+          />
+          <p id="minute-value">00-15</p>
+        </div>
+      </div>
+    </nav>
+    <hr />
+
+    <h2 class="subtitle is-4">Trip Volume</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input
+              id="trip-volume-streets"
+              class="re-render"
+              type="radio"
+              name="trip-volume-radio"
+              checked
+            />
+            Streets
+          </label>
+          <label class="radio">
+            <input
+              id="trip-volume-bins"
+              class="re-render"
+              type="radio"
+              name="trip-volume-radio"
+            />
+            Bins
+          </label>
+        </div>
+        <p class="info has-text-grey">
+          Trip Volume measures the number of vehicles that moved over a street
+          or zone, filtered to protect individual privacy
+        </p>
+        <a id="trip-volume-export" class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map">
+        <div id="trip-volume-map" class="map-box"></div>
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Availability</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input
+              id="availability-streets"
+              class="re-render"
+              type="radio"
+              name="availability-radio"
+              checked
+            />
+            Streets
+          </label>
+          <label class="radio">
+            <input
+              id="availability-bins"
+              class="re-render"
+              type="radio"
+              name="availability-radio"
+            />
+            Bins
+          </label>
+        </div>
+        <p class="info has-text-grey">
+          Availability measures the max number of vehicles able to be picked up
+          in a zone
+        </p>
+        <a id="availability-export" class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map">
+        <div id="availability-map" class="map-box"></div>
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">On Street</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input
+              id="onstreet-streets"
+              class="re-render"
+              type="radio"
+              name="onstreet-radio"
+              checked
+            />
+            Streets
+          </label>
+          <label class="radio">
+            <input
+              id="onstreet-bins"
+              class="re-render"
+              type="radio"
+              name="onstreet-radio"
+            />
+            Bins
+          </label>
+        </div>
+        <p class="info has-text-grey">
+          On-street measures the max number of stationary vehicles in a zone,
+          including unavailable vehicles
+        </p>
+        <a id="onstreet-export" class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map">
+        <div id="onstreet-map" class="map-box"></div>
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Pick Ups</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input
+              id="pickups-streets"
+              class="re-render"
+              type="radio"
+              name="pickups-radio"
+              checked
+            />
+            Streets
+          </label>
+          <label class="radio">
+            <input
+              id="pickups-bins"
+              class="re-render"
+              type="radio"
+              name="pickups-radio"
+            />
+            Bins
+          </label>
+        </div>
+        <p class="info has-text-grey">
+          Pickups measures the total number of trips that began within a zone
+        </p>
+        <a id="pickups-export" class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map">
+        <div id="pickups-map" class="map-box"></div>
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Drop Offs</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <div class="control">
+          <label class="radio">
+            <input
+              id="dropoffs-streets"
+              class="re-render"
+              type="radio"
+              name="dropoffs-radio"
+              checked
+            />
+            Streets
+          </label>
+          <label class="radio">
+            <input
+              id="dropoffs-bins"
+              class="re-render"
+              type="radio"
+              name="dropoffs-radio"
+            />
+            Bins
+          </label>
+        </div>
+        <p class="info has-text-grey">
+          Dropoffs measures the total number of trips that ended within a zone
+        </p>
+        <a id="dropoffs-export" class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map">
+        <div id="dropoffs-map" class="map-box"></div>
+      </div>
+    </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Flows</h2>
+    <div class="tile">
+      <div class="tile is-vertical is-4">
+        <p class="info has-text-grey">
+          Flows describes the number of trips that moved between two zones,
+          filtered to protect individual privacy
+        </p>
+        <a id="flows-export" class="button is-link export">Export</a>
+      </div>
+      <div class="tile is-vertical is-8 map">
+        <div id="flows-map" class="map-box"></div>
+      </div>
+    </div>
+
+    <hr />
+
+    <div id="export-all" class="tile">
+      <div class="tile is-vertical is-4">
+        <a id="export-all" class="button is-success is-medium export"
+          >Export All</a
+        >
+      </div>
+    </div>
+
+    <script>
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoibW9yZ2FuaGVybG9ja2VyIiwiYSI6Ii1zLU4xOWMifQ.FubD68OEerk74AYCLduMZQ";
+
+      const data = {{data}};
+      const provider = "{{provider}}"
+      const day = "{{day}}"
+
+      var maps = {
+        "trip-volume-map": null,
+        "availability-map": null,
+        "onstreet-map": null,
+        "pickups-map": null,
+        "dropoffs-map": null,
+        "flows-map": null
+      };
+
+      var geojson = {
+        "trip-volume": turf.featureCollection([]),
+        availability: turf.featureCollection([]),
+        onstreet: turf.featureCollection([]),
+        pickups: turf.featureCollection([]),
+        dropoffs: turf.featureCollection([]),
+        flows: turf.featureCollection([])
+      };
+
+      $(() => {
+        Object.keys(maps).forEach(map => {
+          maps[map] = new mapboxgl.Map({
+            container: map,
+            style: "{{style}}",
+            center: {{center}},
+            zoom: {{zoom}}
+          });
+        });
+
+        // setup map layers
+        var colors = [
+          "#feebe2",
+          "#fbb4b9",
+          "#f768a1",
+          "#c51b8a",
+          "#7a0177"
+        ];
+
+        const binPaint = {
+          "fill-outline-color": "#000",
+          "fill-color": [
+            "interpolate",
+            ["linear"],
+            ["get", "quantile"],
+            1,
+            colors[0],
+            2,
+            colors[1],
+            3,
+            colors[2],
+            4,
+            colors[3],
+            5,
+            colors[4]
+          ],
+          "fill-opacity": 0.4
+        };
+
+        const streetPaint = {
+          "line-color": [
+            "interpolate",
+            ["linear"],
+            ["get", "quantile"],
+            1,
+            colors[0],
+            2,
+            colors[1],
+            3,
+            colors[2],
+            4,
+            colors[3],
+            5,
+            colors[4]
+          ],
+          "line-width": [
+            "interpolate",
+            ["linear"],
+            ["get", "quantile"],
+            1,
+            2,
+            2,
+            3,
+            3,
+            2.5,
+            4,
+            3,
+            5,
+            4
+          ],
+          "line-opacity": 0.65
+        };
+
+        var layers = maps["trip-volume-map"].getStyle().layers;
+        // Find the index of the first symbol layer in the map style
+        var firstSymbolId;
+        for (var i = 0; i < layers.length; i++) {
+          if (layers[i].type === "symbol") {
+            firstSymbolId = layers[i].id;
+            break;
+          }
+        }
+        maps["trip-volume-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["trip-volume-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["availability-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["availability-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["onstreet-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["onstreet-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["pickups-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["pickups-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["dropoffs-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["dropoffs-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["flows-map"].addLayer(
+          {
+            id: "pairs",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: {
+              "line-color": colors[4],
+              "line-width": [
+                "interpolate",
+                ["linear"],
+                ["get", "quantile"],
+                1,
+                1.5,
+                2.25,
+                2,
+                3,
+                3.75,
+                4,
+                5,
+                5,
+                7
+              ],
+              "line-opacity": 0.4
+            }
+          },
+          firstSymbolId
+        );
+
+        $("#hour-checkbox").on("change", () => {
+          if (!$("#hour-checkbox").prop("checked")) {
+            $("#minute-checkbox").prop("checked", false);
+          }
+        });
+
+        $("#minute-checkbox").on("change", () => {
+          if ($("#minute-checkbox").prop("checked")) {
+            $("#hour-checkbox").prop("checked", true);
+          }
+        });
+
+        $(".re-query").on("change", () => {
+          query();
+        });
+
+        $(".re-render").on("change", () => {
+          render();
+        });
+
+        $("#hour-slider").on("change", () => {
+          // todo: make functional
+          var slideVal = $("#hour-slider").val();
+          var hourVal = "";
+          if (slideVal === "0") hourVal = "12am-1am";
+          if (slideVal === "1") hourVal = "1am-2am";
+          if (slideVal === "2") hourVal = "2am-3am";
+          if (slideVal === "3") hourVal = "3am-4am";
+          if (slideVal === "4") hourVal = "4am-5am";
+          if (slideVal === "5") hourVal = "5am-6am";
+          if (slideVal === "6") hourVal = "6am-7am";
+          if (slideVal === "7") hourVal = "7am-8am";
+          if (slideVal === "8") hourVal = "8am-9am";
+          if (slideVal === "9") hourVal = "9am-10am";
+          if (slideVal === "10") hourVal = "10am-11am";
+          if (slideVal === "11") hourVal = "11am-12pm";
+          if (slideVal === "12") hourVal = "12pm-1pm";
+          if (slideVal === "13") hourVal = "1pm-2pm";
+          if (slideVal === "14") hourVal = "2pm-3pm";
+          if (slideVal === "15") hourVal = "3pm-4pm";
+          if (slideVal === "16") hourVal = "4pm-5pm";
+          if (slideVal === "17") hourVal = "5pm-6pm";
+          if (slideVal === "18") hourVal = "6pm-7pm";
+          if (slideVal === "19") hourVal = "7pm-8pm";
+          if (slideVal === "20") hourVal = "8pm-9pm";
+          if (slideVal === "21") hourVal = "9pm-10pm";
+          if (slideVal === "22") hourVal = "10pm-11pm";
+          if (slideVal === "23") hourVal = "11pm-12am";
+
+          $("#hour-value").text(hourVal);
+        });
+
+        $("#minute-slider").on("change", () => {
+          var slideVal = $("#minute-slider").val();
+          var minVal = "";
+          if (slideVal === "0") minVal = "00-15";
+          if (slideVal === "15") minVal = "15-30";
+          if (slideVal === "30") minVal = "30-45";
+          if (slideVal === "45") minVal = "45-00";
+
+          $("#minute-value").text(minVal);
+        });
+
+        $("#export-all").on("click", () => {
+          exportAll();
+        });
+
+        $("#trip-volume-export").on("click", () => {
+          exportLayer("trip-volume");
+        });
+        $("#availability-export").on("click", () => {
+          exportLayer("availability");
+        });
+        $("#onstreet-export").on("click", () => {
+          exportLayer("onstreet");
+        });
+        $("#pickups-export").on("click", () => {
+          exportLayer("pickups");
+        });
+        $("#dropoffs-export").on("click", () => {
+          exportLayer("dropoffs");
+        });
+        $("#flows-export").on("click", () => {
+          exportLayer("flows");
+        });
+        console.log(data)
+        render()
+      });
+
+      function render() {
+        if (!data) {
+          console.log('WARNING: No data found for report')
+
+          // daily
+          $("#totalVehicles").text("?");
+          $("#totalActiveVehicles").text("?");
+          $("#totalTrips").text("?");
+          $("#totalDistance").text("?");
+          $("#avgDistancePerVehicle").text("?");
+          $("#tripsPerActiveVehicle").text("?");
+          $("#avgTripDistance").text("?");
+          $("#avgTripDuration").text("?");
+          $("#avgVehicleUtilization").text("?");
+
+          // weekly
+          $("#weeklyTotalVehicles").text("?");
+          $("#weeklyTotalActiveVehicles").text("?");
+          $("#weeklyTotalTrips").text("?");
+          $("#weeklyTotalDistance").text("?");
+          $("#weeklyAvgDistancePerVehicle").text("?");
+          $("#weeklyTripsPerActiveVehicle").text("?");
+          $("#weeklyAvgTripDistance").text("?");
+          $("#weeklyAvgTripDuration").text("?");
+          $("#weeklyAvgVehicleUtilization").text("?");
+        } else {
+          // daily stats
+          $("#totalVehicles").text(data.totalVehicles);
+          $("#totalActiveVehicles").text(data.totalActiveVehicles);
+          $("#avgVehicleUtilization").text(
+            Math.round((data.totalActiveVehicles / data.totalVehicles) * 100) +
+              "%"
+          );
+          $("#totalTrips").text(data.totalTrips);
+          $("#totalDistance").text(Math.round(data.totalDistance) + " mi");
+          $("#avgDistancePerVehicle").text(
+            data.averageVehicleDistance.toFixed(2) + " mi"
+          );
+          $("#tripsPerActiveVehicle").text(data.averageTrips.toFixed(2));
+          $("#avgTripDistance").text(
+            data.averageTripDistance.toFixed(2) + " mi"
+          );
+          $("#avgTripDuration").text(
+            Math.floor(data.averageTripDuration) +
+              "m " +
+              Math.round(
+                (data.averageTripDuration -
+                  Math.floor(data.averageTripDuration)) *
+                  60
+              ) +
+              "s"
+          );
+
+          // weekly stats
+          $("#weeklyTotalVehicles").text(data.weeklyTotalVehicles);
+          $("#weeklyTotalActiveVehicles").text(data.weeklyTotalActiveVehicles);
+          $("#weeklyAvgVehicleUtilization").text(
+            Math.round(
+              (data.weeklyTotalActiveVehicles / data.weeklyTotalVehicles) * 100
+            ) + "%"
+          );
+          $("#weeklyTotalTrips").text(data.weeklyTotalTrips);
+          $("#weeklyTotalDistance").text(
+            Math.round(data.weeklyTotalDistance) + " mi"
+          );
+          $("#weeklyAvgDistancePerVehicle").text(
+            data.weeklyAverageVehicleDistance.toFixed(2) + " mi"
+          );
+          $("#weeklyTripsPerActiveVehicle").text(
+            data.weeklyAverageTrips.toFixed(2)
+          );
+          $("#weeklyAvgTripDistance").text(
+            data.weeklyAverageTripDistance.toFixed(2) + " mi"
+          );
+          $("#weeklyAvgTripDuration").text(
+            Math.floor(data.weeklyAverageTripDuration) +
+              "m " +
+              Math.round(
+                (data.weeklyAverageTripDuration -
+                  Math.floor(data.weeklyAverageTripDuration)) *
+                  60
+              ) +
+              "s"
+          );
+
+          // get time filter
+          var time = $("#date").val();
+          if ($("#hour-checkbox").prop("checked")) {
+            var hour = $("#hour-slider")
+              .val()
+              .toString();
+            if (hour.length === 1) {
+              hour = "0" + hour;
+            }
+            time += "-" + hour;
+          }
+          if ($("#minute-checkbox").prop("checked")) {
+            var minute = $("#minute-slider")
+              .val()
+              .toString();
+            if (minute.length === 1) {
+              minute = "0" + minute;
+            }
+            time += "-" + minute;
+          }
+          var timeLevel = "day";
+          if ($("#hour-checkbox").prop("checked")) {
+            timeLevel = "hour";
+          }
+          if ($("#minute-checkbox").prop("checked")) {
+            timeLevel = "minute";
+          }
+
+          clearMaps();
+
+          // render trip volume
+          if ($("#trip-volume-streets").prop("checked")) {
+            Object.keys(data.tripVolumes.streets[timeLevel][time]).forEach(
+              ref => {
+                var feature = JSON.parse(
+                  JSON.stringify(data.geometry.streets[ref])
+                );
+                feature.properties.value =
+                  data.tripVolumes.streets[timeLevel][time][ref];
+                geojson["trip-volume"].features.push(feature);
+              }
+            );
+            categorize(geojson["trip-volume"]);
+            maps["trip-volume-map"]
+              .getSource("streets")
+              .setData(geojson["trip-volume"]);
+          }
+          if ($("#trip-volume-bins").prop("checked")) {
+            Object.keys(data.tripVolumes.bins[timeLevel][time]).forEach(bin => {
+              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+              feature.properties.value =
+                data.tripVolumes.bins[timeLevel][time][bin];
+              geojson["trip-volume"].features.push(feature);
+            });
+            categorize(geojson["trip-volume"]);
+            maps["trip-volume-map"]
+              .getSource("bins")
+              .setData(geojson["trip-volume"]);
+          }
+
+          // render availability
+          if ($("#availability-streets").prop("checked")) {
+            Object.keys(data.availability.streets[timeLevel][time]).forEach(
+              ref => {
+                if (data.geometry.streets[ref]) {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.streets[ref])
+                  );
+                  feature.properties.value =
+                    data.availability.streets[timeLevel][time][ref];
+                  geojson["availability"].features.push(feature);
+                }
+              }
+            );
+            categorize(geojson["availability"]);
+            maps["availability-map"]
+              .getSource("streets")
+              .setData(geojson["availability"]);
+          }
+          if ($("#availability-bins").prop("checked")) {
+            Object.keys(data.availability.bins[timeLevel][time]).forEach(
+              bin => {
+                var feature = JSON.parse(
+                  JSON.stringify(data.geometry.bins[bin])
+                );
+                feature.properties.value =
+                  data.availability.bins[timeLevel][time][bin];
+                geojson["availability"].features.push(feature);
+              }
+            );
+            categorize(geojson["availability"]);
+            maps["availability-map"]
+              .getSource("bins")
+              .setData(geojson["availability"]);
+          }
+
+          // render onstreet
+          if ($("#onstreet-streets").prop("checked")) {
+            Object.keys(data.onstreet.streets[timeLevel][time]).forEach(ref => {
+              if (data.geometry.streets[ref]) {
+                var feature = JSON.parse(
+                  JSON.stringify(data.geometry.streets[ref])
+                );
+                feature.properties.value =
+                  data.onstreet.streets[timeLevel][time][ref];
+                geojson["onstreet"].features.push(feature);
+              }
+            });
+            categorize(geojson["onstreet"]);
+            maps["onstreet-map"]
+              .getSource("streets")
+              .setData(geojson["onstreet"]);
+          }
+          if ($("#onstreet-bins").prop("checked")) {
+            Object.keys(data.onstreet.bins[timeLevel][time]).forEach(bin => {
+              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+              feature.properties.value =
+                data.onstreet.bins[timeLevel][time][bin];
+              geojson["onstreet"].features.push(feature);
+            });
+            categorize(geojson["onstreet"]);
+            maps["onstreet-map"].getSource("bins").setData(geojson["onstreet"]);
+          }
+
+          // render pickups
+          if ($("#pickups-streets").prop("checked")) {
+            Object.keys(data.pickups.streets[timeLevel][time]).forEach(ref => {
+              if (data.geometry.streets[ref]) {
+                var feature = JSON.parse(
+                  JSON.stringify(data.geometry.streets[ref])
+                );
+                feature.properties.value =
+                  data.pickups.streets[timeLevel][time][ref];
+                geojson["pickups"].features.push(feature);
+              }
+            });
+            categorize(geojson["pickups"]);
+            maps["pickups-map"]
+              .getSource("streets")
+              .setData(geojson["pickups"]);
+          }
+          if ($("#pickups-bins").prop("checked")) {
+            Object.keys(data.pickups.bins[timeLevel][time]).forEach(bin => {
+              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+              feature.properties.value =
+                data.pickups.bins[timeLevel][time][bin];
+              geojson["pickups"].features.push(feature);
+            });
+            categorize(geojson["pickups"]);
+            maps["pickups-map"].getSource("bins").setData(geojson["pickups"]);
+          }
+
+          // render dropoffs
+          if ($("#dropoffs-streets").prop("checked")) {
+            Object.keys(data.dropoffs.streets[timeLevel][time]).forEach(ref => {
+              if (data.geometry.streets[ref]) {
+                var feature = JSON.parse(
+                  JSON.stringify(data.geometry.streets[ref])
+                );
+                feature.properties.value =
+                  data.dropoffs.streets[timeLevel][time][ref];
+                geojson["dropoffs"].features.push(feature);
+              }
+            });
+            categorize(geojson["dropoffs"]);
+            maps["dropoffs-map"]
+              .getSource("streets")
+              .setData(geojson["dropoffs"]);
+          }
+          if ($("#dropoffs-bins").prop("checked")) {
+            Object.keys(data.dropoffs.bins[timeLevel][time]).forEach(bin => {
+              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+              feature.properties.value =
+                data.dropoffs.bins[timeLevel][time][bin];
+              geojson["dropoffs"].features.push(feature);
+            });
+            categorize(geojson["dropoffs"]);
+            maps["dropoffs-map"].getSource("bins").setData(geojson["dropoffs"]);
+          }
+
+          // render flows
+          Object.keys(data.flows.pairs[timeLevel][time]).forEach(pair => {
+            var feature = JSON.parse(JSON.stringify(data.geometry.pairs[pair]));
+            feature.properties.value = data.flows.pairs[timeLevel][time][pair];
+            geojson["flows"].features.push(feature);
+          });
+          categorize(geojson["flows"]);
+          maps["flows-map"].getSource("pairs").setData(geojson["flows"]);
+        }
+      }
+
+      function clearMaps() {
+        geojson["trip-volume"] = turf.featureCollection([]);
+        geojson["availability"] = turf.featureCollection([]);
+        geojson["onstreet"] = turf.featureCollection([]);
+        geojson["pickups"] = turf.featureCollection([]);
+        geojson["dropoffs"] = turf.featureCollection([]);
+        geojson["flows"] = turf.featureCollection([]);
+
+        maps["trip-volume-map"]
+          .getSource("streets")
+          .setData(turf.featureCollection([]));
+        maps["trip-volume-map"]
+          .getSource("bins")
+          .setData(turf.featureCollection([]));
+
+        maps["availability-map"]
+          .getSource("streets")
+          .setData(turf.featureCollection([]));
+        maps["availability-map"]
+          .getSource("bins")
+          .setData(turf.featureCollection([]));
+
+        maps["onstreet-map"]
+          .getSource("streets")
+          .setData(turf.featureCollection([]));
+        maps["onstreet-map"]
+          .getSource("bins")
+          .setData(turf.featureCollection([]));
+
+        maps["pickups-map"]
+          .getSource("streets")
+          .setData(turf.featureCollection([]));
+        maps["pickups-map"]
+          .getSource("bins")
+          .setData(turf.featureCollection([]));
+
+        maps["dropoffs-map"]
+          .getSource("streets")
+          .setData(turf.featureCollection([]));
+        maps["dropoffs-map"]
+          .getSource("bins")
+          .setData(turf.featureCollection([]));
+
+        maps["flows-map"]
+          .getSource("pairs")
+          .setData(turf.featureCollection([]));
+      }
+
+      function exportLayer(layer) {
+        // get time filter
+        var time = $("#date").val();
+        if ($("#hour-checkbox").prop("checked")) {
+          var hour = $("#hour-slider")
+            .val()
+            .toString();
+          if (hour.length === 1) {
+            hour = "0" + hour;
+          }
+          time += "-" + hour;
+        }
+        if ($("#minute-checkbox").prop("checked")) {
+          var minute = $("#minute-slider")
+            .val()
+            .toString();
+          if (minute.length === 1) {
+            minute = "0" + minute;
+          }
+          time += "-" + minute;
+        }
+        var provider = $("#provider option:selected")
+          .val()
+          .toLowerCase();
+        var fileName = time + "-" + provider + "-" + layer + ".json";
+
+        var a = document.createElement("a");
+
+        // clear quantile styling data
+        geojson[layer].features.forEach(f => {
+          delete f.properties.quantile;
+        });
+
+        var file = new Blob([JSON.stringify(geojson[layer])], {
+          type: "application/json"
+        });
+
+        // recompute quantiles
+        categorize(geojson[layer]);
+
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+        a.click();
+      }
+
+      function exportAll() {
+        if (data.features.length) {
+        var date = $("#date").val();
+        var provider = $("#provider option:selected")
+          .val()
+          .toLowerCase();
+        var fileName = date + "-" + provider + "-" + data.features[0].geometry.type + ".json";
+
+        var a = document.createElement("a");
+        var file = new Blob([JSON.stringify(data)], {
+          type: "application/json"
+        });
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+        a.click();
+        }
+      }
+
+      function categorize(fc) {
+        var stats = fc.features.map(f => {
+          return f.properties.value;
+        });
+
+        fc.features.forEach(f => {
+          var quantile = ss.quantileRank(stats, f.properties.value);
+          f.properties.quantile = Math.floor(quantile * 5) + 1;
+        });
+      }
+    </script>
+  </body>
+</html>
