@@ -1,11 +1,11 @@
 {
-  "version": "1.3.1",
+  "name": "mobility-metrics",
+  "version": "2.0.0",
+  "description": "tools for aggregating mobility data",
+  "bin": "./src/cli.js",
   "scripts": {
-    "lint": "prettier config.template.json '{,!(node_modules)/**/}*.js' index.html --write",
-    "test": "npm run lint; tap -R spec test/*.test.js",
-    "server": "node server.js",
-    "clear-cache": "rm -rf ./cache",
-    "clear-metrics": "rm -rf ./data"
+    "lint": "prettier config.template.json example/example.json '{,!(node_modules)/**/}*.js' templates/*.html --write",
+    "test": "npm run lint;"
   },
   "engines": {
     "node": ">=11.0.0"
@@ -16,13 +16,12 @@
     "byline": "^5.0.0",
     "d3-queue": "^3.0.7",
     "h3-js": "^3.4.2",
-    "hapi": "^18.1.0",
-    "inert": "^5.1.2",
     "level": "^4.0.0",
     "level-mem": "^3.0.1",
     "md5": "^2.2.1",
     "mkdirp": "^0.5.1",
     "moment": "^2.24.0",
+    "recursive-copy": "^2.0.10",
     "rimraf": "^2.6.3",
     "sharedstreets": "0.12.4",
     "through2": "^3.0.1",

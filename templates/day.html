@@ -7,12 +7,14 @@
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <script src="mapbox-gl.js"></script>
-    <script src="jquery.min.js"></script>
-    <script src="turf.min.js"></script>
-    <script src="simple-statistics.min.js"></script>
-    <link rel="stylesheet" href="bulma.css" />
-    <link href="mapbox-gl.css" rel="stylesheet" />
+    <script src="assets/jquery.min.js"></script>
+    <script src="assets/vega.min.js"></script>
+    <script src="assets/moment.js"></script>
+    <script src="assets/mapbox-gl.js"></script>
+    <script src="assets/turf.min.js"></script>
+    <script src="assets/simple-statistics.min.js"></script>
+    <link rel="stylesheet" href="assets/bulma.css" />
+    <link href="mapbox-gl.css" rel="assets/stylesheet" />
     <style>
       body {
         padding-left: 25%;
@@ -71,20 +73,15 @@
   </head>
   <body>
     <h1 class="title is-3">
-      <img class="logo" src="shst-logo.jpg" />SharedStreets Mobility Metrics
+      <img class="logo" src="assets/shst-logo.jpg" />SharedStreets Mobility
+      Metrics
     </h1>
     <nav class="level">
       <div class="level-item has-text-centered">
-        <h3 class="subtitle is-4">Date:</h3>
-        <input id="date" type="date" class="re-query" value="2019-06-25" />
+        <h3 class="subtitle is-4">Date: {{day}}</h3>
       </div>
       <div class="level-item has-text-centered">
-        <h3 class="subtitle is-4">Provider:</h3>
-        <div class="select">
-          <select id="provider" class="re-query">
-            <option>All</option>
-          </select>
-        </div>
+        <h3 class="subtitle is-4">Provider: {{provider}}</h3>
       </div>
     </nav>
     <div class="daily-summary">
@@ -92,7 +89,7 @@
       <nav class="level">
         <div class="level-item has-text-centered">
           <div>
-            <p class="heading">Total Vehicles</p>
+            <p class="heading">Unique Vehicles</p>
             <p id="totalVehicles" class="title">?</p>
           </div>
         </div>
@@ -157,7 +154,7 @@
       <nav class="level">
         <div class="level-item has-text-centered">
           <div>
-            <p class="heading">Total Vehicles</p>
+            <p class="heading">Unique Vehicles</p>
             <p id="weeklyTotalVehicles" class="title">?</p>
           </div>
         </div>
@@ -215,6 +212,12 @@
         </div>
       </nav>
     </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Fleet Size</h2>
+    <div></div>
+    <div id="fleet"></div>
 
     <hr />
 
@@ -476,7 +479,9 @@
       mapboxgl.accessToken =
         "pk.eyJ1IjoibW9yZ2FuaGVybG9ja2VyIiwiYSI6Ii1zLU4xOWMifQ.FubD68OEerk74AYCLduMZQ";
 
-      var data;
+      const data = {{data}};
+      const provider = "{{provider}}";
+      const day = "{{day}}";
 
       var maps = {
         "trip-volume-map": null,
@@ -496,404 +501,360 @@
         flows: turf.featureCollection([])
       };
 
+      // ready
       $(() => {
-        fetch("/center")
-          .then(response => {
-            return response.json();
-          })
-          .then(function(center) {
-            fetch("/providers")
-              .then(response => {
-                return response.json();
-              })
-              .then(function(providers) {
-                for (let provider of providers) {
-                  $("#provider").append($("<option></option>").text(provider));
-                }
-
-                Object.keys(maps).forEach(map => {
-                  maps[map] = new mapboxgl.Map({
-                    container: map,
-                    style: "mapbox://styles/mapbox/light-v9",
-                    center: center,
-                    zoom: 12
-                  });
-                });
-
-                // setup map layers
-                setTimeout(() => {
-                  var colors = [
-                    "#feebe2",
-                    "#fbb4b9",
-                    "#f768a1",
-                    "#c51b8a",
-                    "#7a0177"
-                  ];
-
-                  const binPaint = {
-                    "fill-outline-color": "#000",
-                    "fill-color": [
-                      "interpolate",
-                      ["linear"],
-                      ["get", "quantile"],
-                      1,
-                      colors[0],
-                      2,
-                      colors[1],
-                      3,
-                      colors[2],
-                      4,
-                      colors[3],
-                      5,
-                      colors[4]
-                    ],
-                    "fill-opacity": 0.4
-                  };
-
-                  const streetPaint = {
-                    "line-color": [
-                      "interpolate",
-                      ["linear"],
-                      ["get", "quantile"],
-                      1,
-                      colors[0],
-                      2,
-                      colors[1],
-                      3,
-                      colors[2],
-                      4,
-                      colors[3],
-                      5,
-                      colors[4]
-                    ],
-                    "line-width": [
-                      "interpolate",
-                      ["linear"],
-                      ["get", "quantile"],
-                      1,
-                      2,
-                      2,
-                      3,
-                      3,
-                      2.5,
-                      4,
-                      3,
-                      5,
-                      4
-                    ],
-                    "line-opacity": 0.65
-                  };
-
-                  var layers = maps["trip-volume-map"].getStyle().layers;
-                  // Find the index of the first symbol layer in the map style
-                  var firstSymbolId;
-                  for (var i = 0; i < layers.length; i++) {
-                    if (layers[i].type === "symbol") {
-                      firstSymbolId = layers[i].id;
-                      break;
-                    }
-                  }
-                  maps["trip-volume-map"].addLayer(
-                    {
-                      id: "streets",
-                      type: "line",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {
-                        "line-join": "round",
-                        "line-cap": "round"
-                      },
-                      paint: streetPaint
-                    },
-                    firstSymbolId
-                  );
-                  maps["trip-volume-map"].addLayer(
-                    {
-                      id: "bins",
-                      type: "fill",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {},
-                      paint: binPaint
-                    },
-                    firstSymbolId
-                  );
-
-                  maps["availability-map"].addLayer(
-                    {
-                      id: "streets",
-                      type: "line",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {
-                        "line-join": "round",
-                        "line-cap": "round"
-                      },
-                      paint: streetPaint
-                    },
-                    firstSymbolId
-                  );
-                  maps["availability-map"].addLayer(
-                    {
-                      id: "bins",
-                      type: "fill",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {},
-                      paint: binPaint
-                    },
-                    firstSymbolId
-                  );
-
-                  maps["onstreet-map"].addLayer(
-                    {
-                      id: "streets",
-                      type: "line",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {
-                        "line-join": "round",
-                        "line-cap": "round"
-                      },
-                      paint: streetPaint
-                    },
-                    firstSymbolId
-                  );
-                  maps["onstreet-map"].addLayer(
-                    {
-                      id: "bins",
-                      type: "fill",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {},
-                      paint: binPaint
-                    },
-                    firstSymbolId
-                  );
-
-                  maps["pickups-map"].addLayer(
-                    {
-                      id: "streets",
-                      type: "line",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {
-                        "line-join": "round",
-                        "line-cap": "round"
-                      },
-                      paint: streetPaint
-                    },
-                    firstSymbolId
-                  );
-                  maps["pickups-map"].addLayer(
-                    {
-                      id: "bins",
-                      type: "fill",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {},
-                      paint: binPaint
-                    },
-                    firstSymbolId
-                  );
-
-                  maps["dropoffs-map"].addLayer(
-                    {
-                      id: "streets",
-                      type: "line",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {
-                        "line-join": "round",
-                        "line-cap": "round"
-                      },
-                      paint: streetPaint
-                    },
-                    firstSymbolId
-                  );
-                  maps["dropoffs-map"].addLayer(
-                    {
-                      id: "bins",
-                      type: "fill",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {},
-                      paint: binPaint
-                    },
-                    firstSymbolId
-                  );
-
-                  maps["flows-map"].addLayer(
-                    {
-                      id: "pairs",
-                      type: "line",
-                      source: {
-                        type: "geojson",
-                        data: turf.featureCollection([])
-                      },
-                      layout: {
-                        "line-join": "round",
-                        "line-cap": "round"
-                      },
-                      paint: {
-                        "line-color": colors[4],
-                        "line-width": [
-                          "interpolate",
-                          ["linear"],
-                          ["get", "quantile"],
-                          1,
-                          1.5,
-                          2.25,
-                          2,
-                          3,
-                          3.75,
-                          4,
-                          5,
-                          5,
-                          7
-                        ],
-                        "line-opacity": 0.4
-                      }
-                    },
-                    firstSymbolId
-                  );
-
-                  $("#hour-checkbox").on("change", () => {
-                    if (!$("#hour-checkbox").prop("checked")) {
-                      $("#minute-checkbox").prop("checked", false);
-                    }
-                  });
-
-                  $("#minute-checkbox").on("change", () => {
-                    if ($("#minute-checkbox").prop("checked")) {
-                      $("#hour-checkbox").prop("checked", true);
-                    }
-                  });
-
-                  $(".re-query").on("change", () => {
-                    query();
-                  });
-
-                  $(".re-render").on("change", () => {
-                    render();
-                  });
-
-                  $("#hour-slider").on("change", () => {
-                    // todo: make functional
-                    var slideVal = $("#hour-slider").val();
-                    var hourVal = "";
-                    if (slideVal === "0") hourVal = "12am-1am";
-                    if (slideVal === "1") hourVal = "1am-2am";
-                    if (slideVal === "2") hourVal = "2am-3am";
-                    if (slideVal === "3") hourVal = "3am-4am";
-                    if (slideVal === "4") hourVal = "4am-5am";
-                    if (slideVal === "5") hourVal = "5am-6am";
-                    if (slideVal === "6") hourVal = "6am-7am";
-                    if (slideVal === "7") hourVal = "7am-8am";
-                    if (slideVal === "8") hourVal = "8am-9am";
-                    if (slideVal === "9") hourVal = "9am-10am";
-                    if (slideVal === "10") hourVal = "10am-11am";
-                    if (slideVal === "11") hourVal = "11am-12pm";
-                    if (slideVal === "12") hourVal = "12pm-1pm";
-                    if (slideVal === "13") hourVal = "1pm-2pm";
-                    if (slideVal === "14") hourVal = "2pm-3pm";
-                    if (slideVal === "15") hourVal = "3pm-4pm";
-                    if (slideVal === "16") hourVal = "4pm-5pm";
-                    if (slideVal === "17") hourVal = "5pm-6pm";
-                    if (slideVal === "18") hourVal = "6pm-7pm";
-                    if (slideVal === "19") hourVal = "7pm-8pm";
-                    if (slideVal === "20") hourVal = "8pm-9pm";
-                    if (slideVal === "21") hourVal = "9pm-10pm";
-                    if (slideVal === "22") hourVal = "10pm-11pm";
-                    if (slideVal === "23") hourVal = "11pm-12am";
-
-                    $("#hour-value").text(hourVal);
-                  });
-
-                  $("#minute-slider").on("change", () => {
-                    var slideVal = $("#minute-slider").val();
-                    var minVal = "";
-                    if (slideVal === "0") minVal = "00-15";
-                    if (slideVal === "15") minVal = "15-30";
-                    if (slideVal === "30") minVal = "30-45";
-                    if (slideVal === "45") minVal = "45-00";
-
-                    $("#minute-value").text(minVal);
-                  });
-
-                  $("#export-all").on("click", () => {
-                    exportAll();
-                  });
-
-                  $("#trip-volume-export").on("click", () => {
-                    exportLayer("trip-volume");
-                  });
-                  $("#availability-export").on("click", () => {
-                    exportLayer("availability");
-                  });
-                  $("#onstreet-export").on("click", () => {
-                    exportLayer("onstreet");
-                  });
-                  $("#pickups-export").on("click", () => {
-                    exportLayer("pickups");
-                  });
-                  $("#dropoffs-export").on("click", () => {
-                    exportLayer("dropoffs");
-                  });
-                  $("#flows-export").on("click", () => {
-                    exportLayer("flows");
-                  });
-
-                  setTimeout(() => {
-                    query();
-                  }, 1000);
-                }, 1000);
-              });
+        Object.keys(maps).forEach(map => {
+          maps[map] = new mapboxgl.Map({
+            container: map,
+            style: "{{style}}",
+            center: {{center}},
+            zoom: {{zoom}}
           });
+        });
+
+        // setup map layers
+        var colors = [
+          "#feebe2",
+          "#fbb4b9",
+          "#f768a1",
+          "#c51b8a",
+          "#7a0177"
+        ];
+
+        const binPaint = {
+          "fill-outline-color": "#000",
+          "fill-color": [
+            "interpolate",
+            ["linear"],
+            ["get", "quantile"],
+            1,
+            colors[0],
+            2,
+            colors[1],
+            3,
+            colors[2],
+            4,
+            colors[3],
+            5,
+            colors[4]
+          ],
+          "fill-opacity": 0.4
+        };
+
+        const streetPaint = {
+          "line-color": [
+            "interpolate",
+            ["linear"],
+            ["get", "quantile"],
+            1,
+            colors[0],
+            2,
+            colors[1],
+            3,
+            colors[2],
+            4,
+            colors[3],
+            5,
+            colors[4]
+          ],
+          "line-width": [
+            "interpolate",
+            ["linear"],
+            ["get", "quantile"],
+            1,
+            2,
+            2,
+            3,
+            3,
+            2.5,
+            4,
+            3,
+            5,
+            4
+          ],
+          "line-opacity": 0.65
+        };
+        // wait for maps to initialize
+        setTimeout(()=>{
+        var layers = maps["trip-volume-map"].getStyle().layers;
+        // Find the index of the first symbol layer in the map style
+        var firstSymbolId;
+        for (var i = 0; i < layers.length; i++) {
+          if (layers[i].type === "symbol") {
+            firstSymbolId = layers[i].id;
+            break;
+          }
+        }
+        maps["trip-volume-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["trip-volume-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["availability-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["availability-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["onstreet-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["onstreet-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["pickups-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["pickups-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["dropoffs-map"].addLayer(
+          {
+            id: "streets",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: streetPaint
+          },
+          firstSymbolId
+        );
+        maps["dropoffs-map"].addLayer(
+          {
+            id: "bins",
+            type: "fill",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {},
+            paint: binPaint
+          },
+          firstSymbolId
+        );
+
+        maps["flows-map"].addLayer(
+          {
+            id: "pairs",
+            type: "line",
+            source: {
+              type: "geojson",
+              data: turf.featureCollection([])
+            },
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: {
+              "line-color": colors[4],
+              "line-width": [
+                "interpolate",
+                ["linear"],
+                ["get", "quantile"],
+                1,
+                1.5,
+                2.25,
+                2,
+                3,
+                3.75,
+                4,
+                5,
+                5,
+                7
+              ],
+              "line-opacity": 0.4
+            }
+          },
+          firstSymbolId
+        );
+
+        $(".re-render").on("change", () => {
+          render()
+        })
+
+        $("#hour-checkbox").on("change", () => {
+          if (!$("#hour-checkbox").prop("checked")) {
+            $("#minute-checkbox").prop("checked", false);
+          }
+        });
+
+        $("#minute-checkbox").on("change", () => {
+          if ($("#minute-checkbox").prop("checked")) {
+            $("#hour-checkbox").prop("checked", true);
+          }
+        });
+
+        $("#hour-slider").on("change", () => {
+          // todo: make functional
+          var slideVal = $("#hour-slider").val();
+          var hourVal = "";
+          if (slideVal === "0") hourVal = "12am-1am";
+          if (slideVal === "1") hourVal = "1am-2am";
+          if (slideVal === "2") hourVal = "2am-3am";
+          if (slideVal === "3") hourVal = "3am-4am";
+          if (slideVal === "4") hourVal = "4am-5am";
+          if (slideVal === "5") hourVal = "5am-6am";
+          if (slideVal === "6") hourVal = "6am-7am";
+          if (slideVal === "7") hourVal = "7am-8am";
+          if (slideVal === "8") hourVal = "8am-9am";
+          if (slideVal === "9") hourVal = "9am-10am";
+          if (slideVal === "10") hourVal = "10am-11am";
+          if (slideVal === "11") hourVal = "11am-12pm";
+          if (slideVal === "12") hourVal = "12pm-1pm";
+          if (slideVal === "13") hourVal = "1pm-2pm";
+          if (slideVal === "14") hourVal = "2pm-3pm";
+          if (slideVal === "15") hourVal = "3pm-4pm";
+          if (slideVal === "16") hourVal = "4pm-5pm";
+          if (slideVal === "17") hourVal = "5pm-6pm";
+          if (slideVal === "18") hourVal = "6pm-7pm";
+          if (slideVal === "19") hourVal = "7pm-8pm";
+          if (slideVal === "20") hourVal = "8pm-9pm";
+          if (slideVal === "21") hourVal = "9pm-10pm";
+          if (slideVal === "22") hourVal = "10pm-11pm";
+          if (slideVal === "23") hourVal = "11pm-12am";
+
+          $("#hour-value").text(hourVal);
+        });
+
+        $("#minute-slider").on("change", () => {
+          var slideVal = $("#minute-slider").val();
+          var minVal = "";
+          if (slideVal === "0") minVal = "00-15";
+          if (slideVal === "15") minVal = "15-30";
+          if (slideVal === "30") minVal = "30-45";
+          if (slideVal === "45") minVal = "45-00";
+
+          $("#minute-value").text(minVal);
+        });
+
+        $("#export-all").on("click", () => {
+          exportAll();
+        });
+
+        $("#trip-volume-export").on("click", () => {
+          exportLayer("trip-volume");
+        });
+        $("#availability-export").on("click", () => {
+          exportLayer("availability");
+        });
+        $("#onstreet-export").on("click", () => {
+          exportLayer("onstreet");
+        });
+        $("#pickups-export").on("click", () => {
+          exportLayer("pickups");
+        });
+        $("#dropoffs-export").on("click", () => {
+          exportLayer("dropoffs");
+        });
+        $("#flows-export").on("click", () => {
+          exportLayer("flows");
+        });
+
+        render();
+      }, 1000)
       });
-
-      function query() {
-        clearMaps();
-        var date = $("#date").val();
-        var provider = $("#provider option:selected")
-          .val()
-          .toLowerCase();
-        var url = "/" + date + "/" + provider;
-        console.log(url);
-
-        fetch(url)
-          .then(response => {
-            return response.json();
-          })
-          .then(function(json) {
-            data = json;
-            render();
-          })
-          .catch(err => {
-            console.log(err);
-            //render();
-          });
-      }
 
       function render() {
         if (!data) {
@@ -945,7 +906,7 @@
               ) +
               "s"
           );
-          console.log(data);
+
           // weekly stats
           $("#weeklyTotalVehicles").text(data.weeklyTotalVehicles);
           $("#weeklyTotalActiveVehicles").text(data.weeklyTotalActiveVehicles);
@@ -978,8 +939,118 @@
               "s"
           );
 
+          // fleet chart
+          var spec = {
+            "$schema": "https://vega.github.io/schema/vega/v5.json",
+            "width": 700,
+            "height": 200,
+            "padding": 5,
+            "signals": [],
+            "legends": [
+              {
+                "fill": "color",
+                "orient": "top-left",
+                "encode": {
+                  "symbols": {"enter": {"fillOpacity": {"value": 0.9}}},
+                  "labels": {"update": {"text": {"field": "value"}}}
+                }
+              }
+            ],
+            "data": [
+              {
+                "name": "table",
+                "values": []
+              }
+            ],
+            "scales": [
+              {
+                "name": "x",
+                "type": "point",
+                "range": "width",
+                "domain": {"data": "table", "field": "x"}
+              },
+              {
+                "name": "y",
+                "type": "linear",
+                "range": "height",
+                "nice": true,
+                "zero": true,
+                "domain": {"data": "table", "field": "y"}
+              },
+              {
+                "name": "color",
+                "type": "ordinal",
+                "range": "category",
+                "domain": {"data": "table", "field": "c"}
+              }
+            ],
+            "axes": [
+              {"orient": "bottom", "scale": "x", "labelOverlap":false},
+              {"orient": "left", "scale": "y"}
+            ],
+            "marks": [
+              {
+                "type": "group",
+                "from": {
+                  "facet": {
+                    "name": "series",
+                    "data": "table",
+                    "groupby": "c"
+                  }
+                },
+                "marks": [
+                  {
+                    "type": "line",
+                    "from": {"data": "series"},
+                    "encode": {
+                      "enter": {
+                        "x": {"scale": "x", "field": "x"},
+                        "y": {"scale": "y", "field": "y"},
+                        "stroke": {"scale": "color", "field": "c"},
+                        "strokeWidth": {"value": 2}
+                      },
+                      "update": {
+                        "interpolate": "linear",
+                        "fillOpacity": {"value": 1}
+                      },
+                      "hover": {
+                        "fillOpacity": {"value": 0.5}
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+
+          var ticks = Object.keys(data.fleet.available)
+          for(let tick of ticks){
+            var h = moment(tick.split('-')[3], 'H').format('ha')
+            var v = data.fleet.available[tick]
+            spec.data[0].values.push({"x": h, "y": v, "c": 'available'})
+          }
+          var ticks = Object.keys(data.fleet.reserved)
+          for(let tick of ticks){
+            var h = moment(tick.split('-')[3], 'H').format('ha')
+            var v = data.fleet.reserved[tick]
+            spec.data[0].values.push({"x": h, "y": v, "c": 'reserved'})
+          }
+          var ticks = Object.keys(data.fleet.unavailable)
+          for(let tick of ticks){
+            var h = moment(tick.split('-')[3], 'H').format('ha')
+            var v = data.fleet.unavailable[tick]
+            spec.data[0].values.push({"x": h, "y": v, "c": 'unavailable'})
+          }
+
+          var view = new vega.View(vega.parse(spec), {
+            renderer:  'canvas',  // renderer (canvas or svg)
+            container: '#fleet',   // parent DOM container
+            hover:     true       // enable hover processing
+          });
+          view.runAsync();
+
           // get time filter
-          var time = $("#date").val();
+          var time = day
           if ($("#hour-checkbox").prop("checked")) {
             var hour = $("#hour-slider")
               .val()
@@ -1010,36 +1081,41 @@
 
           // render trip volume
           if ($("#trip-volume-streets").prop("checked")) {
-            Object.keys(data.tripVolumes.streets[timeLevel][time]).forEach(
-              ref => {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.streets[ref])
-                );
-                feature.properties.value =
-                  data.tripVolumes.streets[timeLevel][time][ref];
-                geojson["trip-volume"].features.push(feature);
-              }
-            );
-            categorize(geojson["trip-volume"]);
-            maps["trip-volume-map"]
-              .getSource("streets")
-              .setData(geojson["trip-volume"]);
+            if (data.tripVolumes.streets[timeLevel][time]) {
+              Object.keys(data.tripVolumes.streets[timeLevel][time]).forEach(
+                ref => {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.streets[ref])
+                  );
+                  feature.properties.value =
+                    data.tripVolumes.streets[timeLevel][time][ref];
+                  geojson["trip-volume"].features.push(feature);
+                }
+              );
+              categorize(geojson["trip-volume"]);
+              maps["trip-volume-map"]
+                .getSource("streets")
+                .setData(geojson["trip-volume"]);
+            }
           }
           if ($("#trip-volume-bins").prop("checked")) {
-            Object.keys(data.tripVolumes.bins[timeLevel][time]).forEach(bin => {
-              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
-              feature.properties.value =
-                data.tripVolumes.bins[timeLevel][time][bin];
-              geojson["trip-volume"].features.push(feature);
-            });
-            categorize(geojson["trip-volume"]);
-            maps["trip-volume-map"]
-              .getSource("bins")
-              .setData(geojson["trip-volume"]);
+            if (data.tripVolumes.bins[timeLevel][time]){
+              Object.keys(data.tripVolumes.bins[timeLevel][time]).forEach(bin => {
+                var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+                feature.properties.value =
+                  data.tripVolumes.bins[timeLevel][time][bin];
+                geojson["trip-volume"].features.push(feature);
+              });
+              categorize(geojson["trip-volume"]);
+              maps["trip-volume-map"]
+                .getSource("bins")
+                .setData(geojson["trip-volume"]);
+            }
           }
 
           // render availability
           if ($("#availability-streets").prop("checked")) {
+            if(data.availability.streets[timeLevel][time]){
             Object.keys(data.availability.streets[timeLevel][time]).forEach(
               ref => {
                 if (data.geometry.streets[ref]) {
@@ -1056,116 +1132,133 @@
             maps["availability-map"]
               .getSource("streets")
               .setData(geojson["availability"]);
+            }
           }
           if ($("#availability-bins").prop("checked")) {
-            Object.keys(data.availability.bins[timeLevel][time]).forEach(
-              bin => {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.bins[bin])
-                );
-                feature.properties.value =
-                  data.availability.bins[timeLevel][time][bin];
-                geojson["availability"].features.push(feature);
-              }
-            );
-            categorize(geojson["availability"]);
-            maps["availability-map"]
-              .getSource("bins")
-              .setData(geojson["availability"]);
+            if(data.availability.bins[timeLevel][time]) {
+              Object.keys(data.availability.bins[timeLevel][time]).forEach(
+                bin => {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.bins[bin])
+                  );
+                  feature.properties.value =
+                    data.availability.bins[timeLevel][time][bin];
+                  geojson["availability"].features.push(feature);
+                }
+              );
+              categorize(geojson["availability"]);
+              maps["availability-map"]
+                .getSource("bins")
+                .setData(geojson["availability"]);
+            }
           }
 
           // render onstreet
           if ($("#onstreet-streets").prop("checked")) {
-            Object.keys(data.onstreet.streets[timeLevel][time]).forEach(ref => {
-              if (data.geometry.streets[ref]) {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.streets[ref])
-                );
-                feature.properties.value =
-                  data.onstreet.streets[timeLevel][time][ref];
-                geojson["onstreet"].features.push(feature);
-              }
-            });
-            categorize(geojson["onstreet"]);
-            maps["onstreet-map"]
-              .getSource("streets")
-              .setData(geojson["onstreet"]);
+            if(data.onstreet.streets[timeLevel][time]) {
+              Object.keys(data.onstreet.streets[timeLevel][time]).forEach(ref => {
+                if (data.geometry.streets[ref]) {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.streets[ref])
+                  );
+                  feature.properties.value =
+                    data.onstreet.streets[timeLevel][time][ref];
+                  geojson["onstreet"].features.push(feature);
+                }
+              });
+              categorize(geojson["onstreet"]);
+              maps["onstreet-map"]
+                .getSource("streets")
+                .setData(geojson["onstreet"]);
+            }
           }
           if ($("#onstreet-bins").prop("checked")) {
-            Object.keys(data.onstreet.bins[timeLevel][time]).forEach(bin => {
-              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
-              feature.properties.value =
-                data.onstreet.bins[timeLevel][time][bin];
-              geojson["onstreet"].features.push(feature);
-            });
-            categorize(geojson["onstreet"]);
-            maps["onstreet-map"].getSource("bins").setData(geojson["onstreet"]);
+            if(data.onstreet.bins[timeLevel][time]) {
+              Object.keys(data.onstreet.bins[timeLevel][time]).forEach(bin => {
+                var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+                feature.properties.value =
+                  data.onstreet.bins[timeLevel][time][bin];
+                geojson["onstreet"].features.push(feature);
+              });
+              categorize(geojson["onstreet"]);
+              maps["onstreet-map"].getSource("bins").setData(geojson["onstreet"]);
+            }
           }
 
           // render pickups
           if ($("#pickups-streets").prop("checked")) {
-            Object.keys(data.pickups.streets[timeLevel][time]).forEach(ref => {
-              if (data.geometry.streets[ref]) {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.streets[ref])
-                );
-                feature.properties.value =
-                  data.pickups.streets[timeLevel][time][ref];
-                geojson["pickups"].features.push(feature);
-              }
-            });
-            categorize(geojson["pickups"]);
-            maps["pickups-map"]
-              .getSource("streets")
-              .setData(geojson["pickups"]);
+            if(data.pickups.streets[timeLevel][time]) {
+              Object.keys(data.pickups.streets[timeLevel][time]).forEach(ref => {
+                if (data.geometry.streets[ref]) {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.streets[ref])
+                  );
+                  feature.properties.value =
+                    data.pickups.streets[timeLevel][time][ref];
+                  geojson["pickups"].features.push(feature);
+                }
+              });
+              categorize(geojson["pickups"]);
+              maps["pickups-map"]
+                .getSource("streets")
+                .setData(geojson["pickups"]);
+            }
           }
           if ($("#pickups-bins").prop("checked")) {
-            Object.keys(data.pickups.bins[timeLevel][time]).forEach(bin => {
-              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
-              feature.properties.value =
-                data.pickups.bins[timeLevel][time][bin];
-              geojson["pickups"].features.push(feature);
-            });
-            categorize(geojson["pickups"]);
-            maps["pickups-map"].getSource("bins").setData(geojson["pickups"]);
+            if (data.pickups.bins[timeLevel][time]) {
+              Object.keys(data.pickups.bins[timeLevel][time]).forEach(bin => {
+                var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+                feature.properties.value =
+                  data.pickups.bins[timeLevel][time][bin];
+                geojson["pickups"].features.push(feature);
+              });
+              categorize(geojson["pickups"]);
+              maps["pickups-map"].getSource("bins").setData(geojson["pickups"]);
+            }
           }
 
           // render dropoffs
           if ($("#dropoffs-streets").prop("checked")) {
-            Object.keys(data.dropoffs.streets[timeLevel][time]).forEach(ref => {
-              if (data.geometry.streets[ref]) {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.streets[ref])
-                );
-                feature.properties.value =
-                  data.dropoffs.streets[timeLevel][time][ref];
-                geojson["dropoffs"].features.push(feature);
-              }
-            });
-            categorize(geojson["dropoffs"]);
-            maps["dropoffs-map"]
-              .getSource("streets")
-              .setData(geojson["dropoffs"]);
+            if(data.dropoffs.streets[timeLevel][time]) {
+              Object.keys(data.dropoffs.streets[timeLevel][time]).forEach(ref => {
+                if (data.geometry.streets[ref]) {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.streets[ref])
+                  );
+                  feature.properties.value =
+                    data.dropoffs.streets[timeLevel][time][ref];
+                  geojson["dropoffs"].features.push(feature);
+                }
+              });
+              categorize(geojson["dropoffs"]);
+              maps["dropoffs-map"]
+                .getSource("streets")
+                .setData(geojson["dropoffs"]);
+            }
           }
           if ($("#dropoffs-bins").prop("checked")) {
-            Object.keys(data.dropoffs.bins[timeLevel][time]).forEach(bin => {
-              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
-              feature.properties.value =
-                data.dropoffs.bins[timeLevel][time][bin];
-              geojson["dropoffs"].features.push(feature);
-            });
-            categorize(geojson["dropoffs"]);
-            maps["dropoffs-map"].getSource("bins").setData(geojson["dropoffs"]);
+            if (data.dropoffs.bins[timeLevel][time]) {
+              Object.keys(data.dropoffs.bins[timeLevel][time]).forEach(bin => {
+                var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+                feature.properties.value =
+                  data.dropoffs.bins[timeLevel][time][bin];
+                geojson["dropoffs"].features.push(feature);
+              });
+              categorize(geojson["dropoffs"]);
+              maps["dropoffs-map"].getSource("bins").setData(geojson["dropoffs"]);
+            }
           }
 
           // render flows
-          Object.keys(data.flows.pairs[timeLevel][time]).forEach(pair => {
-            var feature = JSON.parse(JSON.stringify(data.geometry.pairs[pair]));
-            feature.properties.value = data.flows.pairs[timeLevel][time][pair];
-            geojson["flows"].features.push(feature);
-          });
-          categorize(geojson["flows"]);
-          maps["flows-map"].getSource("pairs").setData(geojson["flows"]);
+          if (data.flows.pairs[timeLevel][time]) {
+            Object.keys(data.flows.pairs[timeLevel][time]).forEach(pair => {
+              var feature = JSON.parse(JSON.stringify(data.geometry.pairs[pair]));
+              feature.properties.value = data.flows.pairs[timeLevel][time][pair];
+              geojson["flows"].features.push(feature);
+            });
+            categorize(geojson["flows"]);
+            maps["flows-map"].getSource("pairs").setData(geojson["flows"]);
+          }
         }
       }
 
@@ -1219,7 +1312,7 @@
 
       function exportLayer(layer) {
         // get time filter
-        var time = $("#date").val();
+        var time = day
         if ($("#hour-checkbox").prop("checked")) {
           var hour = $("#hour-slider")
             .val()
@@ -1263,11 +1356,12 @@
       }
 
       function exportAll() {
-        var date = $("#date").val();
+        if (data.features.length) {
+        var date = day
         var provider = $("#provider option:selected")
           .val()
           .toLowerCase();
-        var fileName = date + "-" + provider + ".json";
+        var fileName = date + "-" + provider + "-" + data.features[0].geometry.type + ".json";
 
         var a = document.createElement("a");
         var file = new Blob([JSON.stringify(data)], {
@@ -1276,6 +1370,7 @@
         a.href = URL.createObjectURL(file);
         a.download = fileName;
         a.click();
+        }
       }
 
       function categorize(fc) {

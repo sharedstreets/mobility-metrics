@@ -6,29 +6,38 @@ const moment = require("moment");
 const h3 = require("h3-js");
 const md5 = require("md5");
 const cache = require("./cache");
-const config = require("../config.json");
+const report = require("./report");
 
-// import all providers
-const providers = Object.keys(config.providers).filter(provider => {
-  return config.providers[provider].enabled;
-});
-
-providers.push("All");
+const version = require(path.join(__dirname, "../package.json")).version;
 
 var Z = 9;
-var privacyMinimum = config.privacyMinimum || 3;
 
-const summarize = async function(day, shst, graph, matchCache) {
+const summarize = async function(
+  day,
+  shst,
+  graph,
+  publicPath,
+  cachePath,
+  config
+) {
   return new Promise(async (resolve, reject) => {
-    var cachePath = path.join(__dirname + "./../cache", day);
-    if (!fs.existsSync(cachePath)) {
+    const privacyMinimum = config.privacyMinimum || 3;
+
+    // import all providers
+    const providers = Object.keys(config.providers).filter(provider => {
+      return config.providers[provider].enabled;
+    });
+    providers.push("All");
+
+    var cacheDayPath = path.join(cachePath, day);
+    if (!fs.existsSync(cacheDayPath)) {
       console.log("  caching...");
-      await cache(day);
+      await cache(day, cachePath, config);
     }
 
     console.log("  summarizing...");
     for (let provider of providers) {
-      var cacheProviderPath = path.join(cachePath, provider);
+      var cacheProviderPath = path.join(cacheDayPath, provider);
 
       console.log("    " + provider + "...");
 
@@ -55,6 +64,7 @@ const summarize = async function(day, shst, graph, matchCache) {
       var totalVehicles = new Set();
       var totalActiveVehicles = new Set();
       var stats = {
+        version: version,
         totalVehicles: 0,
         totalActiveVehicles: 0,
         totalTrips: 0,
@@ -64,6 +74,11 @@ const summarize = async function(day, shst, graph, matchCache) {
           bins: {},
           streets: {},
           pairs: {}
+        },
+        fleet: {
+          available: {},
+          reserved: {},
+          unavailable: {}
         },
         tripVolumes: {
           bins: {
@@ -174,20 +189,22 @@ const summarize = async function(day, shst, graph, matchCache) {
         });
       });
 
+      console.log("      fleet sizes...");
+      await fleet(stats, states, day);
       console.log("      trip volumes...");
-      await tripVolumes(stats, trips, graph, matchCache);
+      await tripVolumes(stats, trips, graph, privacyMinimum);
       console.log("      pickups...");
-      await pickups(stats, trips, graph, matchCache);
+      await pickups(stats, trips, graph);
       console.log("      dropoffs...");
-      await dropoffs(stats, trips, graph, matchCache);
+      await dropoffs(stats, trips, graph);
       console.log("      flows...");
-      flows(stats, trips);
+      flows(stats, trips, privacyMinimum);
       console.log("      availability...");
-      await availability(stats, states, day, graph, matchCache);
+      await availability(stats, states, day, graph);
       console.log("      onstreet...");
-      await onstreet(stats, states, day, graph, matchCache);
+      await onstreet(stats, states, day, graph);
 
-      var summaryPath = path.join(__dirname + "./../data", day);
+      var summaryPath = path.join(publicPath, "data", day);
       mkdirp.sync(summaryPath);
       summaryFilePath = path.join(summaryPath, provider + ".json");
 
@@ -201,7 +218,7 @@ const summarize = async function(day, shst, graph, matchCache) {
       var days = 7;
       while (days--) {
         var d = moment(day, "YYYY-MM-DD").subtract(days, "days");
-        var dPath = path.join(__dirname + "./../data", d.format("YYYY-MM-DD"));
+        var dPath = path.join(publicPath, "data", d.format("YYYY-MM-DD"));
         dFilePath = path.join(dPath, provider + ".json");
 
         if (fs.existsSync(dFilePath)) {
@@ -226,6 +243,9 @@ const summarize = async function(day, shst, graph, matchCache) {
 
       fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
     }
+
+    await report(config, providers, publicPath, day);
+
     resolve();
   });
 };
@@ -245,7 +265,7 @@ function getTimeBins(timestamp) {
   };
 }
 
-async function tripVolumes(stats, trips, graph, matchCache) {
+async function tripVolumes(stats, trips, graph, privacyMinimum) {
   for (let trip of trips) {
     var bins = new Set();
     trip.route.features.forEach(ping => {
@@ -451,7 +471,7 @@ async function tripVolumes(stats, trips, graph, matchCache) {
   });
 }
 
-async function pickups(stats, trips, graph, matchCache) {
+async function pickups(stats, trips, graph, config) {
   // h3 aggregation
   for (let trip of trips) {
     var bins = new Set();
@@ -542,7 +562,7 @@ async function pickups(stats, trips, graph, matchCache) {
   }
 }
 
-async function dropoffs(stats, trips, graph, matchCache) {
+async function dropoffs(stats, trips, graph, config) {
   // h3 aggregation
   for (let trip of trips) {
     var bins = new Set();
@@ -637,7 +657,7 @@ async function dropoffs(stats, trips, graph, matchCache) {
   }
 }
 
-function flows(stats, trips) {
+function flows(stats, trips, privacyMinimum) {
   for (let trip of trips) {
     var a = h3.geoToH3(
       trip.route.features[0].geometry.coordinates[1],
@@ -746,7 +766,59 @@ function flows(stats, trips) {
   });
 }
 
-async function availability(stats, states, day, graph, matchCache) {
+async function fleet(stats, states, day, graph) {
+  // playback times
+  // foreach 1 hour:
+  // foreach vehicle state:
+  // find last state before current
+  // if available, increment fleet stat
+  var date = moment(day, "YYYY-MM-DD");
+  var current = moment(date.format("YYYY-MM-DD"), "YYYY-MM-DD");
+  var start = date.format("X");
+  var stop = date
+    .clone()
+    .add(1, "day")
+    .format("X");
+  while (current.format("YYYY-MM-DD") === date.format("YYYY-MM-DD")) {
+    stats.fleet.available[current.format("YYYY-MM-DD-HH")] = 0;
+    stats.fleet.reserved[current.format("YYYY-MM-DD-HH")] = 0;
+    stats.fleet.unavailable[current.format("YYYY-MM-DD-HH")] = 0;
+
+    var vehicle_ids = Object.keys(states);
+    for (let vehicle_id of vehicle_ids) {
+      var last;
+      for (let state of states[vehicle_id]) {
+        var timestamp = moment(state.event_time, "X");
+
+        if (timestamp.diff(current) <= 0) {
+          last = state.event_type;
+        }
+      }
+
+      if (last) {
+        if (last === "available") {
+          stats.fleet.available[current.format("YYYY-MM-DD-HH")]++;
+        } else if (last === "reserved") {
+          stats.fleet.reserved[current.format("YYYY-MM-DD-HH")]++;
+        } else if (last === "unavailable") {
+          stats.fleet.unavailable[current.format("YYYY-MM-DD-HH")]++;
+        }
+      }
+    }
+
+    current = current.add(1, "hour");
+  }
+
+  const times = Object.keys(stats.fleet);
+  stats.maxFleet = 0;
+  for (let time of times) {
+    if (stats.fleet[time] > stats.maxFleet) {
+      stats.maxFleet = stats.fleet[time];
+    }
+  }
+}
+
+async function availability(stats, states, day, graph) {
   // playback times
   // foreach 15 min:
   // foreach vehicle state:
@@ -933,7 +1005,7 @@ async function availability(stats, states, day, graph, matchCache) {
   });
 }
 
-async function onstreet(stats, states, day, graph, matchCache) {
+async function onstreet(stats, states, day, graph) {
   // playback times
   // foreach 15 min:
   // foreach vehicle state:

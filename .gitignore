@@ -62,8 +62,10 @@ typings/
 
 # default data dirs
 data
+graph
 shst
 cache
+public
 
 # config
 config.json

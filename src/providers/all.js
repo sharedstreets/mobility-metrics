@@ -4,24 +4,21 @@ const mkdirp = require("mkdirp");
 const queue = require("d3-queue").queue;
 const through2 = require("through2");
 const moment = require("moment");
-const config = require("../../config.json");
 
-const cachePath = path.join(__dirname, "../../cache");
+function trips(stream, start, stop, config) {
+  // import all enabled providers
+  const providersPath = __dirname;
+  const providers = Object.keys(config.providers)
+    .filter(provider => {
+      return config.providers[provider].enabled;
+    })
+    .map(provider => {
+      return {
+        name: provider,
+        query: require(path.join(providersPath, provider))
+      };
+    });
 
-// import all enabled providers
-const providersPath = __dirname;
-const providers = Object.keys(config.providers)
-  .filter(provider => {
-    return config.providers[provider].enabled;
-  })
-  .map(provider => {
-    return {
-      name: provider,
-      query: require(path.join(providersPath, provider))
-    };
-  });
-
-function trips(stream, start, stop) {
   var providersQ = queue(1);
   providers.forEach(provider => {
     providersQ.defer(providersCb => {
@@ -43,7 +40,20 @@ function trips(stream, start, stop) {
   });
 }
 
-function changes(stream, start, stop) {
+function changes(stream, start, stop, config) {
+  // import all enabled providers
+  const providersPath = __dirname;
+  const providers = Object.keys(config.providers)
+    .filter(provider => {
+      return config.providers[provider].enabled;
+    })
+    .map(provider => {
+      return {
+        name: provider,
+        query: require(path.join(providersPath, provider))
+      };
+    });
+
   var providersQ = queue(1);
   providers.forEach(provider => {
     providersQ.defer(providersCb => {
