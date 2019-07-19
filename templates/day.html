@@ -946,6 +946,16 @@
             "height": 200,
             "padding": 5,
             "signals": [],
+            "legends": [
+              {
+                "fill": "color",
+                "orient": "top-left",
+                "encode": {
+                  "symbols": {"enter": {"fillOpacity": {"value": 0.9}}},
+                  "labels": {"update": {"text": {"field": "value"}}}
+                }
+              }
+            ],
             "data": [
               {
                 "name": "table",
@@ -1013,11 +1023,23 @@
             ]
           }
 
-          var ticks = Object.keys(data.fleet)
+          var ticks = Object.keys(data.fleet.available)
           for(let tick of ticks){
             var h = moment(tick.split('-')[3], 'H').format('ha')
-            var v = Math.round(Math.abs(data.fleet[tick] / (diff))) + (Math.round(Math.abs(data.fleet[tick] / (diff))) * Math.random() * 0.1)
-            spec.data[0].values.push({"x": h, "y": v})
+            var v = data.fleet.available[tick]
+            spec.data[0].values.push({"x": h, "y": v, "c": 'available'})
+          }
+          var ticks = Object.keys(data.fleet.reserved)
+          for(let tick of ticks){
+            var h = moment(tick.split('-')[3], 'H').format('ha')
+            var v = data.fleet.reserved[tick]
+            spec.data[0].values.push({"x": h, "y": v, "c": 'reserved'})
+          }
+          var ticks = Object.keys(data.fleet.unavailable)
+          for(let tick of ticks){
+            var h = moment(tick.split('-')[3], 'H').format('ha')
+            var v = data.fleet.unavailable[tick]
+            spec.data[0].values.push({"x": h, "y": v, "c": 'unavailable'})
           }
 
           var view = new vega.View(vega.parse(spec), {
