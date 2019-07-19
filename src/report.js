@@ -13,6 +13,8 @@ async function report(config, providers, publicPath, day) {
   const assetsPath = path.join(__dirname, "../assets");
 
   await copy(assetsPath, path.join(reportsPath, day, "assets"));
+  rimraf.sync(path.join(publicPath, "assets"));
+  await copy(assetsPath, path.join(publicPath, "assets"));
 
   const reportsTemplate = fs
     .readFileSync(path.join(__dirname, "../templates/reports.html"))
@@ -40,6 +42,25 @@ async function report(config, providers, publicPath, day) {
 
     fs.writeFileSync(reportPath, html);
   }
+
+  var listing = "";
+  var days = fs.readdirSync(path.join(publicPath, "data"));
+
+  for (let d of days) {
+    listing += '<h2 class="title is-5">' + d + "</h2><ul>";
+    var reports = fs.readdirSync(dataPath);
+    for (let r of reports) {
+      const name = r
+        .split(".")
+        .slice(0, -1)
+        .join(".");
+      listing +=
+        '<li><a href="/reports/' + d + "/" + name + '">' + name + "</a></li>";
+    }
+    listing += "</ul>";
+  }
+  listing = reportsTemplate.split("{{reports}}").join(listing);
+  fs.writeFileSync(path.join(publicPath, "index.html"), listing);
 }
 
 module.exports = report;

@@ -188,7 +188,7 @@ const summarize = async function(
           return a.event_time - b.event_time;
         });
       });
-
+      /*
       console.log("      fleet sizes...");
       await fleet(stats, states, day);
       console.log("      trip volumes...");
@@ -203,7 +203,7 @@ const summarize = async function(
       await availability(stats, states, day, graph);
       console.log("      onstreet...");
       await onstreet(stats, states, day, graph);
-
+*/
       var summaryPath = path.join(publicPath, "data", day);
       mkdirp.sync(summaryPath);
       summaryFilePath = path.join(summaryPath, provider + ".json");
@@ -241,7 +241,7 @@ const summarize = async function(
       stats.weeklyAverageTrips =
         stats.weeklyTotalTrips / stats.weeklyTotalActiveVehicles;
 
-      fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
+      //fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
     }
 
     await report(config, providers, publicPath, day);

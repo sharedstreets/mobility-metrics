@@ -61,14 +61,6 @@ const backfill = async function() {
   });
 };
 
-const clearDir = async function(dir) {
-  return new Promise((resolve, reject) => {
-    rimraf(dir, () => {
-      resolve();
-    });
-  });
-};
-
 backfill()
   .then(() => {
     if (!debug) rimraf.sync(path.join(__dirname, cachePath));

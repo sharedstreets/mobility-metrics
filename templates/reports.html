@@ -3,9 +3,32 @@
   <head>
     <meta charset="utf-8" />
     <title>SharedStreets Mobility Metrics</title>
+    <link rel="stylesheet" href="assets/bulma.css" />
+    <style>
+      body {
+        padding-left: 25%;
+        padding-right: 25%;
+        padding-top: 10px;
+      }
+      .logo {
+        height: 45px;
+        margin: -12px;
+        padding-right: 10px;
+      }
+      .reports {
+        padding-left: 10%;
+        padding-right: 10%;
+      }
+    </style>
   </head>
   <body>
-    <h1>Reports</h1>
-    {{reports}}
+    <h1 class="title is-3">
+      <img class="logo" src="assets/shst-logo.jpg" />SharedStreets Mobility
+      Metrics
+    </h1>
+    <h1 class="title is-4">Reports</h1>
+    <div class="reports">
+      {{reports}}
+    </div>
   </body>
 </html>
