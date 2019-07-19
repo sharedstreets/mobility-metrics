@@ -18,7 +18,7 @@ exec(
   "curl https://s3.amazonaws.com/metro-extracts.nextzen.org/nashville_tennessee.osm.pbf -o graph/nashville.osm.pbf"
 );
 exec(
-  'osmium extract -b "-86.84881210327148,36.12262352221241,-86.73688888549805,36.2049447642222" graph/nashville.osm.pbf -o graph/nash.osm.pbf -s "complete_ways"'
+  'osmium extract -b "-86.79611206054688,36.14612299393171,-86.7575740814209,36.17460406472864" graph/nashville.osm.pbf -o graph/nash.osm.pbf -s "complete_ways"'
 );
 exec(
   "../node_modules/osrm/lib/binding/osrm-extract graph/nash.osm.pbf -p ../node_modules/osrm/profiles/foot.lua;"
@@ -27,7 +27,7 @@ exec("../node_modules/osrm/lib/binding/osrm-contract graph/nash.osrm");
 
 const providers = ["Flipr", "Scoob", "BikeMe", "Spuun"];
 
-const days = 45;
+const days = 10;
 
 const start = 1563087600000; // Sunday, July 14, 2019 3:00:00 AM GMT-04:00
 

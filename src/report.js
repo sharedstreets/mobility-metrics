@@ -32,7 +32,7 @@ async function report(config, providers, publicPath, day) {
     .join(config.style || "mapbox://styles/mapbox/light-v9");
 
   for (let provider of providers) {
-    const reportPath = path.join(reportsPath, day, provider);
+    const reportPath = path.join(reportsPath, day, provider + '.html');
     const metricsPath = path.join(dataPath, provider + ".json");
     const metrics = fs.readFileSync(metricsPath).toString();
 
