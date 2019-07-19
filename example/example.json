@@ -31,6 +31,41 @@
       "trips": "example/data/Spuun/trips.json",
       "status_changes": "example/data/Spuun/changes.json",
       "enabled": true
+    },
+    "Bird": {
+      "type": "mds",
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
+    },
+    "Jump": {
+      "type": "mds",
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
+    },
+    "Lime": {
+      "type": "mds",
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
+    },
+    "Scoot": {
+      "type": "mds",
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
+    },
+    "Spin": {
+      "type": "mds",
+      "trips": "",
+      "status_changes": "",
+      "token": "",
+      "enabled": false
     }
   }
 }
