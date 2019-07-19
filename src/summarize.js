@@ -28,7 +28,7 @@ const summarize = async function(
       return config.providers[provider].enabled;
     });
     providers.push("All");
-    /*
+
     var cacheDayPath = path.join(cachePath, day);
     if (!fs.existsSync(cacheDayPath)) {
       console.log("  caching...");
@@ -74,6 +74,11 @@ const summarize = async function(
           bins: {},
           streets: {},
           pairs: {}
+        },
+        fleet: {
+          available: {},
+          reserved: {},
+          unavailable: {}
         },
         tripVolumes: {
           bins: {
@@ -184,6 +189,8 @@ const summarize = async function(
         });
       });
 
+      console.log("      fleet sizes...");
+      await fleet(stats, states, day);
       console.log("      trip volumes...");
       await tripVolumes(stats, trips, graph, privacyMinimum);
       console.log("      pickups...");
@@ -236,7 +243,7 @@ const summarize = async function(
 
       fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
     }
-*/
+
     await report(config, providers, publicPath, day);
 
     resolve();
@@ -757,6 +764,58 @@ function flows(stats, trips, privacyMinimum) {
   Object.keys(stats.geometry.pairs).forEach(pair => {
     fc.features.push(stats.geometry.pairs[pair]);
   });
+}
+
+async function fleet(stats, states, day, graph) {
+  // playback times
+  // foreach 1 hour:
+  // foreach vehicle state:
+  // find last state before current
+  // if available, increment fleet stat
+  var date = moment(day, "YYYY-MM-DD");
+  var current = moment(date.format("YYYY-MM-DD"), "YYYY-MM-DD");
+  var start = date.format("X");
+  var stop = date
+    .clone()
+    .add(1, "day")
+    .format("X");
+  while (current.format("YYYY-MM-DD") === date.format("YYYY-MM-DD")) {
+    stats.fleet.available[current.format("YYYY-MM-DD-HH")] = 0;
+    stats.fleet.reserved[current.format("YYYY-MM-DD-HH")] = 0;
+    stats.fleet.unavailable[current.format("YYYY-MM-DD-HH")] = 0;
+
+    var vehicle_ids = Object.keys(states);
+    for (let vehicle_id of vehicle_ids) {
+      var last;
+      for (let state of states[vehicle_id]) {
+        var timestamp = moment(state.event_time, "X");
+
+        if (timestamp.diff(current) <= 0) {
+          last = state.event_type;
+        }
+      }
+
+      if (last) {
+        if (last === "available") {
+          stats.fleet.available[current.format("YYYY-MM-DD-HH")]++;
+        } else if (last === "reserved") {
+          stats.fleet.reserved[current.format("YYYY-MM-DD-HH")]++;
+        } else if (last === "unavailable") {
+          stats.fleet.unavailable[current.format("YYYY-MM-DD-HH")]++;
+        }
+      }
+    }
+
+    current = current.add(1, "hour");
+  }
+
+  const times = Object.keys(stats.fleet);
+  stats.maxFleet = 0;
+  for (let time of times) {
+    if (stats.fleet[time] > stats.maxFleet) {
+      stats.maxFleet = stats.fleet[time];
+    }
+  }
 }
 
 async function availability(stats, states, day, graph) {

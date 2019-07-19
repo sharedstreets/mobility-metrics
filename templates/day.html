@@ -7,8 +7,10 @@
       name="viewport"
       content="initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <script src="assets/mapbox-gl.js"></script>
     <script src="assets/jquery.min.js"></script>
+    <script src="assets/vega.min.js"></script>
+    <script src="assets/moment.js"></script>
+    <script src="assets/mapbox-gl.js"></script>
     <script src="assets/turf.min.js"></script>
     <script src="assets/simple-statistics.min.js"></script>
     <link rel="stylesheet" href="assets/bulma.css" />
@@ -87,7 +89,7 @@
       <nav class="level">
         <div class="level-item has-text-centered">
           <div>
-            <p class="heading">Total Vehicles</p>
+            <p class="heading">Unique Vehicles</p>
             <p id="totalVehicles" class="title">?</p>
           </div>
         </div>
@@ -152,7 +154,7 @@
       <nav class="level">
         <div class="level-item has-text-centered">
           <div>
-            <p class="heading">Total Vehicles</p>
+            <p class="heading">Unique Vehicles</p>
             <p id="weeklyTotalVehicles" class="title">?</p>
           </div>
         </div>
@@ -210,6 +212,12 @@
         </div>
       </nav>
     </div>
+
+    <hr />
+
+    <h2 class="subtitle is-4">Fleet Size</h2>
+    <div></div>
+    <div id="fleet"></div>
 
     <hr />
 
@@ -472,8 +480,8 @@
         "pk.eyJ1IjoibW9yZ2FuaGVybG9ja2VyIiwiYSI6Ii1zLU4xOWMifQ.FubD68OEerk74AYCLduMZQ";
 
       const data = {{data}};
-      const provider = "{{provider}}"
-      const day = "{{day}}"
+      const provider = "{{provider}}";
+      const day = "{{day}}";
 
       var maps = {
         "trip-volume-map": null,
@@ -493,6 +501,7 @@
         flows: turf.featureCollection([])
       };
 
+      // ready
       $(() => {
         Object.keys(maps).forEach(map => {
           maps[map] = new mapboxgl.Map({
@@ -565,7 +574,8 @@
           ],
           "line-opacity": 0.65
         };
-
+        // wait for maps to initialize
+        setTimeout(()=>{
         var layers = maps["trip-volume-map"].getStyle().layers;
         // Find the index of the first symbol layer in the map style
         var firstSymbolId;
@@ -760,6 +770,10 @@
           firstSymbolId
         );
 
+        $(".re-render").on("change", () => {
+          render()
+        })
+
         $("#hour-checkbox").on("change", () => {
           if (!$("#hour-checkbox").prop("checked")) {
             $("#minute-checkbox").prop("checked", false);
@@ -770,14 +784,6 @@
           if ($("#minute-checkbox").prop("checked")) {
             $("#hour-checkbox").prop("checked", true);
           }
-        });
-
-        $(".re-query").on("change", () => {
-          query();
-        });
-
-        $(".re-render").on("change", () => {
-          render();
         });
 
         $("#hour-slider").on("change", () => {
@@ -845,14 +851,13 @@
         $("#flows-export").on("click", () => {
           exportLayer("flows");
         });
-        console.log(data)
-        render()
+
+        render();
+      }, 1000)
       });
 
       function render() {
         if (!data) {
-          console.log('WARNING: No data found for report')
-
           // daily
           $("#totalVehicles").text("?");
           $("#totalActiveVehicles").text("?");
@@ -934,8 +939,96 @@
               "s"
           );
 
+          // fleet chart
+          var spec = {
+            "$schema": "https://vega.github.io/schema/vega/v5.json",
+            "width": 700,
+            "height": 200,
+            "padding": 5,
+            "signals": [],
+            "data": [
+              {
+                "name": "table",
+                "values": []
+              }
+            ],
+            "scales": [
+              {
+                "name": "x",
+                "type": "point",
+                "range": "width",
+                "domain": {"data": "table", "field": "x"}
+              },
+              {
+                "name": "y",
+                "type": "linear",
+                "range": "height",
+                "nice": true,
+                "zero": true,
+                "domain": {"data": "table", "field": "y"}
+              },
+              {
+                "name": "color",
+                "type": "ordinal",
+                "range": "category",
+                "domain": {"data": "table", "field": "c"}
+              }
+            ],
+            "axes": [
+              {"orient": "bottom", "scale": "x", "labelOverlap":false},
+              {"orient": "left", "scale": "y"}
+            ],
+            "marks": [
+              {
+                "type": "group",
+                "from": {
+                  "facet": {
+                    "name": "series",
+                    "data": "table",
+                    "groupby": "c"
+                  }
+                },
+                "marks": [
+                  {
+                    "type": "line",
+                    "from": {"data": "series"},
+                    "encode": {
+                      "enter": {
+                        "x": {"scale": "x", "field": "x"},
+                        "y": {"scale": "y", "field": "y"},
+                        "stroke": {"scale": "color", "field": "c"},
+                        "strokeWidth": {"value": 2}
+                      },
+                      "update": {
+                        "interpolate": "linear",
+                        "fillOpacity": {"value": 1}
+                      },
+                      "hover": {
+                        "fillOpacity": {"value": 0.5}
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+
+          var ticks = Object.keys(data.fleet)
+          for(let tick of ticks){
+            var h = moment(tick.split('-')[3], 'H').format('ha')
+            var v = Math.round(Math.abs(data.fleet[tick] / (diff))) + (Math.round(Math.abs(data.fleet[tick] / (diff))) * Math.random() * 0.1)
+            spec.data[0].values.push({"x": h, "y": v})
+          }
+
+          var view = new vega.View(vega.parse(spec), {
+            renderer:  'canvas',  // renderer (canvas or svg)
+            container: '#fleet',   // parent DOM container
+            hover:     true       // enable hover processing
+          });
+          view.runAsync();
+
           // get time filter
-          var time = $("#date").val();
+          var time = day
           if ($("#hour-checkbox").prop("checked")) {
             var hour = $("#hour-slider")
               .val()
@@ -966,36 +1059,41 @@
 
           // render trip volume
           if ($("#trip-volume-streets").prop("checked")) {
-            Object.keys(data.tripVolumes.streets[timeLevel][time]).forEach(
-              ref => {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.streets[ref])
-                );
-                feature.properties.value =
-                  data.tripVolumes.streets[timeLevel][time][ref];
-                geojson["trip-volume"].features.push(feature);
-              }
-            );
-            categorize(geojson["trip-volume"]);
-            maps["trip-volume-map"]
-              .getSource("streets")
-              .setData(geojson["trip-volume"]);
+            if (data.tripVolumes.streets[timeLevel][time]) {
+              Object.keys(data.tripVolumes.streets[timeLevel][time]).forEach(
+                ref => {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.streets[ref])
+                  );
+                  feature.properties.value =
+                    data.tripVolumes.streets[timeLevel][time][ref];
+                  geojson["trip-volume"].features.push(feature);
+                }
+              );
+              categorize(geojson["trip-volume"]);
+              maps["trip-volume-map"]
+                .getSource("streets")
+                .setData(geojson["trip-volume"]);
+            }
           }
           if ($("#trip-volume-bins").prop("checked")) {
-            Object.keys(data.tripVolumes.bins[timeLevel][time]).forEach(bin => {
-              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
-              feature.properties.value =
-                data.tripVolumes.bins[timeLevel][time][bin];
-              geojson["trip-volume"].features.push(feature);
-            });
-            categorize(geojson["trip-volume"]);
-            maps["trip-volume-map"]
-              .getSource("bins")
-              .setData(geojson["trip-volume"]);
+            if (data.tripVolumes.bins[timeLevel][time]){
+              Object.keys(data.tripVolumes.bins[timeLevel][time]).forEach(bin => {
+                var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+                feature.properties.value =
+                  data.tripVolumes.bins[timeLevel][time][bin];
+                geojson["trip-volume"].features.push(feature);
+              });
+              categorize(geojson["trip-volume"]);
+              maps["trip-volume-map"]
+                .getSource("bins")
+                .setData(geojson["trip-volume"]);
+            }
           }
 
           // render availability
           if ($("#availability-streets").prop("checked")) {
+            if(data.availability.streets[timeLevel][time]){
             Object.keys(data.availability.streets[timeLevel][time]).forEach(
               ref => {
                 if (data.geometry.streets[ref]) {
@@ -1012,116 +1110,133 @@
             maps["availability-map"]
               .getSource("streets")
               .setData(geojson["availability"]);
+            }
           }
           if ($("#availability-bins").prop("checked")) {
-            Object.keys(data.availability.bins[timeLevel][time]).forEach(
-              bin => {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.bins[bin])
-                );
-                feature.properties.value =
-                  data.availability.bins[timeLevel][time][bin];
-                geojson["availability"].features.push(feature);
-              }
-            );
-            categorize(geojson["availability"]);
-            maps["availability-map"]
-              .getSource("bins")
-              .setData(geojson["availability"]);
+            if(data.availability.bins[timeLevel][time]) {
+              Object.keys(data.availability.bins[timeLevel][time]).forEach(
+                bin => {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.bins[bin])
+                  );
+                  feature.properties.value =
+                    data.availability.bins[timeLevel][time][bin];
+                  geojson["availability"].features.push(feature);
+                }
+              );
+              categorize(geojson["availability"]);
+              maps["availability-map"]
+                .getSource("bins")
+                .setData(geojson["availability"]);
+            }
           }
 
           // render onstreet
           if ($("#onstreet-streets").prop("checked")) {
-            Object.keys(data.onstreet.streets[timeLevel][time]).forEach(ref => {
-              if (data.geometry.streets[ref]) {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.streets[ref])
-                );
-                feature.properties.value =
-                  data.onstreet.streets[timeLevel][time][ref];
-                geojson["onstreet"].features.push(feature);
-              }
-            });
-            categorize(geojson["onstreet"]);
-            maps["onstreet-map"]
-              .getSource("streets")
-              .setData(geojson["onstreet"]);
+            if(data.onstreet.streets[timeLevel][time]) {
+              Object.keys(data.onstreet.streets[timeLevel][time]).forEach(ref => {
+                if (data.geometry.streets[ref]) {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.streets[ref])
+                  );
+                  feature.properties.value =
+                    data.onstreet.streets[timeLevel][time][ref];
+                  geojson["onstreet"].features.push(feature);
+                }
+              });
+              categorize(geojson["onstreet"]);
+              maps["onstreet-map"]
+                .getSource("streets")
+                .setData(geojson["onstreet"]);
+            }
           }
           if ($("#onstreet-bins").prop("checked")) {
-            Object.keys(data.onstreet.bins[timeLevel][time]).forEach(bin => {
-              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
-              feature.properties.value =
-                data.onstreet.bins[timeLevel][time][bin];
-              geojson["onstreet"].features.push(feature);
-            });
-            categorize(geojson["onstreet"]);
-            maps["onstreet-map"].getSource("bins").setData(geojson["onstreet"]);
+            if(data.onstreet.bins[timeLevel][time]) {
+              Object.keys(data.onstreet.bins[timeLevel][time]).forEach(bin => {
+                var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+                feature.properties.value =
+                  data.onstreet.bins[timeLevel][time][bin];
+                geojson["onstreet"].features.push(feature);
+              });
+              categorize(geojson["onstreet"]);
+              maps["onstreet-map"].getSource("bins").setData(geojson["onstreet"]);
+            }
           }
 
           // render pickups
           if ($("#pickups-streets").prop("checked")) {
-            Object.keys(data.pickups.streets[timeLevel][time]).forEach(ref => {
-              if (data.geometry.streets[ref]) {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.streets[ref])
-                );
-                feature.properties.value =
-                  data.pickups.streets[timeLevel][time][ref];
-                geojson["pickups"].features.push(feature);
-              }
-            });
-            categorize(geojson["pickups"]);
-            maps["pickups-map"]
-              .getSource("streets")
-              .setData(geojson["pickups"]);
+            if(data.pickups.streets[timeLevel][time]) {
+              Object.keys(data.pickups.streets[timeLevel][time]).forEach(ref => {
+                if (data.geometry.streets[ref]) {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.streets[ref])
+                  );
+                  feature.properties.value =
+                    data.pickups.streets[timeLevel][time][ref];
+                  geojson["pickups"].features.push(feature);
+                }
+              });
+              categorize(geojson["pickups"]);
+              maps["pickups-map"]
+                .getSource("streets")
+                .setData(geojson["pickups"]);
+            }
           }
           if ($("#pickups-bins").prop("checked")) {
-            Object.keys(data.pickups.bins[timeLevel][time]).forEach(bin => {
-              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
-              feature.properties.value =
-                data.pickups.bins[timeLevel][time][bin];
-              geojson["pickups"].features.push(feature);
-            });
-            categorize(geojson["pickups"]);
-            maps["pickups-map"].getSource("bins").setData(geojson["pickups"]);
+            if (data.pickups.bins[timeLevel][time]) {
+              Object.keys(data.pickups.bins[timeLevel][time]).forEach(bin => {
+                var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+                feature.properties.value =
+                  data.pickups.bins[timeLevel][time][bin];
+                geojson["pickups"].features.push(feature);
+              });
+              categorize(geojson["pickups"]);
+              maps["pickups-map"].getSource("bins").setData(geojson["pickups"]);
+            }
           }
 
           // render dropoffs
           if ($("#dropoffs-streets").prop("checked")) {
-            Object.keys(data.dropoffs.streets[timeLevel][time]).forEach(ref => {
-              if (data.geometry.streets[ref]) {
-                var feature = JSON.parse(
-                  JSON.stringify(data.geometry.streets[ref])
-                );
-                feature.properties.value =
-                  data.dropoffs.streets[timeLevel][time][ref];
-                geojson["dropoffs"].features.push(feature);
-              }
-            });
-            categorize(geojson["dropoffs"]);
-            maps["dropoffs-map"]
-              .getSource("streets")
-              .setData(geojson["dropoffs"]);
+            if(data.dropoffs.streets[timeLevel][time]) {
+              Object.keys(data.dropoffs.streets[timeLevel][time]).forEach(ref => {
+                if (data.geometry.streets[ref]) {
+                  var feature = JSON.parse(
+                    JSON.stringify(data.geometry.streets[ref])
+                  );
+                  feature.properties.value =
+                    data.dropoffs.streets[timeLevel][time][ref];
+                  geojson["dropoffs"].features.push(feature);
+                }
+              });
+              categorize(geojson["dropoffs"]);
+              maps["dropoffs-map"]
+                .getSource("streets")
+                .setData(geojson["dropoffs"]);
+            }
           }
           if ($("#dropoffs-bins").prop("checked")) {
-            Object.keys(data.dropoffs.bins[timeLevel][time]).forEach(bin => {
-              var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
-              feature.properties.value =
-                data.dropoffs.bins[timeLevel][time][bin];
-              geojson["dropoffs"].features.push(feature);
-            });
-            categorize(geojson["dropoffs"]);
-            maps["dropoffs-map"].getSource("bins").setData(geojson["dropoffs"]);
+            if (data.dropoffs.bins[timeLevel][time]) {
+              Object.keys(data.dropoffs.bins[timeLevel][time]).forEach(bin => {
+                var feature = JSON.parse(JSON.stringify(data.geometry.bins[bin]));
+                feature.properties.value =
+                  data.dropoffs.bins[timeLevel][time][bin];
+                geojson["dropoffs"].features.push(feature);
+              });
+              categorize(geojson["dropoffs"]);
+              maps["dropoffs-map"].getSource("bins").setData(geojson["dropoffs"]);
+            }
           }
 
           // render flows
-          Object.keys(data.flows.pairs[timeLevel][time]).forEach(pair => {
-            var feature = JSON.parse(JSON.stringify(data.geometry.pairs[pair]));
-            feature.properties.value = data.flows.pairs[timeLevel][time][pair];
-            geojson["flows"].features.push(feature);
-          });
-          categorize(geojson["flows"]);
-          maps["flows-map"].getSource("pairs").setData(geojson["flows"]);
+          if (data.flows.pairs[timeLevel][time]) {
+            Object.keys(data.flows.pairs[timeLevel][time]).forEach(pair => {
+              var feature = JSON.parse(JSON.stringify(data.geometry.pairs[pair]));
+              feature.properties.value = data.flows.pairs[timeLevel][time][pair];
+              geojson["flows"].features.push(feature);
+            });
+            categorize(geojson["flows"]);
+            maps["flows-map"].getSource("pairs").setData(geojson["flows"]);
+          }
         }
       }
 
@@ -1175,7 +1290,7 @@
 
       function exportLayer(layer) {
         // get time filter
-        var time = $("#date").val();
+        var time = day
         if ($("#hour-checkbox").prop("checked")) {
           var hour = $("#hour-slider")
             .val()
@@ -1220,7 +1335,7 @@
 
       function exportAll() {
         if (data.features.length) {
-        var date = $("#date").val();
+        var date = day
         var provider = $("#provider option:selected")
           .val()
           .toLowerCase();
