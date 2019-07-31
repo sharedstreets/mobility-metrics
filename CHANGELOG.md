@@ -1,6 +1,10 @@
 CHANGELOG
 ---
 
+## 2.0.1
+
+- fix failing export in UI
+
 ## 2.0.0
 
 - deprecate server in favor of static site
