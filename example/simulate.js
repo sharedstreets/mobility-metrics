@@ -42,8 +42,8 @@ cmd += "--changes data/{provider}/changes.json ";
 cmd += "--trips data/{provider}/trips.json ";
 cmd += "--quiet ";
 
-const minAgents = 25;
-const maxAgents = 200;
+const minAgents = 115;
+const maxAgents = 400;
 
 console.log("running simulations...");
 
