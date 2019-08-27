@@ -1,6 +1,10 @@
 CHANGELOG
 ---
 
+## 2.0.4
+
+- upgrade sharedstreets-js to v0.13.0
+
 ## 2.0.1
 
 - fix failing export in UI
