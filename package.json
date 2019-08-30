@@ -11,6 +11,7 @@
     "node": ">=11.0.0"
   },
   "dependencies": {
+    "@mapbox/tile-cover": "^3.0.2",
     "@oclif/config": "^1.13.0",
     "@turf/turf": "^5.1.6",
     "byline": "^5.0.0",

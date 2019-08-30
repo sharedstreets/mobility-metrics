@@ -1,39 +1,40 @@
-const turf = require('@turf/turf')
+const turf = require("@turf/turf");
+const h3 = require("h3-js");
 
-module.exports = function (change, Z, graph, zones) {
+module.exports = async function(change, config, graph) {
   // STREETS
 
-  if (!change.properties.matches) change.properties.matches = {}
+  if (!change.matches) change.matches = {};
 
-  const matches = await graph.matchPoint(change.route.features[0], null, 1);
+  const matches = await graph.matchPoint(change.event_location, null, 1);
 
   if (matches.length) {
-    change.properties.matches.streets = matches;
+    change.matches.streets = matches;
   }
 
   // BINS
 
   const bin = h3.geoToH3(
-    lastAvailable.event_location.geometry.coordinates[1],
-    lastAvailable.event_location.geometry.coordinates[0],
-    Z
+    change.event_location.geometry.coordinates[1],
+    change.event_location.geometry.coordinates[0],
+    config.Z
   );
 
-  change.properties.matches.bins = bin;
+  change.matches.bins = bin;
 
   // ZONES
 
-  var zoneMatches = []
+  var zoneMatches = [];
 
-  for (let zone of zones.features) {
+  for (let zone of config.zones.features) {
     if (turf.intersect(change.event_location, zone)) {
       zoneMatches.push(zone.properties.id);
     }
   }
 
-  if(zoneMatches.length) {
-    change.properties.matches.zones = zoneMatches;
+  if (zoneMatches.length) {
+    change.matches.zones = zoneMatches;
   }
 
   return change;
-}
+};
