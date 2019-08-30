@@ -1,9 +1,9 @@
-const { test } = require("tap");
+const test = require("tape");
 const { exec } = require("child_process");
 const path = require("path");
 const rimraf = require("rimraf");
 
-test("cli", { timeout: 1200000 }, async t => {
+test("cli", { timeout: 120000 }, async t => {
   const bin = path.join(__dirname, "../src/cli.js");
   const config = path.join(__dirname, "./fixtures/cli/config.json");
   const cache = path.join(__dirname, "./fixtures/cli/cache");
@@ -23,7 +23,9 @@ test("cli", { timeout: 1200000 }, async t => {
     cache +
     " --day 2019-07-15";
   console.log(cmd);
-  const { error, stdout, stderr } = await exec(cmd);
+  exec(cmd, () => {
+    t.end();
+  });
 
   /*
   //console.log(error);
@@ -35,6 +37,4 @@ test("cli", { timeout: 1200000 }, async t => {
   for await (let chunk of stdout) {
     //console.log(chunk.toString());
   }*/
-
-  t.done();
 });
