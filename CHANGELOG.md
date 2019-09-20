@@ -1,6 +1,20 @@
 CHANGELOG
 ---
 
+## 3.0.0
+
+- trip & status hashing feature
+- custom aggregation zones option in config
+- retry MDS when provider API failures occur
+- cache matches during summarization - ~10x backfill speedup
+- report hashing including metrics and code version
+- add report signature to report interface
+- test cache layer
+- monthly metrics summaries
+- fix regression in weekly aggregate calculation
+- fix export all dump failure
+- remove deprecated "all" provider
+
 ## 2.0.4
 
 - upgrade sharedstreets-js to v0.13.0
