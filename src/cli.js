@@ -6,6 +6,7 @@ const rimraf = require("rimraf");
 const shst = require("sharedstreets");
 const turf = require("@turf/turf");
 const summarize = require("./summarize");
+const cover = require("@mapbox/tile-cover");
 
 var argv = require("minimist")(process.argv.slice(2));
 
@@ -29,6 +30,18 @@ if (argv.help || argv.h || Object.keys(argv).length === 1) {
 }
 
 const config = require(path.resolve(argv.config));
+// add spatial indices to zones
+const z = 19;
+const zs = { min_zoom: z, max_zoom: z };
+if (config.zones) {
+  for (let zone of config.zones.features) {
+    zone.properties.keys = {};
+    const keys = cover.indexes(zone.geometry, zs);
+    for (let key of keys) {
+      zone.properties.keys[key] = 1;
+    }
+  }
+}
 
 const publicPath = path.resolve(argv.public);
 const cachePath = path.resolve(argv.cache);
