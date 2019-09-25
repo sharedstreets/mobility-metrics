@@ -69,3 +69,6 @@ public
 
 # config
 config.json
+
+# OS
+.DS_Store

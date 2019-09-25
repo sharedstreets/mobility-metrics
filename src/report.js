@@ -3,8 +3,13 @@ const path = require("path");
 const rimraf = require("rimraf");
 const mkdirp = require("mkdirp");
 const copy = require("recursive-copy");
+const crypto = require("crypto");
 
 async function report(config, providers, publicPath, day) {
+  var version = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "../package.json")).toString()
+  ).version;
+
   const reportsPath = path.join(publicPath, "reports");
   rimraf.sync(path.join(reportsPath, day));
   mkdirp.sync(path.join(reportsPath, day));
@@ -24,11 +29,11 @@ async function report(config, providers, publicPath, day) {
     .toString();
 
   var report = dayTemplate;
-  report = report.split("{{day}}").join(day);
-  report = report.split("{{zoom}}").join(config.zoom || 12);
-  report = report.split("{{center}}").join(JSON.stringify(config.center));
+  report = report.split("$day$").join(day);
+  report = report.split("$zoom$").join(config.zoom || 12);
+  report = report.split("$center$").join(JSON.stringify(config.center));
   report = report
-    .split("{{style}}")
+    .split("$style$")
     .join(config.style || "mapbox://styles/mapbox/light-v9");
 
   for (let provider of providers) {
@@ -36,9 +41,15 @@ async function report(config, providers, publicPath, day) {
     const metricsPath = path.join(dataPath, provider + ".json");
     const metrics = fs.readFileSync(metricsPath).toString();
 
+    const signature = crypto
+      .createHmac("sha256", version)
+      .update(metrics)
+      .digest("hex");
+
     var html = report;
-    html = html.split("{{provider}}").join(provider);
-    html = html.split("{{data}}").join(metrics);
+    html = html.split("$provider$").join(provider);
+    html = html.split("$data$").join(metrics);
+    html = html.split("$signature$").join(signature);
 
     fs.writeFileSync(reportPath, html);
   }
@@ -59,7 +70,7 @@ async function report(config, providers, publicPath, day) {
     }
     listing += "</ul>";
   }
-  listing = reportsTemplate.split("{{reports}}").join(listing);
+  listing = reportsTemplate.split("$reports$").join(listing);
   fs.writeFileSync(path.join(publicPath, "index.html"), listing);
 }
 

@@ -1,8 +1,20 @@
 const fs = require("fs");
 const request = require("request");
+const tripMatch = require("../matchers/trip");
+const changeMatch = require("../matchers/change");
+const crypto = require("crypto");
 
-async function trips(provider, stream, start, stop) {
-  return new Promise((resolve, reject) => {
+async function trips(
+  provider,
+  stream,
+  start,
+  stop,
+  graph,
+  config,
+  cacheDayProviderLogPath,
+  version
+) {
+  return new Promise(async (resolve, reject) => {
     var opts = {
       url: provider.trips + "?start_time=" + start + "&end_time=" + stop,
       headers: {
@@ -12,14 +24,20 @@ async function trips(provider, stream, start, stop) {
     };
 
     // recursive scan across
-    function scan(opts, done) {
-      request.get(opts, (err, res, body) => {
+    async function scan(opts, done) {
+      request.get(opts, async (err, res, body) => {
         if (err) throw err;
 
         var data = JSON.parse(body);
 
         // write any returned trips to stream
         for (let trip of data.data.trips) {
+          trip = await tripMatch(trip, config, graph);
+          const signature = crypto
+            .createHmac("sha256", version)
+            .update(JSON.stringify(trip))
+            .digest("hex");
+          fs.appendFileSync(cacheDayProviderLogPath, signature + "\n");
           stream.write(JSON.stringify(trip) + "\n");
         }
 
@@ -33,14 +51,23 @@ async function trips(provider, stream, start, stop) {
       });
     }
 
-    scan(opts, () => {
+    await scan(opts, () => {
       resolve();
     });
   });
 }
 
-async function changes(provider, stream, start, stop) {
-  return new Promise((resolve, reject) => {
+async function changes(
+  provider,
+  stream,
+  start,
+  stop,
+  graph,
+  config,
+  cacheDayProviderLogPath,
+  version
+) {
+  return new Promise(async (resolve, reject) => {
     var opts = {
       url:
         provider.status_changes + "?start_time=" + start + "&end_time=" + stop,
@@ -51,13 +78,19 @@ async function changes(provider, stream, start, stop) {
     };
 
     // recursive scan across
-    function scan(opts, done) {
-      request.get(opts, (err, res, body) => {
+    async function scan(opts, done) {
+      request.get(opts, async (err, res, body) => {
         if (err) throw err;
         var data = JSON.parse(body);
 
         // write any returned changes to stream
         for (let change of data.data.status_changes) {
+          change = await changeMatch(change, config, graph);
+          const signature = crypto
+            .createHmac("sha256", version)
+            .update(JSON.stringify(change))
+            .digest("hex");
+          fs.appendFileSync(cacheDayProviderLogPath, signature + "\n");
           stream.write(JSON.stringify(change) + "\n");
         }
 
@@ -71,7 +104,7 @@ async function changes(provider, stream, start, stop) {
       });
     }
 
-    scan(opts, () => {
+    await scan(opts, () => {
       resolve();
     });
   });

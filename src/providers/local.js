@@ -2,8 +2,20 @@ const fs = require("fs");
 const path = require("path");
 const through2 = require("through2");
 const byline = require("byline");
+const tripMatch = require("../matchers/trip");
+const changeMatch = require("../matchers/change");
+const crypto = require("crypto");
 
-async function trips(provider, stream, start, stop) {
+async function trips(
+  provider,
+  stream,
+  start,
+  stop,
+  graph,
+  config,
+  cacheDayProviderLogPath,
+  version
+) {
   return new Promise(resolve => {
     var input = fs.createReadStream(
       path.join(__dirname, "./../../" + provider.trips)
@@ -12,7 +24,7 @@ async function trips(provider, stream, start, stop) {
     input
       .pipe(byline.createStream())
       .pipe(
-        through2((chunk, enc, next) => {
+        through2(async (chunk, enc, next) => {
           const data = chunk.toString();
           if (data.length) {
             var trip = JSON.parse(data);
@@ -20,6 +32,12 @@ async function trips(provider, stream, start, stop) {
             trip.end_time = trip.end_time / 1000;
 
             if (trip.start_time >= start && trip.start_time < stop) {
+              trip = await tripMatch(trip, config, graph);
+              const signature = crypto
+                .createHmac("sha256", version)
+                .update(JSON.stringify(trip))
+                .digest("hex");
+              fs.appendFileSync(cacheDayProviderLogPath, signature + "\n");
               stream.write(JSON.stringify(trip) + "\n");
             }
           }
@@ -32,7 +50,16 @@ async function trips(provider, stream, start, stop) {
   });
 }
 
-async function changes(provider, stream, start, stop) {
+async function changes(
+  provider,
+  stream,
+  start,
+  stop,
+  graph,
+  config,
+  cacheDayProviderLogPath,
+  version
+) {
   return new Promise(resolve => {
     var input = fs.createReadStream(
       path.join(__dirname, "./../../" + provider.status_changes)
@@ -41,12 +68,18 @@ async function changes(provider, stream, start, stop) {
     input
       .pipe(byline.createStream())
       .pipe(
-        through2((chunk, enc, next) => {
+        through2(async (chunk, enc, next) => {
           const data = chunk.toString();
           if (data.length) {
             var change = JSON.parse(data);
             change.event_time = change.event_time / 1000;
             if (change.event_time >= start && change.event_time < stop) {
+              change = await changeMatch(change, config, graph);
+              const signature = crypto
+                .createHmac("sha256", version)
+                .update(JSON.stringify(change))
+                .digest("hex");
+              fs.appendFileSync(cacheDayProviderLogPath, signature + "\n");
               stream.write(JSON.stringify(change) + "\n");
             }
           }
