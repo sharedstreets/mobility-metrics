@@ -7,7 +7,11 @@ const moment = require("moment");
 const local = require("./providers/local");
 const mds = require("./providers/mds");
 
-const cache = async function(dayString, cachePath, config) {
+const cache = async function(dayString, cachePath, graph, config) {
+  var version = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "../package.json")).toString()
+  ).version;
+
   const providers = Object.keys(config.providers).filter(provider => {
     return config.providers[provider].enabled;
   });
@@ -34,6 +38,7 @@ const cache = async function(dayString, cachePath, config) {
     var cacheDayProviderPath = path.join(cacheDayPath, name);
     mkdirp.sync(cacheDayProviderPath);
 
+    const cacheDayProviderLogPath = path.join(cacheDayProviderPath, "log.txt");
     const cacheDayProviderTripsPath = path.join(
       cacheDayProviderPath,
       "trips.json"
@@ -56,14 +61,19 @@ const cache = async function(dayString, cachePath, config) {
         cacheDayProviderTripsStream,
         start,
         stop,
-        config
+        graph,
+        config,
+        cacheDayProviderLogPath
       );
       await mds.changes(
         provider,
         cacheDayProviderChangesStream,
         start,
         stop,
-        config
+        graph,
+        config,
+        cacheDayProviderLogPath,
+        version
       );
     } else if (provider.type === "local") {
       await local.trips(
@@ -71,14 +81,20 @@ const cache = async function(dayString, cachePath, config) {
         cacheDayProviderTripsStream,
         start,
         stop,
-        config
+        graph,
+        config,
+        cacheDayProviderLogPath,
+        version
       );
       await local.changes(
         provider,
         cacheDayProviderChangesStream,
         start,
         stop,
-        config
+        graph,
+        config,
+        cacheDayProviderLogPath,
+        version
       );
     }
 

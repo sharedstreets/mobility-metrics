@@ -45,22 +45,24 @@ module.exports = async function(trip, config, graph) {
 
   // ZONES
 
-  var zoneMatches = [];
-  const keys = cover.indexes(line.geometry, zs);
-  for (let zone of config.zones.features) {
-    let found = false;
-    for (let key of keys) {
-      if (zone.properties.keys[key]) found = true;
-      continue;
+  if (config.zones) {
+    var zoneMatches = [];
+    const keys = cover.indexes(line.geometry, zs);
+    for (let zone of config.zones.features) {
+      let found = false;
+      for (let key of keys) {
+        if (zone.properties.keys[key]) found = true;
+        continue;
+      }
+
+      if (found) {
+        zoneMatches.push(zone.properties.id);
+      }
     }
 
-    if (found) {
-      zoneMatches.push(zone.properties.id);
+    if (zoneMatches.length) {
+      trip.matches.zones = zoneMatches;
     }
-  }
-
-  if (zoneMatches.length) {
-    trip.matches.zones = zoneMatches;
   }
 
   return trip;

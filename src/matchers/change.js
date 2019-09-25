@@ -1,5 +1,9 @@
 const turf = require("@turf/turf");
 const h3 = require("h3-js");
+const cover = require("@mapbox/tile-cover");
+
+const z = 19;
+const zs = { min_zoom: z, max_zoom: z };
 
 module.exports = async function(change, config, graph) {
   // STREETS
@@ -24,16 +28,27 @@ module.exports = async function(change, config, graph) {
 
   // ZONES
 
-  var zoneMatches = [];
+  if (config.zones) {
+    var zoneMatches = [];
+    const keys = cover.indexes(
+      turf.point(change.event_location.geometry.coordinates).geometry,
+      zs
+    );
+    for (let zone of config.zones.features) {
+      let found = false;
+      for (let key of keys) {
+        if (zone.properties.keys[key]) found = true;
+        continue;
+      }
 
-  for (let zone of config.zones.features) {
-    if (turf.intersect(change.event_location, zone)) {
-      zoneMatches.push(zone.properties.id);
+      if (found) {
+        zoneMatches.push(zone.properties.id);
+      }
     }
-  }
 
-  if (zoneMatches.length) {
-    change.matches.zones = zoneMatches;
+    if (zoneMatches.length) {
+      change.matches.zones = zoneMatches;
+    }
   }
 
   return change;

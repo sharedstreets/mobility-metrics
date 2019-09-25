@@ -46,26 +46,30 @@ async function bench() {
 
   var start = new Date().getTime();
 
-  var count = 0
+  var count = 0;
 
   for (let trip of trips) {
-    count++
+    count++;
     await tripMatch(trip, config, graph);
   }
 
   var stop = new Date().getTime();
 
-  console.log('trip match avg: ' + ((stop - start) / count).toFixed(4) + 'ms');
-  count = 0
+  console.log("trip match avg: " + ((stop - start) / count).toFixed(4) + "ms");
+  console.log("measured across " + count + " trips");
+  count = 0;
   start = new Date().getTime();
 
   for (let change of changes) {
-    count++
+    count++;
     await changeMatch(change, config, graph);
   }
 
   stop = new Date().getTime();
-  console.log('change match avg: ' + ((stop - start) / count).toFixed(4) + 'ms');
+  console.log(
+    "change match avg: " + ((stop - start) / count).toFixed(4) + "ms"
+  );
+  console.log("measured across " + count + " changes");
 }
 
 bench();

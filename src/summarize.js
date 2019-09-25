@@ -32,7 +32,7 @@ const summarize = async function(
     var cacheDayPath = path.join(cachePath, day);
     if (!fs.existsSync(cacheDayPath)) {
       console.log("  caching...");
-      await cache(day, cachePath, config);
+      await cache(day, cachePath, graph, config);
     }
 
     console.log("  summarizing...");
@@ -86,6 +86,11 @@ const summarize = async function(
             hour: {},
             minute: {}
           },
+          zones: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
           streets: {
             day: {},
             hour: {},
@@ -98,6 +103,11 @@ const summarize = async function(
             hour: {},
             minute: {}
           },
+          zones: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
           streets: {
             day: {},
             hour: {},
@@ -106,6 +116,11 @@ const summarize = async function(
         },
         dropoffs: {
           bins: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
+          zones: {
             day: {},
             hour: {},
             minute: {}
@@ -129,6 +144,11 @@ const summarize = async function(
             hour: {},
             minute: {}
           },
+          zones: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
           streets: {
             day: {},
             hour: {},
@@ -141,6 +161,11 @@ const summarize = async function(
             hour: {},
             minute: {}
           },
+          zones: {
+            day: {},
+            hour: {},
+            minute: {}
+          },
           streets: {
             day: {},
             hour: {},
@@ -148,6 +173,10 @@ const summarize = async function(
           }
         }
       };
+
+      if (config.zones) {
+        stats.geometry.zones = config.zones;
+      }
 
       for (let trip of trips) {
         totalVehicles.add(trip.vehicle_id);
@@ -223,11 +252,11 @@ const summarize = async function(
 
         if (fs.existsSync(dFilePath)) {
           var data = JSON.parse(fs.readFileSync(dFilePath).toString());
-          stats.weeklyTotalVehicles += data.weeklyTotalVehicles;
-          stats.weeklyTotalActiveVehicles += data.weeklyTotalActiveVehicles;
-          stats.weeklyTotalTrips += data.weeklyTotalTrips;
-          stats.weeklyTotalDistance += data.weeklyTotalDistance;
-          stats.weeklyTotalDuration += data.weeklyTotalDuration;
+          stats.weeklyTotalVehicles += data.totalVehicles;
+          stats.weeklyTotalActiveVehicles += data.totalActiveVehicles;
+          stats.weeklyTotalTrips += data.totalTrips;
+          stats.weeklyTotalDistance += data.totalDistance;
+          stats.weeklyTotalDuration += data.totalDuration;
         }
       }
       stats.weeklyAverageVehicleDistance =
@@ -240,6 +269,39 @@ const summarize = async function(
         stats.weeklyTotalDuration / stats.weeklyTotalTrips;
       stats.weeklyAverageTrips =
         stats.weeklyTotalTrips / stats.weeklyTotalActiveVehicles;
+
+      // monthly
+      stats.monthlyTotalVehicles = stats.totalVehicles;
+      stats.monthlyTotalActiveVehicles = stats.totalActiveVehicles;
+      stats.monthlyTotalTrips = stats.totalTrips;
+      stats.monthlyTotalDistance = stats.totalDistance;
+      stats.monthlyTotalDuration = stats.totalDuration;
+
+      var days = 30;
+      while (days--) {
+        var d = moment(day, "YYYY-MM-DD").subtract(days, "days");
+        var dPath = path.join(publicPath, "data", d.format("YYYY-MM-DD"));
+        dFilePath = path.join(dPath, provider + ".json");
+
+        if (fs.existsSync(dFilePath)) {
+          var data = JSON.parse(fs.readFileSync(dFilePath).toString());
+          stats.monthlyTotalVehicles += data.totalVehicles;
+          stats.monthlyTotalActiveVehicles += data.totalActiveVehicles;
+          stats.monthlyTotalTrips += data.totalTrips;
+          stats.monthlyTotalDistance += data.totalDistance;
+          stats.monthlyTotalDuration += data.totalDuration;
+        }
+      }
+      stats.monthlyAverageVehicleDistance =
+        stats.monthlyTotalDistance / stats.monthlyTotalActiveVehicles;
+      stats.monthlyAverageVehicleDuration =
+        stats.monthlyTotalDuration / stats.monthlyTotalActiveVehicles;
+      stats.monthlyAverageTripDistance =
+        stats.monthlyTotalDistance / stats.monthlyTotalTrips;
+      stats.monthlyAverageTripDuration =
+        stats.monthlyTotalDuration / stats.monthlyTotalTrips;
+      stats.monthlyAverageTrips =
+        stats.monthlyTotalTrips / stats.monthlyTotalActiveVehicles;
 
       fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
     }
@@ -267,6 +329,41 @@ function getTimeBins(timestamp) {
 
 async function tripVolumes(stats, trips, graph, privacyMinimum) {
   for (let trip of trips) {
+    // zones
+    if (trip.matches.zones) {
+      var timeBins = getTimeBins(trip.start_time);
+      // populate time bins
+      if (!stats.tripVolumes.zones.day[timeBins.day]) {
+        stats.tripVolumes.zones.day[timeBins.day] = {};
+      }
+      if (!stats.tripVolumes.zones.hour[timeBins.hour]) {
+        stats.tripVolumes.zones.hour[timeBins.hour] = {};
+      }
+      if (!stats.tripVolumes.zones.minute[timeBins.minute]) {
+        stats.tripVolumes.zones.minute[timeBins.minute] = {};
+      }
+
+      // aggregate stats
+      trip.matches.zones.forEach(zone => {
+        // populate hex bins
+        if (!stats.tripVolumes.zones.day[timeBins.day][zone]) {
+          stats.tripVolumes.zones.day[timeBins.day][zone] = 0;
+        }
+        if (!stats.tripVolumes.zones.hour[timeBins.hour][zone]) {
+          stats.tripVolumes.zones.hour[timeBins.hour][zone] = 0;
+        }
+        if (!stats.tripVolumes.zones.minute[timeBins.minute][zone]) {
+          stats.tripVolumes.zones.minute[timeBins.minute][zone] = 0;
+        }
+        // increment hex bins
+        stats.tripVolumes.zones.day[timeBins.day][zone]++;
+        stats.tripVolumes.zones.hour[timeBins.hour][zone]++;
+        stats.tripVolumes.zones.minute[timeBins.minute][zone]++;
+      });
+    }
+
+    // hex bins
+
     var bins = new Set();
     trip.route.features.forEach(ping => {
       var bin = h3.geoToH3(
@@ -323,7 +420,7 @@ async function tripVolumes(stats, trips, graph, privacyMinimum) {
       })
     );
 
-    match = await graph.matchTrace(line);
+    match = trip.matches.streets;
 
     if (
       match &&
@@ -421,6 +518,52 @@ async function tripVolumes(stats, trips, graph, privacyMinimum) {
   Object.keys(stats.tripVolumes.bins.minute).forEach(minute => {
     if (!Object.keys(stats.tripVolumes.bins.minute[minute]).length) {
       delete stats.tripVolumes.bins.minute[minute];
+    }
+  });
+
+  // delete sparse day zones
+  Object.keys(stats.tripVolumes.zones.day).forEach(day => {
+    Object.keys(stats.tripVolumes.zones.day[day]).forEach(zone => {
+      var val = stats.tripVolumes.zones.day[day][zone];
+      if (val < privacyMinimum) {
+        delete stats.tripVolumes.zones.day[day][zone];
+      }
+    });
+  });
+  // delete sparse zone days
+  Object.keys(stats.tripVolumes.zones.day).forEach(day => {
+    if (!Object.keys(stats.tripVolumes.zones.day[day]).length) {
+      delete stats.tripVolumes.zones.day[day];
+    }
+  });
+  // delete sparse hour zones
+  Object.keys(stats.tripVolumes.zones.hour).forEach(hour => {
+    Object.keys(stats.tripVolumes.zones.hour[hour]).forEach(zone => {
+      var val = stats.tripVolumes.zones.hour[hour][zone];
+      if (val < privacyMinimum) {
+        delete stats.tripVolumes.zones.hour[hour][zone];
+      }
+    });
+  });
+  // delete sparse zone hours
+  Object.keys(stats.tripVolumes.zones.hour).forEach(hour => {
+    if (!Object.keys(stats.tripVolumes.zones.hour[hour]).length) {
+      delete stats.tripVolumes.zones.hour[hour];
+    }
+  });
+  // delete sparse minutes zones
+  Object.keys(stats.tripVolumes.zones.minute).forEach(minute => {
+    Object.keys(stats.tripVolumes.zones.minute[minute]).forEach(zone => {
+      var val = stats.tripVolumes.zones.minute[minute][zone];
+      if (val < privacyMinimum) {
+        delete stats.tripVolumes.zones.minute[minute][zone];
+      }
+    });
+  });
+  // delete sparse zone minutes
+  Object.keys(stats.tripVolumes.zones.minute).forEach(minute => {
+    if (!Object.keys(stats.tripVolumes.zones.minute[minute]).length) {
+      delete stats.tripVolumes.zones.minute[minute];
     }
   });
 
@@ -881,13 +1024,39 @@ async function availability(stats, states, day, graph) {
           ]++;
         }
 
+        var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
+          bin: bin
+        });
+        stats.geometry.bins[bin] = geo;
+
+        // availability zones
+        if (lastAvailable.matches.zones) {
+          if (
+            !stats.availability.zones.minute[current.format("YYYY-MM-DD-HH-mm")]
+          ) {
+            stats.availability.zones.minute[
+              current.format("YYYY-MM-DD-HH-mm")
+            ] = {};
+          }
+          if (
+            !stats.availability.zones.minute[
+              current.format("YYYY-MM-DD-HH-mm")
+            ][lastAvailable.matches.zones[0]]
+          ) {
+            stats.availability.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+              lastAvailable.matches.zones[0]
+            ] = 1;
+          } else {
+            stats.availability.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+              lastAvailable.matches.zones[0]
+            ]++;
+          }
+        }
+
         // availability street refs
-        var matches = await graph.matchPoint(
-          lastAvailable.event_location,
-          null,
-          1
-        );
-        if (matches.length) {
+        var matches = lastAvailable.matches.streets;
+
+        if (matches && matches.length) {
           var ref = matches[0].geometryId;
           // cache geometry from ref
           var geo = JSON.parse(
@@ -947,6 +1116,24 @@ async function availability(stats, states, day, graph) {
       }
     });
   });
+  // zones
+  Object.keys(stats.availability.zones.minute).forEach(minute => {
+    var hour = minute.slice(0, minute.length - 3);
+    if (!stats.availability.zones.hour[hour]) {
+      stats.availability.zones.hour[hour] = {};
+    }
+
+    Object.keys(stats.availability.zones.minute[minute]).forEach(zone => {
+      var val = stats.availability.zones.minute[minute][zone];
+
+      if (
+        !stats.availability.zones.hour[hour][zone] ||
+        stats.availability.zones.hour[hour][zone] < val
+      ) {
+        stats.availability.zones.hour[hour][zone] = val;
+      }
+    });
+  });
   // streets
   Object.keys(stats.availability.streets.minute).forEach(minute => {
     var hour = minute.slice(0, minute.length - 3);
@@ -982,6 +1169,24 @@ async function availability(stats, states, day, graph) {
         stats.availability.bins.day[day][bin] < val
       ) {
         stats.availability.bins.day[day][bin] = val;
+      }
+    });
+  });
+  // zones
+  Object.keys(stats.availability.zones.hour).forEach(hour => {
+    var day = hour.slice(0, hour.length - 3);
+    if (!stats.availability.zones.day[day]) {
+      stats.availability.zones.day[day] = {};
+    }
+
+    Object.keys(stats.availability.zones.hour[hour]).forEach(zone => {
+      var val = stats.availability.zones.hour[hour][zone];
+
+      if (
+        !stats.availability.zones.day[day][zone] ||
+        stats.availability.zones.day[day][zone] < val
+      ) {
+        stats.availability.zones.day[day][zone] = val;
       }
     });
   });
@@ -1063,13 +1268,33 @@ async function onstreet(stats, states, day, graph) {
           stats.onstreet.bins.minute[current.format("YYYY-MM-DD-HH-mm")][bin]++;
         }
 
+        // onstreet zones
+        if (lastAvailable.matches.zones) {
+          if (
+            !stats.onstreet.zones.minute[current.format("YYYY-MM-DD-HH-mm")]
+          ) {
+            stats.onstreet.zones.minute[
+              current.format("YYYY-MM-DD-HH-mm")
+            ] = {};
+          }
+          if (
+            !stats.onstreet.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+              lastAvailable.matches.zones[0]
+            ]
+          ) {
+            stats.onstreet.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+              lastAvailable.matches.zones[0]
+            ] = 1;
+          } else {
+            stats.onstreet.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+              lastAvailable.matches.zones[0]
+            ]++;
+          }
+        }
+
         // onstreet street refs
-        var matches = await graph.matchPoint(
-          lastAvailable.event_location,
-          null,
-          1
-        );
-        if (matches.length) {
+        var matches = lastAvailable.matches.streets;
+        if (matches && matches.length) {
           var ref = matches[0].geometryId;
           // cache geometry from ref
           var geo = JSON.parse(
@@ -1127,6 +1352,24 @@ async function onstreet(stats, states, day, graph) {
       }
     });
   });
+  // zones
+  Object.keys(stats.onstreet.zones.minute).forEach(minute => {
+    var hour = minute.slice(0, minute.length - 3);
+    if (!stats.onstreet.zones.hour[hour]) {
+      stats.onstreet.zones.hour[hour] = {};
+    }
+
+    Object.keys(stats.onstreet.zones.minute[minute]).forEach(zone => {
+      var val = stats.onstreet.zones.minute[minute][zone];
+
+      if (
+        !stats.onstreet.zones.hour[hour][zone] ||
+        stats.onstreet.zones.hour[hour][zone] < val
+      ) {
+        stats.onstreet.zones.hour[hour][zone] = val;
+      }
+    });
+  });
   // streets
   Object.keys(stats.onstreet.streets.minute).forEach(minute => {
     var hour = minute.slice(0, minute.length - 3);
@@ -1162,6 +1405,24 @@ async function onstreet(stats, states, day, graph) {
         stats.onstreet.bins.day[day][bin] < val
       ) {
         stats.onstreet.bins.day[day][bin] = val;
+      }
+    });
+  });
+  // zone
+  Object.keys(stats.onstreet.zones.hour).forEach(hour => {
+    var day = hour.slice(0, hour.length - 3);
+    if (!stats.onstreet.zones.day[day]) {
+      stats.onstreet.zones.day[day] = {};
+    }
+
+    Object.keys(stats.onstreet.zones.hour[hour]).forEach(zone => {
+      var val = stats.onstreet.zones.hour[hour][zone];
+
+      if (
+        !stats.onstreet.zones.day[day][zone] ||
+        stats.onstreet.zones.day[day][zone] < val
+      ) {
+        stats.onstreet.zones.day[day][zone] = val;
       }
     });
   });
