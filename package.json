@@ -1,6 +1,6 @@
 {
   "name": "mobility-metrics",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "tools for aggregating mobility data",
   "bin": "./src/cli.js",
   "scripts": {

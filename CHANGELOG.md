@@ -1,6 +1,14 @@
 CHANGELOG
 ---
 
+### 3.0.2
+
+- fix report listing template using legacy format
+
+### 3.0.1
+
+- cartographic changes to improve quantile classes in custom zones
+
 ## 3.0.0
 
 - trip & status hashing feature
