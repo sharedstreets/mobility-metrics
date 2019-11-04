@@ -30,7 +30,36 @@ npm install -g mobility-metrics
 
 ## Configuration
 
-A `config.json` file is required to run Mobility Metrics. Enable providers and set credentials through this file. This file is used to store access tokens - **handle with care, these tokens are sensitive!**. See the config file in `/example/example.json` for details.
+A `config.json` file is required to run Mobility Metrics. Enable providers and set credentials through this file. This file is used to store access tokens - **handle with care, these tokens are sensitive!**. See the config file in `/example/example.json` for a working example.
+
+### Options
+
+- `boundary`
+  - a GeoJSON bounding box array used for downloading the street network for matching
+- `center`
+  - default map center represented as a coordinate array
+- `zoom`
+  - default map zoom level
+- `privacyMinimum`
+  - minimum unique record count for geographic trip volumes and origin destination flows
+- `lost`
+  - maximum number of days without status change before vehicles are permanently lost
+- `summary`
+  - enabled or disabled metrics in summary UI
+- `providers`
+  - list of providers to query
+    - `type`
+      - "local" for data off disk or "mds" for data off MDS provider API
+    - `trips`
+      - URI of trip data
+    - `status_changes`
+      - URI of status change event feed
+    - `token`
+      - token for MDS API; blank if local
+    - `enabled`
+      - true or false
+- `zones`
+  - optional GeoJSON FeatureCollection of Polygons and/or MultiPolygon with a unique property named `id`
 
 ## Provider types
 

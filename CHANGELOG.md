@@ -1,11 +1,33 @@
 CHANGELOG
 ---
 
-### 3.0.2
+## 4.0.0
+
+- add custom zone aggregation for pickups and dropoffs
+- fix bug where map would not immediately refresh when unselecting minute time filter
+- deprecate --day flag from CLI
+- add startDay, endDay, and reportDay flags to CLI
+- add support for aggregation windows of arbitrary size, enabling weekly, monthly, annual, etc. reports
+- refactor geographic aggregators to support multi-day aggregation windows
+- add warmup config for detecting vehicles deployed before aggregation window
+- add configurable summary options for selecting which metrics appear in UI
+- deprecate 7 day / 30 day snapshots in favor of dedicated reports
+- add accessible hover tooltips for all metrics
+- improve report hash styling
+- update all metric descriptions in readme documentation
+- add canonical config documentation to readme
+- intuitive descriptions of MDS status codes in fleet status chart legend
+- implement report diffing algorithm for detecting changes
+- add report history to listing page with diff statistics UI
+- update demo to show census blocks
+- fixed "timesliders get stuck" bug
+- add zoom option to example config
+
+## 3.0.2
 
 - fix report listing template using legacy format
 
-### 3.0.1
+## 3.0.1
 
 - cartographic changes to improve quantile classes in custom zones
 

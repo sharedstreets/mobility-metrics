@@ -46,6 +46,7 @@ module.exports = async function(trip, config, graph) {
   // ZONES
 
   if (config.zones) {
+    // trace
     var zoneMatches = [];
     const keys = cover.indexes(line.geometry, zs);
     for (let zone of config.zones.features) {
@@ -62,6 +63,44 @@ module.exports = async function(trip, config, graph) {
 
     if (zoneMatches.length) {
       trip.matches.zones = zoneMatches;
+    }
+
+    // pickup
+    var pickupZoneMatches = [];
+    const pickupKeys = cover.indexes(line.geometry, zs);
+    for (let zone of config.zones.features) {
+      let found = false;
+      for (let key of pickupKeys) {
+        if (zone.properties.keys[key]) found = true;
+        continue;
+      }
+
+      if (found) {
+        pickupZoneMatches.push(zone.properties.id);
+      }
+    }
+
+    if (pickupZoneMatches.length) {
+      trip.matches.pickupZones = pickupZoneMatches;
+    }
+
+    // dropoff
+    var dropoffZoneMatches = [];
+    const dropoffKeys = cover.indexes(line.geometry, zs);
+    for (let zone of config.zones.features) {
+      let found = false;
+      for (let key of dropoffKeys) {
+        if (zone.properties.keys[key]) found = true;
+        continue;
+      }
+
+      if (found) {
+        dropoffZoneMatches.push(zone.properties.id);
+      }
+    }
+
+    if (zoneMatches.length) {
+      trip.matches.dropoffZones = dropoffZoneMatches;
     }
   }
 

@@ -7,7 +7,14 @@ const moment = require("moment");
 const local = require("./providers/local");
 const mds = require("./providers/mds");
 
-const cache = async function(dayString, cachePath, graph, config) {
+const cache = async function(
+  startDay,
+  endDay,
+  reportDay,
+  cachePath,
+  graph,
+  config
+) {
   var version = JSON.parse(
     fs.readFileSync(path.join(__dirname, "../package.json")).toString()
   ).version;
@@ -16,16 +23,12 @@ const cache = async function(dayString, cachePath, graph, config) {
     return config.providers[provider].enabled;
   });
 
-  var day = moment(dayString, "YYYY-MM-DD");
-  const stop = Math.round(
-    +day
-      .clone()
-      .add(1, "day")
-      .format("X")
+  const start = Math.round(
+    +startDay.subtract(config.lost, "days").format("X")
   );
-  const start = Math.round(+day.format("X"));
+  const stop = Math.round(+endDay.format("X"));
 
-  const cacheDayPath = path.join(cachePath, day.format("YYYY-MM-DD"));
+  const cacheDayPath = path.join(cachePath, reportDay.format("YYYY-MM-DD"));
   const cacheDayAllPath = path.join(cacheDayPath, "./All");
   const cacheDayAllTripsPath = path.join(cacheDayAllPath, "trips.json");
   const cacheDayAllChangesPath = path.join(cacheDayAllPath, "changes.json");

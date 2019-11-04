@@ -18,7 +18,9 @@ if (argv.help || argv.h || Object.keys(argv).length === 1) {
   help += "--config      path to config json file\n";
   help += "--public      path to public metric directory\n";
   help += "--cache       path to temporary data cache\n";
-  help += "--day         day to process (YYYY-MM-DD)\n";
+  help += "--startDay    start of query range (YYYY-MM-DD)\n";
+  help += "--endDay      end of query range (YYYY-MM-DD)\n";
+  help += "--reportDay   day of report listing (YYYY-MM-DD)\n";
 
   console.log(help);
   process.exit(0);
@@ -26,7 +28,11 @@ if (argv.help || argv.h || Object.keys(argv).length === 1) {
   if (!argv.config) throw new Error("specify config file");
   if (!argv.public) throw new Error("specify public metric directory");
   if (!argv.cache) throw new Error("specify temporary data cache");
-  if (!argv.day) throw new Error("specify day to process (YYYY-MM-DD)");
+  if (!argv.startDay)
+    throw new Error("specify start of query range (YYYY-MM-DD)");
+  if (!argv.endDay) throw new Error("specify end of query range (YYYY-MM-DD)");
+  if (!argv.reportDay)
+    throw new Error("specify day of report listing (YYYY-MM-DD)");
 }
 
 const config = require(path.resolve(argv.config));
@@ -47,7 +53,9 @@ const publicPath = path.resolve(argv.public);
 const cachePath = path.resolve(argv.cache);
 
 const debug = argv.debug;
-const day = moment(argv.day, "YYYY-MM-DD");
+const startDay = moment(argv.startDay, "YYYY-MM-DD");
+const endDay = moment(argv.endDay, "YYYY-MM-DD");
+const reportDay = moment(argv.reportDay, "YYYY-MM-DD");
 
 const backfill = async function() {
   return new Promise(async (resolve, reject) => {
@@ -62,7 +70,9 @@ const backfill = async function() {
     await graph.buildGraph();
 
     await summarize(
-      day.format("YYYY-MM-DD"),
+      startDay,
+      endDay,
+      reportDay,
       shst,
       graph,
       publicPath,
