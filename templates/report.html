@@ -991,32 +991,32 @@
       });
 
       function render() {
-        if(!summary["Unique Vehicles"]) {
-          $("#totalVehiclesDiv").remove()
+        if (!summary["Unique Vehicles"]) {
+          $("#totalVehiclesDiv").remove();
         }
-        if(!summary["Active Vehicles"]) {
-          $("#totalActiveVehiclesDiv").remove()
+        if (!summary["Active Vehicles"]) {
+          $("#totalActiveVehiclesDiv").remove();
         }
-        if(!summary["Total Trips"]) {
-          $("#totalTripsDiv").remove()
+        if (!summary["Total Trips"]) {
+          $("#totalTripsDiv").remove();
         }
-        if(!summary["Total Trip Distance"]) {
-          $("#totalDistanceDiv").remove()
+        if (!summary["Total Trip Distance"]) {
+          $("#totalDistanceDiv").remove();
         }
-        if(!summary["Distance Per Vehicle"]) {
-          $("#avgDistancePerVehicleDiv").remove()
+        if (!summary["Distance Per Vehicle"]) {
+          $("#avgDistancePerVehicleDiv").remove();
         }
-        if(!summary["Trips Per Active Vehicle"]) {
-          $("#tripsPerActiveVehicleDiv").remove()
+        if (!summary["Trips Per Active Vehicle"]) {
+          $("#tripsPerActiveVehicleDiv").remove();
         }
-        if(!summary["Avg Trip Distance"]) {
-          $("#avgTripDistanceDiv").remove()
+        if (!summary["Avg Trip Distance"]) {
+          $("#avgTripDistanceDiv").remove();
         }
-        if(!summary["Avg Trip Duration"]) {
-          $("#avgTripDurationDiv").remove()
+        if (!summary["Avg Trip Duration"]) {
+          $("#avgTripDurationDiv").remove();
         }
-        if(!summary["Vehicle Utilization"]) {
-          $("#avgVehicleUtilizationDiv").remove()
+        if (!summary["Vehicle Utilization"]) {
+          $("#avgVehicleUtilizationDiv").remove();
         }
 
         if (!data) {
@@ -1234,7 +1234,7 @@
             }
           }
           if ($("#trip-volume-zones").prop("checked")) {
-            debugger
+            debugger;
             if (data.tripVolumes.zones[timeLevel][time]) {
               geojson["trip-volume"] = JSON.parse(
                 JSON.stringify(data.geometry.zones)
@@ -1416,12 +1416,10 @@
               geojson["pickups"].features.forEach(f => {
                 f.properties.value = 0;
               });
-              Object.keys(data.pickups.zones[timeLevel][time]).forEach(
-                zone => {
-                  geojson["pickups"].features[zone].properties.value =
-                    data.pickups.zones[timeLevel][time][zone];
-                }
-              );
+              Object.keys(data.pickups.zones[timeLevel][time]).forEach(zone => {
+                geojson["pickups"].features[zone].properties.value =
+                  data.pickups.zones[timeLevel][time][zone];
+              });
               categorize(geojson["pickups"]);
               maps["pickups-map"]
                 .getSource("zones")

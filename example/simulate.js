@@ -50,7 +50,7 @@ console.log("running simulations...");
 for (var day = 1; day <= days; day++) {
   console.log(day + " / " + days);
   console.log("- - -");
-  const time = (start + day * 86400000) + 21600;
+  const time = start + day * 86400000 + 21600;
 
   for (let provider of providers) {
     console.log("  " + provider);

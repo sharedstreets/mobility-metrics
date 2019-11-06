@@ -23,9 +23,7 @@ const cache = async function(
     return config.providers[provider].enabled;
   });
 
-  const start = Math.round(
-    +startDay.subtract(config.lost, "days").format("X")
-  );
+  const start = Math.round(+startDay.subtract(config.lost, "days").format("X"));
   const stop = Math.round(+endDay.format("X"));
 
   const cacheDayPath = path.join(cachePath, reportDay.format("YYYY-MM-DD"));
