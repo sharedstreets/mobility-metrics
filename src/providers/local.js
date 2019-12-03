@@ -28,8 +28,8 @@ async function trips(
           const data = chunk.toString();
           if (data.length) {
             var trip = JSON.parse(data);
-            trip.start_time = trip.start_time / 1000;
-            trip.end_time = trip.end_time / 1000;
+            trip.start_time = trip.start_time;
+            trip.end_time = trip.end_time;
 
             if (trip.start_time >= start && trip.start_time < stop) {
               trip = await tripMatch(trip, config, graph);
@@ -72,7 +72,7 @@ async function changes(
           const data = chunk.toString();
           if (data.length) {
             var change = JSON.parse(data);
-            change.event_time = change.event_time / 1000;
+            change.event_time = change.event_time;
             if (change.event_time >= start && change.event_time < stop) {
               change = await changeMatch(change, config, graph);
               const signature = crypto

@@ -1,6 +1,13 @@
 CHANGELOG
 ---
 
+## 4.1.0
+
+- document requirement for MDS >=0.3
+- normalize epoch millisecond timestamp parsing
+- remove parsing for debug option for cache preservation (no longer needed)
+- accept local file timestamps as milliseconds
+
 ## 4.0.0
 
 - add custom zone aggregation for pickups and dropoffs
