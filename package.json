@@ -1,6 +1,6 @@
 {
   "name": "mobility-metrics",
-  "version": "3.0.2",
+  "version": "4.0.0",
   "description": "tools for aggregating mobility data",
   "bin": "./src/cli.js",
   "scripts": {
@@ -25,7 +25,7 @@
     "recursive-copy": "^2.0.10",
     "request": "^2.88.0",
     "rimraf": "^2.6.3",
-    "sharedstreets": "^0.13.0",
+    "sharedstreets": "^0.13.7",
     "through2": "^3.0.1",
     "untildify": "^3.0.3"
   },

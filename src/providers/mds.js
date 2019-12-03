@@ -16,7 +16,12 @@ async function trips(
 ) {
   return new Promise(async (resolve, reject) => {
     var opts = {
-      url: provider.trips + "?start_time=" + start + "&end_time=" + stop,
+      url:
+        provider.trips +
+        "?start_time=" +
+        start.toString() +
+        "&end_time=" +
+        stop.toString(),
       headers: {
         "Content-Type": "application/json",
         Authorization: provider.token
@@ -70,7 +75,11 @@ async function changes(
   return new Promise(async (resolve, reject) => {
     var opts = {
       url:
-        provider.status_changes + "?start_time=" + start + "&end_time=" + stop,
+        provider.status_changes +
+        "?start_time=" +
+        start.toString() +
+        "&end_time=" +
+        stop.toString(),
       headers: {
         "Content-Type": "application/json",
         Authorization: provider.token

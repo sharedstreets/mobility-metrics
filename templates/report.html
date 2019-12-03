@@ -21,24 +21,15 @@
         padding-right: 25%;
         padding-top: 10px;
       }
+      heading {
+        text-transform: none;
+      }
       .logo {
         height: 45px;
         margin: -12px;
         padding-right: 10px;
       }
-      .daily-summary {
-        background-color: #f7f7f7;
-        padding: 15px;
-        margin-left: -50px;
-        margin-right: -50px;
-      }
-      .weekly-summary {
-        background-color: #f7f7f7;
-        padding: 15px;
-        margin-left: -50px;
-        margin-right: -50px;
-      }
-      .monthly-summary {
+      .summary {
         background-color: #f7f7f7;
         padding: 15px;
         margin-left: -50px;
@@ -63,10 +54,19 @@
         margin-top: auto;
       }
       #export-all {
-        margin-bottom: 50px;
+        margin-bottom: 25px;
       }
       .info {
         margin: 7px;
+      }
+      .tip {
+        height: 15px;
+        width: 15px;
+        background-color: #d1d1d1;
+        border-radius: 50%;
+        display: inline-block;
+        text-transform: none;
+        font-weight: bold;
       }
       #date {
         font-size: 20px;
@@ -76,7 +76,7 @@
         margin-left: 10px;
       }
       #sign {
-        padding-bottom: 50px;
+        padding-bottom: 60px;
       }
     </style>
   </head>
@@ -87,215 +87,160 @@
     </h1>
     <nav class="level">
       <div class="level-item has-text-centered">
-        <h3 class="subtitle is-4">Date: $day$</h3>
+        <h3 class="subtitle is-4">Date: $date$</h3>
       </div>
       <div class="level-item has-text-centered">
         <h3 class="subtitle is-4">Provider: $provider$</h3>
       </div>
     </nav>
-    <div class="daily-summary">
-      <h2 class="subtitle is-4">Daily Summary</h2>
+    <div class="summary">
+      <h2 class="subtitle is-4">Summary</h2>
       <nav class="level">
-        <div class="level-item has-text-centered">
+        <div id="totalVehiclesDiv" class="level-item has-text-centered">
           <div>
-            <p class="heading">Unique Vehicles</p>
+            <p class="heading">
+              Unique Vehicles
+              <span
+                title="Number of unique vehicles with any records over the course of entire reporting period."
+                style="cursor:pointer;"
+                class="tip"
+                >i</span
+              >
+            </p>
             <p id="totalVehicles" class="title">?</p>
           </div>
         </div>
-        <div class="level-item has-text-centered">
+        <div id="totalActiveVehiclesDiv" class="level-item has-text-centered">
           <div>
-            <p class="heading">Active Vehicles</p>
+            <p class="heading">
+              Active Vehicles
+              <span
+                title="Number of vehicles with at least one trip."
+                style="cursor:pointer;"
+                class="tip"
+                >i</span
+              >
+            </p>
             <p id="totalActiveVehicles" class="title">?</p>
           </div>
         </div>
-        <div class="level-item has-text-centered">
+        <div id="totalTripsDiv" class="level-item has-text-centered">
           <div>
-            <p class="heading">Total Trips</p>
+            <p class="heading">
+              Total Trips
+              <span
+                title="Number of trips performed by all vehicles."
+                style="cursor:pointer;"
+                class="tip"
+                >i</span
+              >
+            </p>
             <p id="totalTrips" class="title">?</p>
           </div>
         </div>
       </nav>
       <nav class="level">
-        <div class="level-item has-text-centered">
+        <div id="totalDistanceDiv" class="level-item has-text-centered">
           <div>
-            <p class="heading">Total Trip Distance</p>
+            <p class="heading">
+              Total Trip Distance
+              <span
+                title="Distance of all trips combined across the fleet."
+                style="cursor:pointer;"
+                class="tip"
+                >i</span
+              >
+            </p>
             <p id="totalDistance" class="title">?</p>
           </div>
         </div>
-        <div class="level-item has-text-centered">
+        <div id="avgDistancePerVehicleDiv" class="level-item has-text-centered">
           <div>
-            <p class="heading">Distance Per Vehicle</p>
+            <p class="heading">
+              Distance Per Vehicle
+              <span
+                title="Average total travel distance for each vehicle."
+                style="cursor:pointer;"
+                class="tip"
+                >i</span
+              >
+            </p>
             <p id="avgDistancePerVehicle" class="title">?</p>
           </div>
         </div>
-        <div class="level-item has-text-centered">
+        <div id="avgVehicleUtilizationDiv" class="level-item has-text-centered">
           <div>
-            <p class="heading">Vehicle Utilization</p>
+            <p class="heading">
+              Vehicle Utilization
+              <span
+                title="Percentage of available vehicles that were used at least once over the reporting period."
+                style="cursor:pointer;"
+                class="tip"
+                >i</span
+              >
+            </p>
             <p id="avgVehicleUtilization" class="title">?</p>
           </div>
         </div>
       </nav>
       <nav class="level">
-        <div class="level-item has-text-centered">
+        <div id="tripsPerActiveVehicleDiv" class="level-item has-text-centered">
           <div>
-            <p class="heading">Trips Per Active Vehicle</p>
+            <p class="heading">
+              Trips Per Active Vehicle
+              <span
+                title="Average number of trips performed per active vehicle over the reporting period."
+                style="cursor:pointer;"
+                class="tip"
+                >i</span
+              >
+            </p>
             <p id="tripsPerActiveVehicle" class="title">?</p>
           </div>
         </div>
-        <div class="level-item has-text-centered">
+        <div id="avgTripDistanceDiv" class="level-item has-text-centered">
           <div>
-            <p class="heading">Avg Trip Distance</p>
+            <p class="heading">
+              Avg Trip Distance
+              <span
+                title="Average distance across all trips."
+                style="cursor:pointer;"
+                class="tip"
+                >i</span
+              >
+            </p>
             <p id="avgTripDistance" class="title">?</p>
           </div>
         </div>
-        <div class="level-item has-text-centered">
+        <div id="avgTripDurationDiv" class="level-item has-text-centered">
           <div>
-            <p class="heading">Avg Trip Duration</p>
+            <p class="heading">
+              Avg Trip Duration
+              <span
+                title="Average duration between pickup and dropoff across all trips."
+                style="cursor:pointer;"
+                class="tip"
+                >i</span
+              >
+            </p>
             <p id="avgTripDuration" class="title">?</p>
           </div>
         </div>
       </nav>
     </div>
 
-    <div class="weekly-summary">
-      <h2 class="subtitle is-4">Weekly Summary</h2>
-
-      <nav class="level">
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Unique Vehicles</p>
-            <p id="weeklyTotalVehicles" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Active Vehicles</p>
-            <p id="weeklyTotalActiveVehicles" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Total Trips</p>
-            <p id="weeklyTotalTrips" class="title">?</p>
-          </div>
-        </div>
-      </nav>
-      <nav class="level">
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Total Trip Distance</p>
-            <p id="weeklyTotalDistance" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Distance Per Vehicle</p>
-            <p id="weeklyAvgDistancePerVehicle" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Vehicle Utilization</p>
-            <p id="weeklyAvgVehicleUtilization" class="title">?</p>
-          </div>
-        </div>
-      </nav>
-      <nav class="level">
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Trips Per Active Vehicle</p>
-            <p id="weeklyTripsPerActiveVehicle" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Avg Trip Distance</p>
-            <p id="weeklyAvgTripDistance" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Avg Trip Duration</p>
-            <p id="weeklyAvgTripDuration" class="title">?</p>
-          </div>
-        </div>
-      </nav>
-    </div>
-
-    <div class="monthly-summary">
-      <h2 class="subtitle is-4">Monthly Summary</h2>
-
-      <nav class="level">
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Unique Vehicles</p>
-            <p id="monthlyTotalVehicles" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Active Vehicles</p>
-            <p id="monthlyTotalActiveVehicles" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Total Trips</p>
-            <p id="monthlyTotalTrips" class="title">?</p>
-          </div>
-        </div>
-      </nav>
-      <nav class="level">
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Total Trip Distance</p>
-            <p id="monthlyTotalDistance" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Distance Per Vehicle</p>
-            <p id="monthlyAvgDistancePerVehicle" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Vehicle Utilization</p>
-            <p id="monthlyAvgVehicleUtilization" class="title">?</p>
-          </div>
-        </div>
-      </nav>
-      <nav class="level">
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Trips Per Active Vehicle</p>
-            <p id="monthlyTripsPerActiveVehicle" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Avg Trip Distance</p>
-            <p id="monthlyAvgTripDistance" class="title">?</p>
-          </div>
-        </div>
-        <div class="level-item has-text-centered">
-          <div>
-            <p class="heading">Avg Trip Duration</p>
-            <p id="monthlyAvgTripDuration" class="title">?</p>
-          </div>
-        </div>
-      </nav>
-    </div>
-
     <hr />
 
-    <h2 class="subtitle is-4">Fleet Size</h2>
-    <div></div>
+    <div>
+      <span class="subtitle is-4">Fleet Status</span>
+    </div>
+    <div style="padding:12px;"></div>
+
     <div id="fleet"></div>
 
     <hr />
 
-    <h2 class="subtitle is-6">Time Filter</h2>
+    <div class="subtitle is-5">Time Filter</div>
     <nav class="level">
       <div class="level-item has-text-centered">
         <div>
@@ -503,6 +448,15 @@
             />
             Bins
           </label>
+          <label class="radio">
+            <input
+              id="pickups-zones"
+              class="re-render"
+              type="radio"
+              name="pickups-radio"
+            />
+            Zones
+          </label>
         </div>
         <p class="info has-text-grey">
           Pickups measures the total number of trips that began within a zone
@@ -538,6 +492,15 @@
               name="dropoffs-radio"
             />
             Bins
+          </label>
+          <label class="radio">
+            <input
+              id="dropoffs-zones"
+              class="re-render"
+              type="radio"
+              name="dropoffs-radio"
+            />
+            Zones
           </label>
         </div>
         <p class="info has-text-grey">
@@ -578,7 +541,7 @@
 
     <div id="sign" class="tile">
       <div class="tile is-vertical is-12">
-        <h3 class="">🔒 $signature$</h3>
+        <h3 class="info has-text-grey">🔒 $signature$</h3>
       </div>
     </div>
 
@@ -587,8 +550,11 @@
         "pk.eyJ1IjoibW9yZ2FuaGVybG9ja2VyIiwiYSI6Ii1zLU4xOWMifQ.FubD68OEerk74AYCLduMZQ";
 
       const data = $data$;
+      const summary = $summary$;
       const provider = "$provider$";
-      const day = "$day$";
+      const reportDay = "$reportDay$";
+      const startDay = "$startDay$";
+      const endDay = "$endDay$";
 
       var maps = {
         "trip-volume-map": null,
@@ -844,6 +810,19 @@
             },
             firstSymbolId
           );
+          maps["pickups-map"].addLayer(
+            {
+              id: "zones",
+              type: "fill",
+              source: {
+                type: "geojson",
+                data: turf.featureCollection([])
+              },
+              layout: {},
+              paint: binPaint
+            },
+            firstSymbolId
+          );
 
           maps["dropoffs-map"].addLayer(
             {
@@ -864,6 +843,19 @@
           maps["dropoffs-map"].addLayer(
             {
               id: "bins",
+              type: "fill",
+              source: {
+                type: "geojson",
+                data: turf.featureCollection([])
+              },
+              layout: {},
+              paint: binPaint
+            },
+            firstSymbolId
+          );
+          maps["dropoffs-map"].addLayer(
+            {
+              id: "zones",
               type: "fill",
               source: {
                 type: "geojson",
@@ -918,12 +910,14 @@
             if (!$("#hour-checkbox").prop("checked")) {
               $("#minute-checkbox").prop("checked", false);
             }
+            render(); // fixes re-render class not firing
           });
 
           $("#minute-checkbox").on("change", () => {
             if ($("#minute-checkbox").prop("checked")) {
               $("#hour-checkbox").prop("checked", true);
             }
+            render(); // fixes re-render class not firing
           });
 
           $("#hour-slider").on("change", () => {
@@ -997,8 +991,35 @@
       });
 
       function render() {
+        if (!summary["Unique Vehicles"]) {
+          $("#totalVehiclesDiv").remove();
+        }
+        if (!summary["Active Vehicles"]) {
+          $("#totalActiveVehiclesDiv").remove();
+        }
+        if (!summary["Total Trips"]) {
+          $("#totalTripsDiv").remove();
+        }
+        if (!summary["Total Trip Distance"]) {
+          $("#totalDistanceDiv").remove();
+        }
+        if (!summary["Distance Per Vehicle"]) {
+          $("#avgDistancePerVehicleDiv").remove();
+        }
+        if (!summary["Trips Per Active Vehicle"]) {
+          $("#tripsPerActiveVehicleDiv").remove();
+        }
+        if (!summary["Avg Trip Distance"]) {
+          $("#avgTripDistanceDiv").remove();
+        }
+        if (!summary["Avg Trip Duration"]) {
+          $("#avgTripDurationDiv").remove();
+        }
+        if (!summary["Vehicle Utilization"]) {
+          $("#avgVehicleUtilizationDiv").remove();
+        }
+
         if (!data) {
-          // daily
           $("#totalVehicles").text("?");
           $("#totalActiveVehicles").text("?");
           $("#totalTrips").text("?");
@@ -1008,30 +1029,7 @@
           $("#avgTripDistance").text("?");
           $("#avgTripDuration").text("?");
           $("#avgVehicleUtilization").text("?");
-
-          // weekly
-          $("#weeklyTotalVehicles").text("?");
-          $("#weeklyTotalActiveVehicles").text("?");
-          $("#weeklyTotalTrips").text("?");
-          $("#weeklyTotalDistance").text("?");
-          $("#weeklyAvgDistancePerVehicle").text("?");
-          $("#weeklyTripsPerActiveVehicle").text("?");
-          $("#weeklyAvgTripDistance").text("?");
-          $("#weeklyAvgTripDuration").text("?");
-          $("#weeklyAvgVehicleUtilization").text("?");
-
-          // monthly
-          $("#monthlyTotalVehicles").text("?");
-          $("#monthlyTotalActiveVehicles").text("?");
-          $("#monthlyTotalTrips").text("?");
-          $("#monthlyTotalDistance").text("?");
-          $("#monthlyAvgDistancePerVehicle").text("?");
-          $("#monthlyTripsPerActiveVehicle").text("?");
-          $("#monthlyAvgTripDistance").text("?");
-          $("#monthlyAvgTripDuration").text("?");
-          $("#monthlyAvgVehicleUtilization").text("?");
         } else {
-          // daily stats
           $("#totalVehicles").text(data.totalVehicles);
           $("#totalActiveVehicles").text(data.totalActiveVehicles);
           $("#avgVehicleUtilization").text(
@@ -1058,73 +1056,6 @@
               "s"
           );
 
-          // weekly stats
-          $("#weeklyTotalVehicles").text(data.weeklyTotalVehicles);
-          $("#weeklyTotalActiveVehicles").text(data.weeklyTotalActiveVehicles);
-          $("#weeklyAvgVehicleUtilization").text(
-            Math.round(
-              (data.weeklyTotalActiveVehicles / data.weeklyTotalVehicles) * 100
-            ) + "%"
-          );
-          $("#weeklyTotalTrips").text(data.weeklyTotalTrips);
-          $("#weeklyTotalDistance").text(
-            Math.round(data.weeklyTotalDistance) + " mi"
-          );
-          $("#weeklyAvgDistancePerVehicle").text(
-            data.weeklyAverageVehicleDistance.toFixed(2) + " mi"
-          );
-          $("#weeklyTripsPerActiveVehicle").text(
-            data.weeklyAverageTrips.toFixed(2)
-          );
-          $("#weeklyAvgTripDistance").text(
-            data.weeklyAverageTripDistance.toFixed(2) + " mi"
-          );
-          $("#weeklyAvgTripDuration").text(
-            Math.floor(data.weeklyAverageTripDuration) +
-              "m " +
-              Math.round(
-                (data.weeklyAverageTripDuration -
-                  Math.floor(data.weeklyAverageTripDuration)) *
-                  60
-              ) +
-              "s"
-          );
-
-          // monthly stats
-          $("#monthlyTotalVehicles").text(data.monthlyTotalVehicles);
-          $("#monthlyTotalActiveVehicles").text(
-            data.monthlyTotalActiveVehicles
-          );
-          $("#monthlyAvgVehicleUtilization").text(
-            Math.round(
-              (data.monthlyTotalActiveVehicles / data.monthlyTotalVehicles) *
-                100
-            ) + "%"
-          );
-          $("#monthlyTotalTrips").text(data.monthlyTotalTrips);
-          $("#monthlyTotalDistance").text(
-            Math.round(data.monthlyTotalDistance) + " mi"
-          );
-          $("#monthlyAvgDistancePerVehicle").text(
-            data.monthlyAverageVehicleDistance.toFixed(2) + " mi"
-          );
-          $("#monthlyTripsPerActiveVehicle").text(
-            data.monthlyAverageTrips.toFixed(2)
-          );
-          $("#monthlyAvgTripDistance").text(
-            data.monthlyAverageTripDistance.toFixed(2) + " mi"
-          );
-          $("#monthlyAvgTripDuration").text(
-            Math.floor(data.monthlyAverageTripDuration) +
-              "m " +
-              Math.round(
-                (data.monthlyAverageTripDuration -
-                  Math.floor(data.monthlyAverageTripDuration)) *
-                  60
-              ) +
-              "s"
-          );
-
           // fleet chart
           var spec = {
             $schema: "https://vega.github.io/schema/vega/v5.json",
@@ -1135,7 +1066,7 @@
             legends: [
               {
                 fill: "color",
-                orient: "top-left",
+                orient: "top-right",
                 encode: {
                   symbols: { enter: { fillOpacity: { value: 0.9 } } },
                   labels: { update: { text: { field: "value" } } }
@@ -1213,19 +1144,19 @@
           for (let tick of ticks) {
             var h = moment(tick.split("-")[3], "H").format("ha");
             var v = data.fleet.available[tick];
-            spec.data[0].values.push({ x: h, y: v, c: "available" });
+            spec.data[0].values.push({ x: h, y: v, c: "deployed" });
           }
           var ticks = Object.keys(data.fleet.reserved);
           for (let tick of ticks) {
             var h = moment(tick.split("-")[3], "H").format("ha");
             var v = data.fleet.reserved[tick];
-            spec.data[0].values.push({ x: h, y: v, c: "reserved" });
+            spec.data[0].values.push({ x: h, y: v, c: "trip in progress" });
           }
           var ticks = Object.keys(data.fleet.unavailable);
           for (let tick of ticks) {
             var h = moment(tick.split("-")[3], "H").format("ha");
             var v = data.fleet.unavailable[tick];
-            spec.data[0].values.push({ x: h, y: v, c: "unavailable" });
+            spec.data[0].values.push({ x: h, y: v, c: "awaiting maintinence" });
           }
 
           var view = new vega.View(vega.parse(spec), {
@@ -1236,7 +1167,7 @@
           view.runAsync();
 
           // get time filter
-          var time = day;
+          var time = reportDay;
           if ($("#hour-checkbox").prop("checked")) {
             var hour = $("#hour-slider")
               .val()
@@ -1303,6 +1234,7 @@
             }
           }
           if ($("#trip-volume-zones").prop("checked")) {
+            debugger;
             if (data.tripVolumes.zones[timeLevel][time]) {
               geojson["trip-volume"] = JSON.parse(
                 JSON.stringify(data.geometry.zones)
@@ -1476,6 +1408,24 @@
               maps["pickups-map"].getSource("bins").setData(geojson["pickups"]);
             }
           }
+          if ($("#pickups-zones").prop("checked")) {
+            if (data.pickups.zones[timeLevel][time]) {
+              geojson["pickups"] = JSON.parse(
+                JSON.stringify(data.geometry.zones)
+              );
+              geojson["pickups"].features.forEach(f => {
+                f.properties.value = 0;
+              });
+              Object.keys(data.pickups.zones[timeLevel][time]).forEach(zone => {
+                geojson["pickups"].features[zone].properties.value =
+                  data.pickups.zones[timeLevel][time][zone];
+              });
+              categorize(geojson["pickups"]);
+              maps["pickups-map"]
+                .getSource("zones")
+                .setData(geojson["pickups"]);
+            }
+          }
 
           // render dropoffs
           if ($("#dropoffs-streets").prop("checked")) {
@@ -1511,6 +1461,26 @@
               categorize(geojson["dropoffs"]);
               maps["dropoffs-map"]
                 .getSource("bins")
+                .setData(geojson["dropoffs"]);
+            }
+          }
+          if ($("#dropoffs-zones").prop("checked")) {
+            if (data.dropoffs.zones[timeLevel][time]) {
+              geojson["dropoffs"] = JSON.parse(
+                JSON.stringify(data.geometry.zones)
+              );
+              geojson["dropoffs"].features.forEach(f => {
+                f.properties.value = 0;
+              });
+              Object.keys(data.dropoffs.zones[timeLevel][time]).forEach(
+                zone => {
+                  geojson["dropoffs"].features[zone].properties.value =
+                    data.dropoffs.zones[timeLevel][time][zone];
+                }
+              );
+              categorize(geojson["dropoffs"]);
+              maps["dropoffs-map"]
+                .getSource("zones")
                 .setData(geojson["dropoffs"]);
             }
           }
@@ -1575,12 +1545,18 @@
         maps["pickups-map"]
           .getSource("bins")
           .setData(turf.featureCollection([]));
+        maps["pickups-map"]
+          .getSource("zones")
+          .setData(turf.featureCollection([]));
 
         maps["dropoffs-map"]
           .getSource("streets")
           .setData(turf.featureCollection([]));
         maps["dropoffs-map"]
           .getSource("bins")
+          .setData(turf.featureCollection([]));
+        maps["dropoffs-map"]
+          .getSource("zones")
           .setData(turf.featureCollection([]));
 
         maps["flows-map"]
@@ -1590,7 +1566,7 @@
 
       function exportLayer(layer) {
         // get time filter
-        var time = day;
+        var time = reportDay;
         if ($("#hour-checkbox").prop("checked")) {
           var hour = $("#hour-slider")
             .val()

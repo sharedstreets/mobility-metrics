@@ -27,7 +27,7 @@ exec("../node_modules/osrm/lib/binding/osrm-contract graph/nash.osrm");
 
 const providers = ["Flipr", "Scoob", "BikeMe", "Spuun"];
 
-const days = 7;
+const days = 30;
 
 const start = 1563087600000; // Sunday, July 14, 2019 3:00:00 AM GMT-04:00
 
@@ -50,7 +50,7 @@ console.log("running simulations...");
 for (var day = 1; day <= days; day++) {
   console.log(day + " / " + days);
   console.log("- - -");
-  const time = start + day * 86400000;
+  const time = start + day * 86400000 + 21600;
 
   for (let provider of providers) {
     console.log("  " + provider);

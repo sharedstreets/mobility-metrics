@@ -13,7 +13,9 @@ const version = require(path.join(__dirname, "../package.json")).version;
 var Z = 9;
 
 const summarize = async function(
-  day,
+  startDay,
+  endDay,
+  reportDay,
   shst,
   graph,
   publicPath,
@@ -29,10 +31,10 @@ const summarize = async function(
     });
     providers.push("All");
 
-    var cacheDayPath = path.join(cachePath, day);
+    var cacheDayPath = path.join(cachePath, reportDay.format("YYYY-MM-DD"));
     if (!fs.existsSync(cacheDayPath)) {
       console.log("  caching...");
-      await cache(day, cachePath, graph, config);
+      await cache(startDay, endDay, reportDay, cachePath, graph, config);
     }
 
     console.log("  summarizing...");
@@ -219,100 +221,54 @@ const summarize = async function(
       });
 
       console.log("      fleet sizes...");
-      await fleet(stats, states, day);
-      console.log("      trip volumes...");
-      await tripVolumes(stats, trips, graph, privacyMinimum);
-      console.log("      pickups...");
-      await pickups(stats, trips, graph);
-      console.log("      dropoffs...");
-      await dropoffs(stats, trips, graph);
-      console.log("      flows...");
-      flows(stats, trips, privacyMinimum);
-      console.log("      availability...");
-      await availability(stats, states, day, graph);
-      console.log("      onstreet...");
-      await onstreet(stats, states, day, graph);
+      await fleet(startDay, endDay, reportDay, stats, states);
 
-      var summaryPath = path.join(publicPath, "data", day);
+      console.log("      trip volumes...");
+      await tripVolumes(
+        startDay,
+        endDay,
+        reportDay,
+        stats,
+        trips,
+        graph,
+        privacyMinimum
+      );
+      console.log("      availability...");
+      await availability(startDay, endDay, reportDay, stats, states, graph);
+      console.log("      onstreet...");
+      await onstreet(startDay, endDay, reportDay, stats, states, graph);
+      console.log("      pickups...");
+      await pickups(startDay, endDay, reportDay, stats, trips, graph);
+      console.log("      dropoffs...");
+      await dropoffs(startDay, endDay, reportDay, stats, trips, graph);
+      console.log("      flows...");
+      flows(startDay, endDay, reportDay, stats, trips, privacyMinimum);
+
+      var summaryPath = path.join(
+        publicPath,
+        "data",
+        reportDay.format("YYYY-MM-DD")
+      );
       mkdirp.sync(summaryPath);
       summaryFilePath = path.join(summaryPath, provider + ".json");
-
-      // weekly
-      stats.weeklyTotalVehicles = stats.totalVehicles;
-      stats.weeklyTotalActiveVehicles = stats.totalActiveVehicles;
-      stats.weeklyTotalTrips = stats.totalTrips;
-      stats.weeklyTotalDistance = stats.totalDistance;
-      stats.weeklyTotalDuration = stats.totalDuration;
-
-      var days = 7;
-      while (days--) {
-        var d = moment(day, "YYYY-MM-DD").subtract(days, "days");
-        var dPath = path.join(publicPath, "data", d.format("YYYY-MM-DD"));
-        dFilePath = path.join(dPath, provider + ".json");
-
-        if (fs.existsSync(dFilePath)) {
-          var data = JSON.parse(fs.readFileSync(dFilePath).toString());
-          stats.weeklyTotalVehicles += data.totalVehicles;
-          stats.weeklyTotalActiveVehicles += data.totalActiveVehicles;
-          stats.weeklyTotalTrips += data.totalTrips;
-          stats.weeklyTotalDistance += data.totalDistance;
-          stats.weeklyTotalDuration += data.totalDuration;
-        }
-      }
-      stats.weeklyAverageVehicleDistance =
-        stats.weeklyTotalDistance / stats.weeklyTotalActiveVehicles;
-      stats.weeklyAverageVehicleDuration =
-        stats.weeklyTotalDuration / stats.weeklyTotalActiveVehicles;
-      stats.weeklyAverageTripDistance =
-        stats.weeklyTotalDistance / stats.weeklyTotalTrips;
-      stats.weeklyAverageTripDuration =
-        stats.weeklyTotalDuration / stats.weeklyTotalTrips;
-      stats.weeklyAverageTrips =
-        stats.weeklyTotalTrips / stats.weeklyTotalActiveVehicles;
-
-      // monthly
-      stats.monthlyTotalVehicles = stats.totalVehicles;
-      stats.monthlyTotalActiveVehicles = stats.totalActiveVehicles;
-      stats.monthlyTotalTrips = stats.totalTrips;
-      stats.monthlyTotalDistance = stats.totalDistance;
-      stats.monthlyTotalDuration = stats.totalDuration;
-
-      var days = 30;
-      while (days--) {
-        var d = moment(day, "YYYY-MM-DD").subtract(days, "days");
-        var dPath = path.join(publicPath, "data", d.format("YYYY-MM-DD"));
-        dFilePath = path.join(dPath, provider + ".json");
-
-        if (fs.existsSync(dFilePath)) {
-          var data = JSON.parse(fs.readFileSync(dFilePath).toString());
-          stats.monthlyTotalVehicles += data.totalVehicles;
-          stats.monthlyTotalActiveVehicles += data.totalActiveVehicles;
-          stats.monthlyTotalTrips += data.totalTrips;
-          stats.monthlyTotalDistance += data.totalDistance;
-          stats.monthlyTotalDuration += data.totalDuration;
-        }
-      }
-      stats.monthlyAverageVehicleDistance =
-        stats.monthlyTotalDistance / stats.monthlyTotalActiveVehicles;
-      stats.monthlyAverageVehicleDuration =
-        stats.monthlyTotalDuration / stats.monthlyTotalActiveVehicles;
-      stats.monthlyAverageTripDistance =
-        stats.monthlyTotalDistance / stats.monthlyTotalTrips;
-      stats.monthlyAverageTripDuration =
-        stats.monthlyTotalDuration / stats.monthlyTotalTrips;
-      stats.monthlyAverageTrips =
-        stats.monthlyTotalTrips / stats.monthlyTotalActiveVehicles;
 
       fs.writeFileSync(summaryFilePath, JSON.stringify(stats));
     }
 
-    await report(config, providers, publicPath, day);
+    await report(
+      config,
+      providers,
+      publicPath,
+      startDay.format("YYYY-MM-DD"),
+      endDay.format("YYYY-MM-DD"),
+      reportDay.format("YYYY-MM-DD")
+    );
 
     resolve();
   });
 };
 
-function getTimeBins(timestamp) {
+function getTimeBins(reportDay, timestamp) {
   var time = moment(timestamp, "X");
   var minutes = +time.minutes();
   var formattedMinutes = "00";
@@ -320,157 +276,172 @@ function getTimeBins(timestamp) {
   if (minutes >= 30) formattedMinutes = "30";
   if (minutes >= 45) formattedMinutes = "45";
 
-  return {
-    day: time.format("YYYY-MM-DD"),
-    hour: time.format("YYYY-MM-DD-HH"),
-    minute: time.format("YYYY-MM-DD-HH-") + formattedMinutes
-  };
+  var bins = {};
+  bins.day = reportDay.format("YYYY-MM-DD");
+  bins.hour = bins.day + "-" + time.format("HH");
+  bins.minute = bins.hour + "-" + formattedMinutes;
+
+  return bins;
 }
 
-async function tripVolumes(stats, trips, graph, privacyMinimum) {
+async function tripVolumes(
+  startDay,
+  endDay,
+  reportDay,
+  stats,
+  trips,
+  graph,
+  privacyMinimum
+) {
   for (let trip of trips) {
-    // zones
-    if (trip.matches.zones) {
-      var timeBins = getTimeBins(trip.start_time);
-      // populate time bins
-      if (!stats.tripVolumes.zones.day[timeBins.day]) {
-        stats.tripVolumes.zones.day[timeBins.day] = {};
-      }
-      if (!stats.tripVolumes.zones.hour[timeBins.hour]) {
-        stats.tripVolumes.zones.hour[timeBins.hour] = {};
-      }
-      if (!stats.tripVolumes.zones.minute[timeBins.minute]) {
-        stats.tripVolumes.zones.minute[timeBins.minute] = {};
-      }
-
-      // aggregate stats
-      trip.matches.zones.forEach(zone => {
-        // populate hex bins
-        if (!stats.tripVolumes.zones.day[timeBins.day][zone]) {
-          stats.tripVolumes.zones.day[timeBins.day][zone] = 0;
-        }
-        if (!stats.tripVolumes.zones.hour[timeBins.hour][zone]) {
-          stats.tripVolumes.zones.hour[timeBins.hour][zone] = 0;
-        }
-        if (!stats.tripVolumes.zones.minute[timeBins.minute][zone]) {
-          stats.tripVolumes.zones.minute[timeBins.minute][zone] = 0;
-        }
-        // increment hex bins
-        stats.tripVolumes.zones.day[timeBins.day][zone]++;
-        stats.tripVolumes.zones.hour[timeBins.hour][zone]++;
-        stats.tripVolumes.zones.minute[timeBins.minute][zone]++;
-      });
-    }
-
-    // hex bins
-
-    var bins = new Set();
-    trip.route.features.forEach(ping => {
-      var bin = h3.geoToH3(
-        ping.geometry.coordinates[1],
-        ping.geometry.coordinates[0],
-        Z
-      );
-      bins.add(bin);
-    });
-    // store bin geometry
-    bins.forEach(bin => {
-      var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
-        bin: bin
-      });
-      stats.geometry.bins[bin] = geo;
-    });
-
-    var timeBins = getTimeBins(trip.start_time);
-    // populate time bins
-    if (!stats.tripVolumes.bins.day[timeBins.day]) {
-      stats.tripVolumes.bins.day[timeBins.day] = {};
-    }
-    if (!stats.tripVolumes.bins.hour[timeBins.hour]) {
-      stats.tripVolumes.bins.hour[timeBins.hour] = {};
-    }
-    if (!stats.tripVolumes.bins.minute[timeBins.minute]) {
-      stats.tripVolumes.bins.minute[timeBins.minute] = {};
-    }
-
-    // aggregate stats
-    bins.forEach(bin => {
-      // populate hex bins
-      if (!stats.tripVolumes.bins.day[timeBins.day][bin]) {
-        stats.tripVolumes.bins.day[timeBins.day][bin] = 0;
-      }
-      if (!stats.tripVolumes.bins.hour[timeBins.hour][bin]) {
-        stats.tripVolumes.bins.hour[timeBins.hour][bin] = 0;
-      }
-      if (!stats.tripVolumes.bins.minute[timeBins.minute][bin]) {
-        stats.tripVolumes.bins.minute[timeBins.minute][bin] = 0;
-      }
-      // increment hex bins
-      stats.tripVolumes.bins.day[timeBins.day][bin]++;
-      stats.tripVolumes.bins.hour[timeBins.hour][bin]++;
-      stats.tripVolumes.bins.minute[timeBins.minute][bin]++;
-    });
-
-    // sharedstreets aggregation
-    var refs = new Set();
-
-    var line = turf.lineString(
-      trip.route.features.map(pt => {
-        return pt.geometry.coordinates;
-      })
-    );
-
-    match = trip.matches.streets;
-
+    // check for time range
     if (
-      match &&
-      match.segments &&
-      match.matchedPath &&
-      match.matchedPath.geometry &&
-      match.matchedPath.geometry.coordinates &&
-      match.matchedPath.geometry.coordinates.length === match.segments.length
+      trip.start_time >= startDay.format("x") &&
+      trip.start_time <= endDay.format("x")
     ) {
-      match.segments
-        .map((segment, s) => {
-          return turf.lineString(match.matchedPath.geometry.coordinates[s], {
-            ref: segment.geometryId
-          });
-        })
-        .forEach(f => {
-          refs.add(f.properties.ref);
+      // zones
+      if (trip.matches.zones) {
+        var timeBins = getTimeBins(reportDay, trip.start_time);
+        // populate time bins
+        if (!stats.tripVolumes.zones.day[timeBins.day]) {
+          stats.tripVolumes.zones.day[timeBins.day] = {};
+        }
+        if (!stats.tripVolumes.zones.hour[timeBins.hour]) {
+          stats.tripVolumes.zones.hour[timeBins.hour] = {};
+        }
+        if (!stats.tripVolumes.zones.minute[timeBins.minute]) {
+          stats.tripVolumes.zones.minute[timeBins.minute] = {};
+        }
 
-          if (!stats.geometry.streets[f.properties.ref]) {
-            stats.geometry.streets[f.properties.ref] = f;
+        // aggregate stats
+        trip.matches.zones.forEach(zone => {
+          // populate hex bins
+          if (!stats.tripVolumes.zones.day[timeBins.day][zone]) {
+            stats.tripVolumes.zones.day[timeBins.day][zone] = 0;
           }
+          if (!stats.tripVolumes.zones.hour[timeBins.hour][zone]) {
+            stats.tripVolumes.zones.hour[timeBins.hour][zone] = 0;
+          }
+          if (!stats.tripVolumes.zones.minute[timeBins.minute][zone]) {
+            stats.tripVolumes.zones.minute[timeBins.minute][zone] = 0;
+          }
+          // increment hex bins
+          stats.tripVolumes.zones.day[timeBins.day][zone]++;
+          stats.tripVolumes.zones.hour[timeBins.hour][zone]++;
+          stats.tripVolumes.zones.minute[timeBins.minute][zone]++;
         });
+      }
+
+      // hex bins
+
+      var bins = new Set();
+      trip.route.features.forEach(ping => {
+        var bin = h3.geoToH3(
+          ping.geometry.coordinates[1],
+          ping.geometry.coordinates[0],
+          Z
+        );
+        bins.add(bin);
+      });
+      // store bin geometry
+      bins.forEach(bin => {
+        var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
+          bin: bin
+        });
+        stats.geometry.bins[bin] = geo;
+      });
+
+      var timeBins = getTimeBins(reportDay, trip.start_time);
       // populate time bins
-      if (!stats.tripVolumes.streets.day[timeBins.day]) {
-        stats.tripVolumes.streets.day[timeBins.day] = {};
+      if (!stats.tripVolumes.bins.day[timeBins.day]) {
+        stats.tripVolumes.bins.day[timeBins.day] = {};
       }
-      if (!stats.tripVolumes.streets.hour[timeBins.hour]) {
-        stats.tripVolumes.streets.hour[timeBins.hour] = {};
+      if (!stats.tripVolumes.bins.hour[timeBins.hour]) {
+        stats.tripVolumes.bins.hour[timeBins.hour] = {};
       }
-      if (!stats.tripVolumes.streets.minute[timeBins.minute]) {
-        stats.tripVolumes.streets.minute[timeBins.minute] = {};
+      if (!stats.tripVolumes.bins.minute[timeBins.minute]) {
+        stats.tripVolumes.bins.minute[timeBins.minute] = {};
       }
 
       // aggregate stats
-      refs.forEach(ref => {
-        // populate street refs
-        if (!stats.tripVolumes.streets.day[timeBins.day][ref]) {
-          stats.tripVolumes.streets.day[timeBins.day][ref] = 0;
+      bins.forEach(bin => {
+        // populate hex bins
+        if (!stats.tripVolumes.bins.day[timeBins.day][bin]) {
+          stats.tripVolumes.bins.day[timeBins.day][bin] = 0;
         }
-        if (!stats.tripVolumes.streets.hour[timeBins.hour][ref]) {
-          stats.tripVolumes.streets.hour[timeBins.hour][ref] = 0;
+        if (!stats.tripVolumes.bins.hour[timeBins.hour][bin]) {
+          stats.tripVolumes.bins.hour[timeBins.hour][bin] = 0;
         }
-        if (!stats.tripVolumes.streets.minute[timeBins.minute][ref]) {
-          stats.tripVolumes.streets.minute[timeBins.minute][ref] = 0;
+        if (!stats.tripVolumes.bins.minute[timeBins.minute][bin]) {
+          stats.tripVolumes.bins.minute[timeBins.minute][bin] = 0;
         }
         // increment hex bins
-        stats.tripVolumes.streets.day[timeBins.day][ref]++;
-        stats.tripVolumes.streets.hour[timeBins.hour][ref]++;
-        stats.tripVolumes.streets.minute[timeBins.minute][ref]++;
+        stats.tripVolumes.bins.day[timeBins.day][bin]++;
+        stats.tripVolumes.bins.hour[timeBins.hour][bin]++;
+        stats.tripVolumes.bins.minute[timeBins.minute][bin]++;
       });
+
+      // sharedstreets aggregation
+      var refs = new Set();
+
+      var line = turf.lineString(
+        trip.route.features.map(pt => {
+          return pt.geometry.coordinates;
+        })
+      );
+
+      match = trip.matches.streets;
+
+      if (
+        match &&
+        match.segments &&
+        match.matchedPath &&
+        match.matchedPath.geometry &&
+        match.matchedPath.geometry.coordinates &&
+        match.matchedPath.geometry.coordinates.length === match.segments.length
+      ) {
+        match.segments
+          .map((segment, s) => {
+            return turf.lineString(match.matchedPath.geometry.coordinates[s], {
+              ref: segment.geometryId
+            });
+          })
+          .forEach(f => {
+            refs.add(f.properties.ref);
+
+            if (!stats.geometry.streets[f.properties.ref]) {
+              stats.geometry.streets[f.properties.ref] = f;
+            }
+          });
+        // populate time bins
+        if (!stats.tripVolumes.streets.day[timeBins.day]) {
+          stats.tripVolumes.streets.day[timeBins.day] = {};
+        }
+        if (!stats.tripVolumes.streets.hour[timeBins.hour]) {
+          stats.tripVolumes.streets.hour[timeBins.hour] = {};
+        }
+        if (!stats.tripVolumes.streets.minute[timeBins.minute]) {
+          stats.tripVolumes.streets.minute[timeBins.minute] = {};
+        }
+
+        // aggregate stats
+        refs.forEach(ref => {
+          // populate street refs
+          if (!stats.tripVolumes.streets.day[timeBins.day][ref]) {
+            stats.tripVolumes.streets.day[timeBins.day][ref] = 0;
+          }
+          if (!stats.tripVolumes.streets.hour[timeBins.hour][ref]) {
+            stats.tripVolumes.streets.hour[timeBins.hour][ref] = 0;
+          }
+          if (!stats.tripVolumes.streets.minute[timeBins.minute][ref]) {
+            stats.tripVolumes.streets.minute[timeBins.minute][ref] = 0;
+          }
+          // increment hex bins
+          stats.tripVolumes.streets.day[timeBins.day][ref]++;
+          stats.tripVolumes.streets.hour[timeBins.hour][ref]++;
+          stats.tripVolumes.streets.minute[timeBins.minute][ref]++;
+        });
+      }
     }
   }
 
@@ -614,246 +585,349 @@ async function tripVolumes(stats, trips, graph, privacyMinimum) {
   });
 }
 
-async function pickups(stats, trips, graph, config) {
-  // h3 aggregation
+async function pickups(
+  startDay,
+  endDay,
+  reportDay,
+  stats,
+  trips,
+  graph,
+  config
+) {
   for (let trip of trips) {
-    var bins = new Set();
-    [trip.route.features[0]].forEach(ping => {
-      var bin = h3.geoToH3(
-        ping.geometry.coordinates[1],
-        ping.geometry.coordinates[0],
-        Z
-      );
-      bins.add(bin);
-    });
-    // store bin geometry
-    bins.forEach(bin => {
-      var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
-        bin: bin
+    // check for time range
+    if (
+      trip.start_time >= startDay.format("x") &&
+      trip.start_time <= endDay.format("x")
+    ) {
+      // zones
+      if (trip.matches.pickupZones) {
+        var timeBins = getTimeBins(reportDay, trip.start_time);
+        // populate time bins
+        if (!stats.pickups.zones.day[timeBins.day]) {
+          stats.pickups.zones.day[timeBins.day] = {};
+        }
+        if (!stats.pickups.zones.hour[timeBins.hour]) {
+          stats.pickups.zones.hour[timeBins.hour] = {};
+        }
+        if (!stats.pickups.zones.minute[timeBins.minute]) {
+          stats.pickups.zones.minute[timeBins.minute] = {};
+        }
+
+        // aggregate stats
+        trip.matches.pickupZones.forEach(zone => {
+          // populate hex bins
+          if (!stats.pickups.zones.day[timeBins.day][zone]) {
+            stats.pickups.zones.day[timeBins.day][zone] = 0;
+          }
+          if (!stats.pickups.zones.hour[timeBins.hour][zone]) {
+            stats.pickups.zones.hour[timeBins.hour][zone] = 0;
+          }
+          if (!stats.pickups.zones.minute[timeBins.minute][zone]) {
+            stats.pickups.zones.minute[timeBins.minute][zone] = 0;
+          }
+          // increment hex bins
+          stats.pickups.zones.day[timeBins.day][zone]++;
+          stats.pickups.zones.hour[timeBins.hour][zone]++;
+          stats.pickups.zones.minute[timeBins.minute][zone]++;
+        });
+      }
+
+      // hex bins
+
+      var bins = new Set();
+      [trip.route.features[0]].forEach(ping => {
+        var bin = h3.geoToH3(
+          ping.geometry.coordinates[1],
+          ping.geometry.coordinates[0],
+          Z
+        );
+        bins.add(bin);
       });
-      stats.geometry.bins[bin] = geo;
-    });
+      // store bin geometry
+      bins.forEach(bin => {
+        var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
+          bin: bin
+        });
+        stats.geometry.bins[bin] = geo;
+      });
 
-    var timeBins = getTimeBins(trip.start_time);
-    // populate time bins
-    if (!stats.pickups.bins.day[timeBins.day]) {
-      stats.pickups.bins.day[timeBins.day] = {};
-    }
-    if (!stats.pickups.bins.hour[timeBins.hour]) {
-      stats.pickups.bins.hour[timeBins.hour] = {};
-    }
-    if (!stats.pickups.bins.minute[timeBins.minute]) {
-      stats.pickups.bins.minute[timeBins.minute] = {};
-    }
-
-    // aggregate stats
-    bins.forEach(bin => {
-      // populate hex bins
-      if (!stats.pickups.bins.day[timeBins.day][bin]) {
-        stats.pickups.bins.day[timeBins.day][bin] = 0;
-      }
-      if (!stats.pickups.bins.hour[timeBins.hour][bin]) {
-        stats.pickups.bins.hour[timeBins.hour][bin] = 0;
-      }
-      if (!stats.pickups.bins.minute[timeBins.minute][bin]) {
-        stats.pickups.bins.minute[timeBins.minute][bin] = 0;
-      }
-      // increment hex bins
-      stats.pickups.bins.day[timeBins.day][bin]++;
-      stats.pickups.bins.hour[timeBins.hour][bin]++;
-      stats.pickups.bins.minute[timeBins.minute][bin]++;
-    });
-
-    // sharedstreets aggregation
-    var matches = await graph.matchPoint(trip.route.features[0], null, 1);
-    if (matches.length) {
-      var ref = matches[0].geometryId;
-      // cache geometry from ref
-      var geo = JSON.parse(
-        JSON.stringify(graph.tileIndex.featureIndex.get(ref))
-      );
-      geo.properties = {
-        ref: ref
-      };
-      stats.geometry.streets[ref] = geo;
-
+      var timeBins = getTimeBins(reportDay, trip.start_time);
       // populate time bins
-      if (!stats.pickups.streets.day[timeBins.day]) {
-        stats.pickups.streets.day[timeBins.day] = {};
+      if (!stats.pickups.bins.day[timeBins.day]) {
+        stats.pickups.bins.day[timeBins.day] = {};
       }
-      if (!stats.pickups.streets.hour[timeBins.hour]) {
-        stats.pickups.streets.hour[timeBins.hour] = {};
+      if (!stats.pickups.bins.hour[timeBins.hour]) {
+        stats.pickups.bins.hour[timeBins.hour] = {};
       }
-      if (!stats.pickups.streets.minute[timeBins.minute]) {
-        stats.pickups.streets.minute[timeBins.minute] = {};
+      if (!stats.pickups.bins.minute[timeBins.minute]) {
+        stats.pickups.bins.minute[timeBins.minute] = {};
       }
-      // populate streets
-      if (!stats.pickups.streets.day[timeBins.day][ref]) {
-        stats.pickups.streets.day[timeBins.day][ref] = 0;
+
+      // aggregate stats
+      bins.forEach(bin => {
+        // populate hex bins
+        if (!stats.pickups.bins.day[timeBins.day][bin]) {
+          stats.pickups.bins.day[timeBins.day][bin] = 0;
+        }
+        if (!stats.pickups.bins.hour[timeBins.hour][bin]) {
+          stats.pickups.bins.hour[timeBins.hour][bin] = 0;
+        }
+        if (!stats.pickups.bins.minute[timeBins.minute][bin]) {
+          stats.pickups.bins.minute[timeBins.minute][bin] = 0;
+        }
+        // increment hex bins
+        stats.pickups.bins.day[timeBins.day][bin]++;
+        stats.pickups.bins.hour[timeBins.hour][bin]++;
+        stats.pickups.bins.minute[timeBins.minute][bin]++;
+      });
+
+      // streets
+
+      var matches = await graph.matchPoint(trip.route.features[0], null, 1);
+      if (matches.length) {
+        var ref = matches[0].geometryId;
+        // cache geometry from ref
+        var geo = JSON.parse(
+          JSON.stringify(graph.tileIndex.featureIndex.get(ref))
+        );
+        geo.properties = {
+          ref: ref
+        };
+        stats.geometry.streets[ref] = geo;
+
+        // populate time bins
+        if (!stats.pickups.streets.day[timeBins.day]) {
+          stats.pickups.streets.day[timeBins.day] = {};
+        }
+        if (!stats.pickups.streets.hour[timeBins.hour]) {
+          stats.pickups.streets.hour[timeBins.hour] = {};
+        }
+        if (!stats.pickups.streets.minute[timeBins.minute]) {
+          stats.pickups.streets.minute[timeBins.minute] = {};
+        }
+        // populate streets
+        if (!stats.pickups.streets.day[timeBins.day][ref]) {
+          stats.pickups.streets.day[timeBins.day][ref] = 0;
+        }
+        if (!stats.pickups.streets.hour[timeBins.hour][ref]) {
+          stats.pickups.streets.hour[timeBins.hour][ref] = 0;
+        }
+        if (!stats.pickups.streets.minute[timeBins.minute][ref]) {
+          stats.pickups.streets.minute[timeBins.minute][ref] = 0;
+        }
+        // increment streets
+        stats.pickups.streets.day[timeBins.day][ref]++;
+        stats.pickups.streets.hour[timeBins.hour][ref]++;
+        stats.pickups.streets.minute[timeBins.minute][ref]++;
       }
-      if (!stats.pickups.streets.hour[timeBins.hour][ref]) {
-        stats.pickups.streets.hour[timeBins.hour][ref] = 0;
-      }
-      if (!stats.pickups.streets.minute[timeBins.minute][ref]) {
-        stats.pickups.streets.minute[timeBins.minute][ref] = 0;
-      }
-      // increment streets
-      stats.pickups.streets.day[timeBins.day][ref]++;
-      stats.pickups.streets.hour[timeBins.hour][ref]++;
-      stats.pickups.streets.minute[timeBins.minute][ref]++;
     }
   }
 }
 
-async function dropoffs(stats, trips, graph, config) {
-  // h3 aggregation
+async function dropoffs(
+  startDay,
+  endDay,
+  reportDay,
+  stats,
+  trips,
+  graph,
+  config
+) {
   for (let trip of trips) {
-    var bins = new Set();
-    [trip.route.features[trip.route.features.length - 1]].forEach(ping => {
-      var bin = h3.geoToH3(
-        ping.geometry.coordinates[1],
-        ping.geometry.coordinates[0],
-        Z
-      );
-      bins.add(bin);
-    });
-    // store bin geometry
-    bins.forEach(bin => {
-      var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
-        bin: bin
+    // check for time range
+    if (
+      trip.start_time >= startDay.format("x") &&
+      trip.start_time <= endDay.format("x")
+    ) {
+      // zones
+      if (trip.matches.dropoffZones) {
+        var timeBins = getTimeBins(reportDay, trip.end_time);
+        // populate time bins
+        if (!stats.dropoffs.zones.day[timeBins.day]) {
+          stats.dropoffs.zones.day[timeBins.day] = {};
+        }
+        if (!stats.dropoffs.zones.hour[timeBins.hour]) {
+          stats.dropoffs.zones.hour[timeBins.hour] = {};
+        }
+        if (!stats.dropoffs.zones.minute[timeBins.minute]) {
+          stats.dropoffs.zones.minute[timeBins.minute] = {};
+        }
+
+        // aggregate stats
+        trip.matches.dropoffZones.forEach(zone => {
+          // populate hex bins
+          if (!stats.dropoffs.zones.day[timeBins.day][zone]) {
+            stats.dropoffs.zones.day[timeBins.day][zone] = 0;
+          }
+          if (!stats.dropoffs.zones.hour[timeBins.hour][zone]) {
+            stats.dropoffs.zones.hour[timeBins.hour][zone] = 0;
+          }
+          if (!stats.dropoffs.zones.minute[timeBins.minute][zone]) {
+            stats.dropoffs.zones.minute[timeBins.minute][zone] = 0;
+          }
+          // increment hex bins
+          stats.dropoffs.zones.day[timeBins.day][zone]++;
+          stats.dropoffs.zones.hour[timeBins.hour][zone]++;
+          stats.dropoffs.zones.minute[timeBins.minute][zone]++;
+        });
+      }
+
+      // hex bins
+
+      var bins = new Set();
+      [trip.route.features[trip.route.features.length - 1]].forEach(ping => {
+        var bin = h3.geoToH3(
+          ping.geometry.coordinates[1],
+          ping.geometry.coordinates[0],
+          Z
+        );
+        bins.add(bin);
       });
-      stats.geometry.bins[bin] = geo;
-    });
+      // store bin geometry
+      bins.forEach(bin => {
+        var geo = turf.polygon([h3.h3ToGeoBoundary(bin, true)], {
+          bin: bin
+        });
+        stats.geometry.bins[bin] = geo;
+      });
 
-    var timeBins = getTimeBins(trip.start_time);
-    // populate time bins
-    if (!stats.dropoffs.bins.day[timeBins.day]) {
-      stats.dropoffs.bins.day[timeBins.day] = {};
-    }
-    if (!stats.dropoffs.bins.hour[timeBins.hour]) {
-      stats.dropoffs.bins.hour[timeBins.hour] = {};
-    }
-    if (!stats.dropoffs.bins.minute[timeBins.minute]) {
-      stats.dropoffs.bins.minute[timeBins.minute] = {};
-    }
-
-    // aggregate stats
-    bins.forEach(bin => {
-      // populate hex bins
-      if (!stats.dropoffs.bins.day[timeBins.day][bin]) {
-        stats.dropoffs.bins.day[timeBins.day][bin] = 0;
-      }
-      if (!stats.dropoffs.bins.hour[timeBins.hour][bin]) {
-        stats.dropoffs.bins.hour[timeBins.hour][bin] = 0;
-      }
-      if (!stats.dropoffs.bins.minute[timeBins.minute][bin]) {
-        stats.dropoffs.bins.minute[timeBins.minute][bin] = 0;
-      }
-      // increment hex bins
-      stats.dropoffs.bins.day[timeBins.day][bin]++;
-      stats.dropoffs.bins.hour[timeBins.hour][bin]++;
-      stats.dropoffs.bins.minute[timeBins.minute][bin]++;
-    });
-
-    // sharedstreets aggregation
-    var matches = await graph.matchPoint(
-      trip.route.features[trip.route.features.length - 1],
-      null,
-      1
-    );
-    if (matches.length) {
-      var ref = matches[0].geometryId;
-      // cache geometry from ref
-      var geo = JSON.parse(
-        JSON.stringify(graph.tileIndex.featureIndex.get(ref))
-      );
-      geo.properties = {
-        ref: ref
-      };
-      stats.geometry.streets[ref] = geo;
-
+      var timeBins = getTimeBins(reportDay, trip.end_time);
       // populate time bins
-      if (!stats.dropoffs.streets.day[timeBins.day]) {
-        stats.dropoffs.streets.day[timeBins.day] = {};
+      if (!stats.dropoffs.bins.day[timeBins.day]) {
+        stats.dropoffs.bins.day[timeBins.day] = {};
       }
-      if (!stats.dropoffs.streets.hour[timeBins.hour]) {
-        stats.dropoffs.streets.hour[timeBins.hour] = {};
+      if (!stats.dropoffs.bins.hour[timeBins.hour]) {
+        stats.dropoffs.bins.hour[timeBins.hour] = {};
       }
-      if (!stats.dropoffs.streets.minute[timeBins.minute]) {
-        stats.dropoffs.streets.minute[timeBins.minute] = {};
+      if (!stats.dropoffs.bins.minute[timeBins.minute]) {
+        stats.dropoffs.bins.minute[timeBins.minute] = {};
       }
-      // populate streets
-      if (!stats.dropoffs.streets.day[timeBins.day][ref]) {
-        stats.dropoffs.streets.day[timeBins.day][ref] = 0;
+
+      // aggregate stats
+      bins.forEach(bin => {
+        // populate hex bins
+        if (!stats.dropoffs.bins.day[timeBins.day][bin]) {
+          stats.dropoffs.bins.day[timeBins.day][bin] = 0;
+        }
+        if (!stats.dropoffs.bins.hour[timeBins.hour][bin]) {
+          stats.dropoffs.bins.hour[timeBins.hour][bin] = 0;
+        }
+        if (!stats.dropoffs.bins.minute[timeBins.minute][bin]) {
+          stats.dropoffs.bins.minute[timeBins.minute][bin] = 0;
+        }
+        // increment hex bins
+        stats.dropoffs.bins.day[timeBins.day][bin]++;
+        stats.dropoffs.bins.hour[timeBins.hour][bin]++;
+        stats.dropoffs.bins.minute[timeBins.minute][bin]++;
+      });
+
+      // sharedstreets aggregation
+      var matches = await graph.matchPoint(
+        trip.route.features[trip.route.features.length - 1],
+        null,
+        1
+      );
+      if (matches.length) {
+        var ref = matches[0].geometryId;
+        // cache geometry from ref
+        var geo = JSON.parse(
+          JSON.stringify(graph.tileIndex.featureIndex.get(ref))
+        );
+        geo.properties = {
+          ref: ref
+        };
+        stats.geometry.streets[ref] = geo;
+
+        // populate time bins
+        if (!stats.dropoffs.streets.day[timeBins.day]) {
+          stats.dropoffs.streets.day[timeBins.day] = {};
+        }
+        if (!stats.dropoffs.streets.hour[timeBins.hour]) {
+          stats.dropoffs.streets.hour[timeBins.hour] = {};
+        }
+        if (!stats.dropoffs.streets.minute[timeBins.minute]) {
+          stats.dropoffs.streets.minute[timeBins.minute] = {};
+        }
+        // populate streets
+        if (!stats.dropoffs.streets.day[timeBins.day][ref]) {
+          stats.dropoffs.streets.day[timeBins.day][ref] = 0;
+        }
+        if (!stats.dropoffs.streets.hour[timeBins.hour][ref]) {
+          stats.dropoffs.streets.hour[timeBins.hour][ref] = 0;
+        }
+        if (!stats.dropoffs.streets.minute[timeBins.minute][ref]) {
+          stats.dropoffs.streets.minute[timeBins.minute][ref] = 0;
+        }
+        // increment streets
+        stats.dropoffs.streets.day[timeBins.day][ref]++;
+        stats.dropoffs.streets.hour[timeBins.hour][ref]++;
+        stats.dropoffs.streets.minute[timeBins.minute][ref]++;
       }
-      if (!stats.dropoffs.streets.hour[timeBins.hour][ref]) {
-        stats.dropoffs.streets.hour[timeBins.hour][ref] = 0;
-      }
-      if (!stats.dropoffs.streets.minute[timeBins.minute][ref]) {
-        stats.dropoffs.streets.minute[timeBins.minute][ref] = 0;
-      }
-      // increment streets
-      stats.dropoffs.streets.day[timeBins.day][ref]++;
-      stats.dropoffs.streets.hour[timeBins.hour][ref]++;
-      stats.dropoffs.streets.minute[timeBins.minute][ref]++;
     }
   }
 }
 
-function flows(stats, trips, privacyMinimum) {
+function flows(startDay, endDay, reportDay, stats, trips, privacyMinimum) {
   for (let trip of trips) {
-    var a = h3.geoToH3(
-      trip.route.features[0].geometry.coordinates[1],
-      trip.route.features[0].geometry.coordinates[0],
-      Z
-    );
-    var b = h3.geoToH3(
-      trip.route.features[trip.route.features.length - 1].geometry
-        .coordinates[1],
-      trip.route.features[trip.route.features.length - 1].geometry
-        .coordinates[0],
-      Z
-    );
+    // check for time range
+    if (
+      trip.start_time >= startDay.format("x") &&
+      trip.start_time <= endDay.format("x")
+    ) {
+      var a = h3.geoToH3(
+        trip.route.features[0].geometry.coordinates[1],
+        trip.route.features[0].geometry.coordinates[0],
+        Z
+      );
+      var b = h3.geoToH3(
+        trip.route.features[trip.route.features.length - 1].geometry
+          .coordinates[1],
+        trip.route.features[trip.route.features.length - 1].geometry
+          .coordinates[0],
+        Z
+      );
 
-    // store pair geometry
-    var pair = turf.lineString(
-      [
-        turf.centroid(turf.polygon([h3.h3ToGeoBoundary(a, true)])).geometry
-          .coordinates,
-        turf.centroid(turf.polygon([h3.h3ToGeoBoundary(b, true)])).geometry
-          .coordinates
-      ],
-      { pair: a + ">" + b }
-    );
-    stats.geometry.pairs[pair.properties.pair] = pair;
+      // store pair geometry
+      var pair = turf.lineString(
+        [
+          turf.centroid(turf.polygon([h3.h3ToGeoBoundary(a, true)])).geometry
+            .coordinates,
+          turf.centroid(turf.polygon([h3.h3ToGeoBoundary(b, true)])).geometry
+            .coordinates
+        ],
+        { pair: a + ">" + b }
+      );
+      stats.geometry.pairs[pair.properties.pair] = pair;
 
-    var timeBins = getTimeBins(trip.start_time);
-    // populate time bins
-    if (!stats.flows.pairs.day[timeBins.day]) {
-      stats.flows.pairs.day[timeBins.day] = {};
-    }
-    if (!stats.flows.pairs.hour[timeBins.hour]) {
-      stats.flows.pairs.hour[timeBins.hour] = {};
-    }
-    if (!stats.flows.pairs.minute[timeBins.minute]) {
-      stats.flows.pairs.minute[timeBins.minute] = {};
-    }
+      var timeBins = getTimeBins(reportDay, trip.start_time);
+      // populate time bins
+      if (!stats.flows.pairs.day[timeBins.day]) {
+        stats.flows.pairs.day[timeBins.day] = {};
+      }
+      if (!stats.flows.pairs.hour[timeBins.hour]) {
+        stats.flows.pairs.hour[timeBins.hour] = {};
+      }
+      if (!stats.flows.pairs.minute[timeBins.minute]) {
+        stats.flows.pairs.minute[timeBins.minute] = {};
+      }
 
-    // aggregate stats
-    // populate flow pairs
-    if (!stats.flows.pairs.day[timeBins.day][pair.properties.pair]) {
-      stats.flows.pairs.day[timeBins.day][pair.properties.pair] = 0;
+      // aggregate stats
+      // populate flow pairs
+      if (!stats.flows.pairs.day[timeBins.day][pair.properties.pair]) {
+        stats.flows.pairs.day[timeBins.day][pair.properties.pair] = 0;
+      }
+      if (!stats.flows.pairs.hour[timeBins.hour][pair.properties.pair]) {
+        stats.flows.pairs.hour[timeBins.hour][pair.properties.pair] = 0;
+      }
+      if (!stats.flows.pairs.minute[timeBins.minute][pair.properties.pair]) {
+        stats.flows.pairs.minute[timeBins.minute][pair.properties.pair] = 0;
+      }
+      // increment flow pairs
+      stats.flows.pairs.day[timeBins.day][pair.properties.pair]++;
+      stats.flows.pairs.hour[timeBins.hour][pair.properties.pair]++;
+      stats.flows.pairs.minute[timeBins.minute][pair.properties.pair]++;
     }
-    if (!stats.flows.pairs.hour[timeBins.hour][pair.properties.pair]) {
-      stats.flows.pairs.hour[timeBins.hour][pair.properties.pair] = 0;
-    }
-    if (!stats.flows.pairs.minute[timeBins.minute][pair.properties.pair]) {
-      stats.flows.pairs.minute[timeBins.minute][pair.properties.pair] = 0;
-    }
-    // increment flow pairs
-    stats.flows.pairs.day[timeBins.day][pair.properties.pair]++;
-    stats.flows.pairs.hour[timeBins.hour][pair.properties.pair]++;
-    stats.flows.pairs.minute[timeBins.minute][pair.properties.pair]++;
   }
 
   // filter
@@ -909,29 +983,31 @@ function flows(stats, trips, privacyMinimum) {
   });
 }
 
-async function fleet(stats, states, day, graph) {
+async function fleet(startDay, endDay, reportDay, stats, states) {
   // playback times
   // foreach 1 hour:
   // foreach vehicle state:
   // find last state before current
   // if available, increment fleet stat
-  var date = moment(day, "YYYY-MM-DD");
-  var current = moment(date.format("YYYY-MM-DD"), "YYYY-MM-DD");
-  var start = date.format("X");
-  var stop = date
+
+  var start = startDay.format("x");
+  var stop = endDay
     .clone()
     .add(1, "day")
-    .format("X");
-  while (current.format("YYYY-MM-DD") === date.format("YYYY-MM-DD")) {
-    stats.fleet.available[current.format("YYYY-MM-DD-HH")] = 0;
-    stats.fleet.reserved[current.format("YYYY-MM-DD-HH")] = 0;
-    stats.fleet.unavailable[current.format("YYYY-MM-DD-HH")] = 0;
+    .format("x");
+  var current = startDay.clone();
+  var baseDay = reportDay.format("YYYY-MM-DD");
+
+  while (current.format("YYYY-MM-DD") <= endDay.format("YYYY-MM-DD")) {
+    stats.fleet.available[current.format(baseDay + "-HH")] = 0;
+    stats.fleet.reserved[current.format(baseDay + "-HH")] = 0;
+    stats.fleet.unavailable[current.format(baseDay + "-HH")] = 0;
 
     var vehicle_ids = Object.keys(states);
     for (let vehicle_id of vehicle_ids) {
       var last;
       for (let state of states[vehicle_id]) {
-        var timestamp = moment(state.event_time, "X");
+        var timestamp = moment(state.event_time, "x");
 
         if (timestamp.diff(current) <= 0) {
           last = state.event_type;
@@ -940,47 +1016,41 @@ async function fleet(stats, states, day, graph) {
 
       if (last) {
         if (last === "available") {
-          stats.fleet.available[current.format("YYYY-MM-DD-HH")]++;
+          stats.fleet.available[current.format(baseDay + "-HH")]++;
         } else if (last === "reserved") {
-          stats.fleet.reserved[current.format("YYYY-MM-DD-HH")]++;
+          stats.fleet.reserved[current.format(baseDay + "-HH")]++;
         } else if (last === "unavailable") {
-          stats.fleet.unavailable[current.format("YYYY-MM-DD-HH")]++;
+          stats.fleet.unavailable[current.format(baseDay + "-HH")]++;
         }
       }
     }
 
     current = current.add(1, "hour");
   }
-
-  const times = Object.keys(stats.fleet);
-  stats.maxFleet = 0;
-  for (let time of times) {
-    if (stats.fleet[time] > stats.maxFleet) {
-      stats.maxFleet = stats.fleet[time];
-    }
-  }
 }
 
-async function availability(stats, states, day, graph) {
+async function availability(startDay, endDay, reportDay, stats, states, graph) {
   // playback times
   // foreach 15 min:
   // foreach vehicle state:
   // find last state before current
   // if available, increment availability stat
-  var date = moment(day, "YYYY-MM-DD");
-  var current = moment(date.format("YYYY-MM-DD"), "YYYY-MM-DD");
-  var start = date.format("X");
-  var stop = date
+
+  var start = startDay.format("x");
+  var stop = endDay
     .clone()
     .add(1, "day")
-    .format("X");
-  while (current.format("YYYY-MM-DD") === date.format("YYYY-MM-DD")) {
+    .format("x");
+  var current = startDay.clone();
+  var baseDay = reportDay.format("YYYY-MM-DD");
+
+  while (current.format("YYYY-MM-DD") <= endDay.format("YYYY-MM-DD")) {
     var vehicle_ids = Object.keys(states);
     for (let vehicle_id of vehicle_ids) {
       var lastAvailable;
       states[vehicle_id].forEach(state => {
         if (state.event_type === "available") {
-          var timestamp = moment(state.event_time, "X");
+          var timestamp = moment(state.event_time, "x");
 
           if (timestamp.diff(current) <= 0) {
             lastAvailable = state;
@@ -1004,22 +1074,22 @@ async function availability(stats, states, day, graph) {
 
         // bootstrap bin
         if (
-          !stats.availability.bins.minute[current.format("YYYY-MM-DD-HH-mm")]
+          !stats.availability.bins.minute[current.format(baseDay + "-HH-mm")]
         ) {
           stats.availability.bins.minute[
-            current.format("YYYY-MM-DD-HH-mm")
+            current.format(baseDay + "-HH-mm")
           ] = {};
         }
         if (
-          !stats.availability.bins.minute[current.format("YYYY-MM-DD-HH-mm")][
+          !stats.availability.bins.minute[current.format(baseDay + "-HH-mm")][
             bin
           ]
         ) {
-          stats.availability.bins.minute[current.format("YYYY-MM-DD-HH-mm")][
+          stats.availability.bins.minute[current.format(baseDay + "-HH-mm")][
             bin
           ] = 1;
         } else {
-          stats.availability.bins.minute[current.format("YYYY-MM-DD-HH-mm")][
+          stats.availability.bins.minute[current.format(baseDay + "-HH-mm")][
             bin
           ]++;
         }
@@ -1032,22 +1102,22 @@ async function availability(stats, states, day, graph) {
         // availability zones
         if (lastAvailable.matches.zones) {
           if (
-            !stats.availability.zones.minute[current.format("YYYY-MM-DD-HH-mm")]
+            !stats.availability.zones.minute[current.format(baseDay + "-HH-mm")]
           ) {
             stats.availability.zones.minute[
-              current.format("YYYY-MM-DD-HH-mm")
+              current.format(baseDay + "-HH-mm")
             ] = {};
           }
           if (
             !stats.availability.zones.minute[
-              current.format("YYYY-MM-DD-HH-mm")
+              current.format(baseDay + "-HH-mm")
             ][lastAvailable.matches.zones[0]]
           ) {
-            stats.availability.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+            stats.availability.zones.minute[current.format(baseDay + "-HH-mm")][
               lastAvailable.matches.zones[0]
             ] = 1;
           } else {
-            stats.availability.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+            stats.availability.zones.minute[current.format(baseDay + "-HH-mm")][
               lastAvailable.matches.zones[0]
             ]++;
           }
@@ -1070,24 +1140,24 @@ async function availability(stats, states, day, graph) {
           // bootstrap ref
           if (
             !stats.availability.streets.minute[
-              current.format("YYYY-MM-DD-HH-mm")
+              current.format(baseDay + "-HH-mm")
             ]
           ) {
             stats.availability.streets.minute[
-              current.format("YYYY-MM-DD-HH-mm")
+              current.format(baseDay + "-HH-mm")
             ] = {};
           }
           if (
             !stats.availability.streets.minute[
-              current.format("YYYY-MM-DD-HH-mm")
+              current.format(baseDay + "-HH-mm")
             ][ref]
           ) {
             stats.availability.streets.minute[
-              current.format("YYYY-MM-DD-HH-mm")
+              current.format(baseDay + "-HH-mm")
             ][ref] = 1;
           } else {
             stats.availability.streets.minute[
-              current.format("YYYY-MM-DD-HH-mm")
+              current.format(baseDay + "-HH-mm")
             ][ref]++;
           }
         }
@@ -1210,20 +1280,22 @@ async function availability(stats, states, day, graph) {
   });
 }
 
-async function onstreet(stats, states, day, graph) {
+async function onstreet(startDay, endDay, reportDay, stats, states, graph) {
   // playback times
   // foreach 15 min:
   // foreach vehicle state:
   // find last state before current
   // if available, increment onstreet stat
-  var date = moment(day, "YYYY-MM-DD");
-  var current = moment(date.format("YYYY-MM-DD"), "YYYY-MM-DD");
-  var start = date.format("X");
-  var stop = date
+
+  var start = startDay.format("x");
+  var stop = endDay
     .clone()
     .add(1, "day")
-    .format("X");
-  while (current.format("YYYY-MM-DD") === date.format("YYYY-MM-DD")) {
+    .format("x");
+  var current = startDay.clone();
+  var baseDay = reportDay.format("YYYY-MM-DD");
+
+  while (current.format("YYYY-MM-DD") <= endDay.format("YYYY-MM-DD")) {
     var vehicle_ids = Object.keys(states);
     for (let vehicle_id of vehicle_ids) {
       var lastAvailable;
@@ -1232,7 +1304,7 @@ async function onstreet(stats, states, day, graph) {
           state.event_type === "available" ||
           state.event_type === "unavailable"
         ) {
-          var timestamp = moment(state.event_time, "X");
+          var timestamp = moment(state.event_time, "x");
 
           if (timestamp.diff(current) <= 0) {
             lastAvailable = state;
@@ -1255,38 +1327,38 @@ async function onstreet(stats, states, day, graph) {
         stats.geometry.bins[bin] = geo;
 
         // bootstrap bin
-        if (!stats.onstreet.bins.minute[current.format("YYYY-MM-DD-HH-mm")]) {
-          stats.onstreet.bins.minute[current.format("YYYY-MM-DD-HH-mm")] = {};
+        if (!stats.onstreet.bins.minute[current.format(baseDay + "-HH-mm")]) {
+          stats.onstreet.bins.minute[current.format(baseDay + "-HH-mm")] = {};
         }
         if (
-          !stats.onstreet.bins.minute[current.format("YYYY-MM-DD-HH-mm")][bin]
+          !stats.onstreet.bins.minute[current.format(baseDay + "-HH-mm")][bin]
         ) {
-          stats.onstreet.bins.minute[current.format("YYYY-MM-DD-HH-mm")][
+          stats.onstreet.bins.minute[current.format(baseDay + "-HH-mm")][
             bin
           ] = 1;
         } else {
-          stats.onstreet.bins.minute[current.format("YYYY-MM-DD-HH-mm")][bin]++;
+          stats.onstreet.bins.minute[current.format(baseDay + "-HH-mm")][bin]++;
         }
 
         // onstreet zones
         if (lastAvailable.matches.zones) {
           if (
-            !stats.onstreet.zones.minute[current.format("YYYY-MM-DD-HH-mm")]
+            !stats.onstreet.zones.minute[current.format(baseDay + "-HH-mm")]
           ) {
             stats.onstreet.zones.minute[
-              current.format("YYYY-MM-DD-HH-mm")
+              current.format(baseDay + "-HH-mm")
             ] = {};
           }
           if (
-            !stats.onstreet.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+            !stats.onstreet.zones.minute[current.format(baseDay + "-HH-mm")][
               lastAvailable.matches.zones[0]
             ]
           ) {
-            stats.onstreet.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+            stats.onstreet.zones.minute[current.format(baseDay + "-HH-mm")][
               lastAvailable.matches.zones[0]
             ] = 1;
           } else {
-            stats.onstreet.zones.minute[current.format("YYYY-MM-DD-HH-mm")][
+            stats.onstreet.zones.minute[current.format(baseDay + "-HH-mm")][
               lastAvailable.matches.zones[0]
             ]++;
           }
@@ -1307,22 +1379,22 @@ async function onstreet(stats, states, day, graph) {
 
           // bootstrap ref
           if (
-            !stats.onstreet.streets.minute[current.format("YYYY-MM-DD-HH-mm")]
+            !stats.onstreet.streets.minute[current.format(baseDay + "-HH-mm")]
           ) {
             stats.onstreet.streets.minute[
-              current.format("YYYY-MM-DD-HH-mm")
+              current.format(baseDay + "-HH-mm")
             ] = {};
           }
           if (
-            !stats.onstreet.streets.minute[current.format("YYYY-MM-DD-HH-mm")][
+            !stats.onstreet.streets.minute[current.format(baseDay + "-HH-mm")][
               ref
             ]
           ) {
-            stats.onstreet.streets.minute[current.format("YYYY-MM-DD-HH-mm")][
+            stats.onstreet.streets.minute[current.format(baseDay + "-HH-mm")][
               ref
             ] = 1;
           } else {
-            stats.onstreet.streets.minute[current.format("YYYY-MM-DD-HH-mm")][
+            stats.onstreet.streets.minute[current.format(baseDay + "-HH-mm")][
               ref
             ]++;
           }
