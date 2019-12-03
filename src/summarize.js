@@ -296,8 +296,8 @@ async function tripVolumes(
   for (let trip of trips) {
     // check for time range
     if (
-      trip.start_time >= startDay.format("X") &&
-      trip.start_time <= endDay.format("X")
+      trip.start_time >= startDay.format("x") &&
+      trip.start_time <= endDay.format("x")
     ) {
       // zones
       if (trip.matches.zones) {
@@ -597,8 +597,8 @@ async function pickups(
   for (let trip of trips) {
     // check for time range
     if (
-      trip.start_time >= startDay.format("X") &&
-      trip.start_time <= endDay.format("X")
+      trip.start_time >= startDay.format("x") &&
+      trip.start_time <= endDay.format("x")
     ) {
       // zones
       if (trip.matches.pickupZones) {
@@ -737,8 +737,8 @@ async function dropoffs(
   for (let trip of trips) {
     // check for time range
     if (
-      trip.start_time >= startDay.format("X") &&
-      trip.start_time <= endDay.format("X")
+      trip.start_time >= startDay.format("x") &&
+      trip.start_time <= endDay.format("x")
     ) {
       // zones
       if (trip.matches.dropoffZones) {
@@ -872,8 +872,8 @@ function flows(startDay, endDay, reportDay, stats, trips, privacyMinimum) {
   for (let trip of trips) {
     // check for time range
     if (
-      trip.start_time >= startDay.format("X") &&
-      trip.start_time <= endDay.format("X")
+      trip.start_time >= startDay.format("x") &&
+      trip.start_time <= endDay.format("x")
     ) {
       var a = h3.geoToH3(
         trip.route.features[0].geometry.coordinates[1],
@@ -990,11 +990,11 @@ async function fleet(startDay, endDay, reportDay, stats, states) {
   // find last state before current
   // if available, increment fleet stat
 
-  var start = startDay.format("X");
+  var start = startDay.format("x");
   var stop = endDay
     .clone()
     .add(1, "day")
-    .format("X");
+    .format("x");
   var current = startDay.clone();
   var baseDay = reportDay.format("YYYY-MM-DD");
 
@@ -1007,7 +1007,7 @@ async function fleet(startDay, endDay, reportDay, stats, states) {
     for (let vehicle_id of vehicle_ids) {
       var last;
       for (let state of states[vehicle_id]) {
-        var timestamp = moment(state.event_time, "X");
+        var timestamp = moment(state.event_time, "x");
 
         if (timestamp.diff(current) <= 0) {
           last = state.event_type;
@@ -1036,11 +1036,11 @@ async function availability(startDay, endDay, reportDay, stats, states, graph) {
   // find last state before current
   // if available, increment availability stat
 
-  var start = startDay.format("X");
+  var start = startDay.format("x");
   var stop = endDay
     .clone()
     .add(1, "day")
-    .format("X");
+    .format("x");
   var current = startDay.clone();
   var baseDay = reportDay.format("YYYY-MM-DD");
 
@@ -1050,7 +1050,7 @@ async function availability(startDay, endDay, reportDay, stats, states, graph) {
       var lastAvailable;
       states[vehicle_id].forEach(state => {
         if (state.event_type === "available") {
-          var timestamp = moment(state.event_time, "X");
+          var timestamp = moment(state.event_time, "x");
 
           if (timestamp.diff(current) <= 0) {
             lastAvailable = state;
@@ -1287,11 +1287,11 @@ async function onstreet(startDay, endDay, reportDay, stats, states, graph) {
   // find last state before current
   // if available, increment onstreet stat
 
-  var start = startDay.format("X");
+  var start = startDay.format("x");
   var stop = endDay
     .clone()
     .add(1, "day")
-    .format("X");
+    .format("x");
   var current = startDay.clone();
   var baseDay = reportDay.format("YYYY-MM-DD");
 
@@ -1304,7 +1304,7 @@ async function onstreet(startDay, endDay, reportDay, stats, states, graph) {
           state.event_type === "available" ||
           state.event_type === "unavailable"
         ) {
-          var timestamp = moment(state.event_time, "X");
+          var timestamp = moment(state.event_time, "x");
 
           if (timestamp.diff(current) <= 0) {
             lastAvailable = state;

@@ -23,8 +23,8 @@ const cache = async function(
     return config.providers[provider].enabled;
   });
 
-  const start = Math.round(+startDay.subtract(config.lost, "days").format("X"));
-  const stop = Math.round(+endDay.format("X"));
+  const start = Math.round(+startDay.subtract(config.lost, "days").format("x"));
+  const stop = Math.round(+endDay.format("x"));
 
   const cacheDayPath = path.join(cachePath, reportDay.format("YYYY-MM-DD"));
   const cacheDayAllPath = path.join(cacheDayPath, "./All");
@@ -64,7 +64,8 @@ const cache = async function(
         stop,
         graph,
         config,
-        cacheDayProviderLogPath
+        cacheDayProviderLogPath,
+        version
       );
       await mds.changes(
         provider,
