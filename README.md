@@ -7,7 +7,7 @@ SharedStreets Mobility Metrics is an open source command line interface (CLI) an
 
 - OSX or Linux (docker or WSL is recommended for Windows users)
 - Node.js v11
-- Valid MDS credentials for at least one live MDS Provider API
+- Valid MDS credentials for at least one live MDS Provider API supporting MDS v0.3 or higher
 
 ## API
 

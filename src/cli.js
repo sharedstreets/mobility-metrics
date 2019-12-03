@@ -52,7 +52,6 @@ if (config.zones) {
 const publicPath = path.resolve(argv.public);
 const cachePath = path.resolve(argv.cache);
 
-const debug = argv.debug;
 const startDay = moment(argv.startDay, "YYYY-MM-DD");
 const endDay = moment(argv.endDay, "YYYY-MM-DD");
 const reportDay = moment(argv.reportDay, "YYYY-MM-DD");
@@ -86,7 +85,8 @@ const backfill = async function() {
 
 backfill()
   .then(() => {
-    if (!debug) rimraf.sync(path.join(__dirname, cachePath));
+    rimraf.sync(cachePath);
+
     console.log("\ncompleted backfill");
   })
   .catch(err => {
