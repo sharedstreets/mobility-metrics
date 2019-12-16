@@ -9,14 +9,30 @@
   "zoom": 12.75,
   "privacyMinimum": 3,
   "lost": 2,
+  "geographicFilter": {
+    "type": "Feature",
+    "properties": {},
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-86.77564144134521, 36.163344537460084],
+          [-86.74620151519775, 36.163344537460084],
+          [-86.74620151519775, 36.17997342339555],
+          [-86.77564144134521, 36.17997342339555],
+          [-86.77564144134521, 36.163344537460084]
+        ]
+      ]
+    }
+  },
   "summary": {
     "Unique Vehicles": true,
     "Active Vehicles": true,
     "Total Trips": true,
     "Total Trip Distance": true,
-    "Distance Per Vehicle": false,
+    "Distance Per Vehicle": true,
     "Vehicle Utilization": true,
-    "Trips Per Active Vehicle": false,
+    "Trips Per Active Vehicle": true,
     "Avg Trip Distance": true,
     "Avg Trip Duration": true
   },
