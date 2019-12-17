@@ -1,6 +1,12 @@
 CHANGELOG
 ---
 
+## 4.3.0
+
+- add geo filter
+- add vehicle type filter
+- config fallbacks to prevent errors when missing values
+
 ## 4.1.0
 
 - document requirement for MDS >=0.3
