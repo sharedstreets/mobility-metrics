@@ -90,6 +90,10 @@ A `config.json` file is required to run Mobility Metrics. Enable providers and s
   - maximum number of days without status change before vehicles are permanently lost
 - `summary`
   - enabled or disabled metrics in summary UI
+- `vehicleFilter`
+  - optionally allow only one type of [MDS vehicle_type](https://github.com/openmobilityfoundation/mobility-data-specification/tree/dev/provider#vehicle-types)
+- `geographicFilter`
+  - filter all data that falls outside the defined geographic filter, formatted as a valid GeoJSON Feature of type Polygon or MultiPolygon
 - `providers`
   - list of providers to query
     - `type`

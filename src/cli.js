@@ -37,17 +37,53 @@ if (argv.help || argv.h || Object.keys(argv).length === 1) {
 
 const config = require(path.resolve(argv.config));
 // add spatial indices to zones
+if (!config.zones) {
+  config.zones = turf.FeatureCollection([]);
+}
 const z = 19;
 const zs = { min_zoom: z, max_zoom: z };
-if (config.zones) {
-  for (let zone of config.zones.features) {
-    zone.properties.keys = {};
-    const keys = cover.indexes(zone.geometry, zs);
-    for (let key of keys) {
-      zone.properties.keys[key] = 1;
-    }
+for (let zone of config.zones.features) {
+  zone.properties.keys = {};
+  const keys = cover.indexes(zone.geometry, zs);
+  for (let key of keys) {
+    zone.properties.keys[key] = 1;
   }
 }
+// build geographicFilter lookup
+if (config.geographicFilter) {
+  config.geographicFilterKeys = {};
+  cover.indexes(config.geographicFilter.geometry, zs).forEach(qk => {
+    config.geographicFilterKeys[qk] = 1;
+  });
+}
+
+// check for valid vehicleFilter
+if (
+  config.vehicleFilter &&
+  (config.vehicleFilter !== "car" &&
+    config.vehicleFilter !== "bicycle" &&
+    config.vehicleFilter !== "scooter")
+) {
+  throw new Error("detected invalid vehicle filter");
+}
+
+// defaults
+if (!config.zoom) config.zoom = 12.5;
+if (!config.lost) config.lost = 2;
+if (!config.privacyMinimum || config.privacyMinimum < 3)
+  config.privacyMinimum = 3;
+if (!config.summary)
+  config.summary = {
+    "Unique Vehicles": true,
+    "Active Vehicles": true,
+    "Total Trips": true,
+    "Total Trip Distance": true,
+    "Distance Per Vehicle": true,
+    "Vehicle Utilization": true,
+    "Trips Per Active Vehicle": true,
+    "Avg Trip Distance": true,
+    "Avg Trip Duration": true
+  };
 
 const publicPath = path.resolve(argv.public);
 const cachePath = path.resolve(argv.cache);

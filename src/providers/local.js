@@ -33,12 +33,14 @@ async function trips(
 
             if (trip.start_time >= start && trip.start_time < stop) {
               trip = await tripMatch(trip, config, graph);
-              const signature = crypto
-                .createHmac("sha256", version)
-                .update(JSON.stringify(trip))
-                .digest("hex");
-              fs.appendFileSync(cacheDayProviderLogPath, signature + "\n");
-              stream.write(JSON.stringify(trip) + "\n");
+              if (trip) {
+                const signature = crypto
+                  .createHmac("sha256", version)
+                  .update(JSON.stringify(trip))
+                  .digest("hex");
+                fs.appendFileSync(cacheDayProviderLogPath, signature + "\n");
+                stream.write(JSON.stringify(trip) + "\n");
+              }
             }
           }
           next();
@@ -75,12 +77,14 @@ async function changes(
             change.event_time = change.event_time;
             if (change.event_time >= start && change.event_time < stop) {
               change = await changeMatch(change, config, graph);
-              const signature = crypto
-                .createHmac("sha256", version)
-                .update(JSON.stringify(change))
-                .digest("hex");
-              fs.appendFileSync(cacheDayProviderLogPath, signature + "\n");
-              stream.write(JSON.stringify(change) + "\n");
+              if (change) {
+                const signature = crypto
+                  .createHmac("sha256", version)
+                  .update(JSON.stringify(change))
+                  .digest("hex");
+                fs.appendFileSync(cacheDayProviderLogPath, signature + "\n");
+                stream.write(JSON.stringify(change) + "\n");
+              }
             }
           }
           next();
