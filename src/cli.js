@@ -61,7 +61,7 @@ if (config.geographicFilter) {
 if (
   config.vehicleFilter &&
   (config.vehicleFilter !== "car" &&
-    config.vehicleFilter !== "bike" &&
+    config.vehicleFilter !== "bicycle" &&
     config.vehicleFilter !== "scooter")
 ) {
   throw new Error("detected invalid vehicle filter");
