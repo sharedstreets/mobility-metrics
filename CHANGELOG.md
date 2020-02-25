@@ -1,6 +1,19 @@
 CHANGELOG
 ---
 
+## 4.4.0
+
+- implements an optional "version" setting that can be set per provider
+- setting to "0.3" will use the MDS 0.3 request headers and parameters when performing queries
+- leaving version blank will fall back to 0.2 request structure
+- varying MDS versions are normalized, allowing multiple providers to be combined across version implementations
+
+## 4.3.0
+
+- add geo filter
+- add vehicle type filter
+- config fallbacks to prevent errors when missing values
+
 ## 4.1.0
 
 - document requirement for MDS >=0.3

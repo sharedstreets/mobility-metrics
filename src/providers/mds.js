@@ -15,18 +15,36 @@ async function trips(
   version
 ) {
   return new Promise(async (resolve, reject) => {
-    var opts = {
-      url:
-        provider.trips +
-        "?start_time=" +
-        start.toString() +
-        "&end_time=" +
-        stop.toString(),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: provider.token
-      }
-    };
+    var opts = {};
+
+    if (provider.version === "0.3") {
+      opts = {
+        url:
+          provider.trips +
+          "?min_end_time=" +
+          start.toString() +
+          "&max_end_time=" +
+          stop.toString(),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/vnd.mds.provider+json;version=0.3",
+          Authorization: provider.token
+        }
+      };
+    } else {
+      opts = {
+        url:
+          provider.status_changes +
+          "?start_time=" +
+          start.toString() +
+          "&end_time=" +
+          stop.toString(),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: provider.token
+        }
+      };
+    }
 
     // recursive scan across
     async function scan(opts, done) {
@@ -75,18 +93,36 @@ async function changes(
   version
 ) {
   return new Promise(async (resolve, reject) => {
-    var opts = {
-      url:
-        provider.status_changes +
-        "?start_time=" +
-        start.toString() +
-        "&end_time=" +
-        stop.toString(),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: provider.token
-      }
-    };
+    var opts = {};
+
+    if (provider.version === "0.3") {
+      opts = {
+        url:
+          provider.status_changes +
+          "?start_time=" +
+          start.toString() +
+          "&end_time=" +
+          stop.toString(),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/vnd.mds.provider+json;version=0.3",
+          Authorization: provider.token
+        }
+      };
+    } else {
+      opts = {
+        url:
+          provider.status_changes +
+          "?start_time=" +
+          start.toString() +
+          "&end_time=" +
+          stop.toString(),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: provider.token
+        }
+      };
+    }
 
     // recursive scan across
     async function scan(opts, done) {

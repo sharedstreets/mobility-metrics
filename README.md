@@ -98,6 +98,8 @@ A `config.json` file is required to run Mobility Metrics. Enable providers and s
   - list of providers to query
     - `type`
       - "local" for data off disk or "mds" for data off MDS provider API
+    - `version`
+      - sets the version of MDS to target; defaults to 0.2, but to use 0.3, set version to "0.3"
     - `trips`
       - URI of trip data
     - `status_changes`
