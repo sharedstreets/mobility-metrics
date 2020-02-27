@@ -1,6 +1,10 @@
 CHANGELOG
 ---
 
+## 4.5.0
+
+- add `-v,--version` flags to check version number
+
 ## 4.4.0
 
 - implements an optional "version" setting that can be set per provider
