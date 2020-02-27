@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const path = require("path");
+const fs = require("fs");
 const moment = require("moment");
 const rimraf = require("rimraf");
 const shst = require("sharedstreets");
@@ -9,6 +10,14 @@ const summarize = require("./summarize");
 const cover = require("@mapbox/tile-cover");
 
 var argv = require("minimist")(process.argv.slice(2));
+
+if (argv.version || argv.v) {
+  const version = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "../package.json"))
+  ).version;
+  console.log("v" + version);
+  process.exit(0);
+}
 
 if (argv.help || argv.h || Object.keys(argv).length === 1) {
   var help = "";

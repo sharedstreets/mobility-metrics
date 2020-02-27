@@ -131,6 +131,10 @@ The CLI is responsible for downloading raw data, running aggregation and reports
 mobility-metrics --config ./example/example.json --public ./public --cache ./cache --day 2019-07-20;
 ```
 
+## Version
+
+To check the version of the CLI you are running, use the `-v` or `--version` flags.
+
 ## Docker
 
 Docker is supported, and is recommended when installation is challenging on bespoke systems that fail when installing dependencies, such as OSRM.
