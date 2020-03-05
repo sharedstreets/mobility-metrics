@@ -25,9 +25,9 @@ exec(
 );
 exec("../node_modules/osrm/lib/binding/osrm-contract graph/nash.osrm");
 
-const providers = ["Flipr", "Scoob", "BikeMe", "Spuun"];
+const providers = ["Flipr"]; //, "Scoob", "BikeMe", "Spuun"];
 
-const days = 2;
+const days = 3;
 
 const start = 1563087600000; // Sunday, July 14, 2019 3:00:00 AM GMT-04:00
 
@@ -42,8 +42,8 @@ cmd += "--changes data/{provider}/changes.json ";
 cmd += "--trips data/{provider}/trips.json ";
 cmd += "--quiet ";
 
-const minAgents = 50;
-const maxAgents = 200;
+const minAgents = 5000;
+const maxAgents = 5000;
 
 console.log("running simulations...");
 
