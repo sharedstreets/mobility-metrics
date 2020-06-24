@@ -127,6 +127,8 @@ The CLI is responsible for downloading raw data, running aggregation and reports
 
 ### Flags
 
+The following flags are required to run mobility-metrics.
+
 - `--config`
   - path to configuration JSON file
 - `--public`
@@ -137,6 +139,8 @@ The CLI is responsible for downloading raw data, running aggregation and reports
   - Beginning date of query range
 - `--endDay`
   - End date of query range - should match `startDay` to query a single day of data
+- `--reportDay`
+  - Date used for report titles - does not need to match query dates
 
 ### Example
 
@@ -146,7 +150,8 @@ mobility-metrics \
   --public ./public \
   --cache ./cache \
   --startDay 2019-07-20 \
-  --endDay 2019-07-20;
+  --endDay 2019-07-20 \
+  --reportDay 2019-07-20
 ```
 
 ## Version
