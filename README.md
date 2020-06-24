@@ -125,10 +125,28 @@ In your config.json file, each provider can be one of two types:
 
 The CLI is responsible for downloading raw data, running aggregation and reports, then deleting the raw cache. Configure this command in cron for automated daily imports.
 
+### Flags
+
+- `--config`
+  - path to configuration JSON file
+- `--public`
+  - path to directory where data and dashboard will be written
+- `--cache`
+  - path to temporary directory where raw data will be cached during aggregation (cache is automatically deleted after aggregation)
+- `--startDay`
+  - Beginning date of query range
+- `--endDay`
+  - End date of query range - should match `startDay` to query a single day of data
+
+### Example
+
 ```sh
-# --day = target backfill date in YYYY-MM-DD format
-# --days = number of days prior to target to also backfill
-mobility-metrics --config ./example/example.json --public ./public --cache ./cache --day 2019-07-20;
+mobility-metrics \
+  --config ./example/example.json \
+  --public ./public \
+  --cache ./cache \
+  --startDay 2019-07-20 \
+  --endDay 2019-07-20;
 ```
 
 ## Version
