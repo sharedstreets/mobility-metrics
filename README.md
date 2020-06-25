@@ -142,6 +142,11 @@ The following flags are required to run mobility-metrics.
 - `--reportDay`
   - Date used for report titles - does not need to match query dates
 
+#### Optional
+
+- `--version`
+  - Get the mobility-metrics binary version
+
 ### Example
 
 ```sh
