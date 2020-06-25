@@ -24,7 +24,8 @@ async function trips(
           "?min_end_time=" +
           start.toString() +
           "&max_end_time=" +
-          stop.toString(),
+          stop.toString() +
+          "&page[limit]=1000",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/vnd.mds.provider+json;version=0.3",
