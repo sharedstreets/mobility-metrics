@@ -31,7 +31,8 @@ if (argv.help || argv.h || Object.keys(argv).length === 1) {
   help += "--endDay      end of query range (YYYY-MM-DD)\n";
   help += "--reportDay   day of report listing (YYYY-MM-DD)\n";
   help += "--compareA    path to audit log A for comparison with B\n";
-  help += "--compareAB   path to audit log B for comparison with A\n";
+  help += "--compareB   path to audit log B for comparison with A\n";
+  help += "--compareHashes   optional flag to enable comparison of individual trip/status_change hashes\n";
 
   console.log(help);
   process.exit(0);
@@ -166,10 +167,6 @@ if (argv.help || argv.h || Object.keys(argv).length === 1) {
 
     }
   }
-
-
-  ///Users/kpw/workspace/sharedstreets/mobility-metrics/public/audits/2019-07-21/2020-12-01_14.27.36
-
   return;
 }
 else {
