@@ -206,6 +206,8 @@ const summarize = async function(
         if(!auditLog.day[day]) {
           auditLog.day[day] = {
             version: version,
+            day: day,
+            provider: provider,
             totalTrips: 0,
             totalVehicles: 0,
             totalChanges: 0,
@@ -250,6 +252,8 @@ const summarize = async function(
         if(!auditLog.day[day]) {
           auditLog.day[day] = {
             version: version,
+            day: day,
+            provider: provider,
             totalTrips: 0,
             totalVehicles: 0,
             totalChanges: 0,

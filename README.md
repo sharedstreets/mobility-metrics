@@ -147,6 +147,18 @@ The following flags are required to run mobility-metrics.
 - `--version`
   - Get the mobility-metrics binary version
 
+#### Auditing
+
+  Run Mobility Metrics data auditing functions to compare source data used for reports (see Auditing section below for additiona information).
+
+  - `--compareA`
+    - Path to auditing directory for report A
+  - `--compareB`
+    - Path to auditing directory for report B
+  - `--compareHashes`
+    - Run hash comparison between report A and B
+
+
 ### Example
 
 ```sh
@@ -230,6 +242,31 @@ mobility-metrics --config ./example/example.json --public ./public --cache ./cac
 ```
 
 A full static file structure should be generated at `./public`. See the _Serving API_ section above for tips on serving this endpoint over HTTP.
+
+## Example
+
+Mobility Metrics version +4.7.x implements data auditing functionality that allows fine-grain comparison of source data used in reports generated for similar or overlapping time periods. This allows debugging of source data to ensure metrics differences are not the result of underlying data integrity problems. When a report is run Mobility Metrics stores auditing logs in `./auditing` alongside the report data. This audit log contains summary stats about the input data as well as a complete set irreversible hashes for each input trip and status_change event. When a data audit is performed, the logs from from each report are compared and differences are flagged.
+
+The audit log directory path for each report is listed at the bottom of the report page:
+
+![Audit log path listed in report](./images/audit_log.png)
+
+Example of using the comparison command line tools to compare audit logs:
+
+```
+$ mobility-metrics  --compareA path/to/audit_log_a/ --compareA path/to/audit_log_b/
+```
+
+![Comparison](./images/compare1.png)
+
+To compare individual hashes use the optional `--compareHashes` flag:
+
+```
+$ mobility-metrics --compareA path/to/audit_log_a/ --compareA path/to/audit_log_b/ --compareHashes
+```
+
+![Comparison with Hashes](./images/compare2.png)
+
 
 ## Test
 
