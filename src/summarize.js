@@ -87,6 +87,7 @@ const summarize = async function(
 
       var stats = {
         version: version,
+        auditPath: auditPath,
         totalVehicles: 0,
         totalActiveVehicles: 0,
         totalTrips: 0,
@@ -240,8 +241,6 @@ const summarize = async function(
         stats.averageTripDuration = stats.totalDuration / stats.totalTrips;
         stats.averageTrips = stats.totalTrips / stats.totalActiveVehicles;
       }
-
-      console.log(JSON.stringify(auditLog));
 
       // build state histories for each vehicle
       var states = {};

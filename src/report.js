@@ -60,16 +60,18 @@ async function report(
     const reportPath = path.join(reportsPath, reportDay, provider + ".html");
     const metricsPath = path.join(dataPath, provider + ".json");
     const metrics = fs.readFileSync(metricsPath).toString();
+    const metricsData = JSON.parse(metrics);
 
     const signature = crypto
-      .createHmac("sha256", version)
+      .createHmac("sha256", metricsData.version)
       .update(metrics)
       .digest("hex");
 
     var html = report;
     html = html.split("$provider$").join(provider);
     html = html.split("$data$").join(metrics);
-    html = html.split("$signature$").join(signature);
+    html = html.split("$signature$").join(metricsData.version + ": " + signature);
+    html = html.split("$auditPath$").join(metricsData.auditPath);
 
     fs.writeFileSync(reportPath, html);
   }
