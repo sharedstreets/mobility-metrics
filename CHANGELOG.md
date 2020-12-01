@@ -1,6 +1,10 @@
 CHANGELOG
 ---
 
+## 4.7.0 
+- adds auditing functionality
+- updates dependencies
+
 ## 4.5.0
 
 - add `-v,--version` flags to check version number
