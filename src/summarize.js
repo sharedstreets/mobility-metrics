@@ -7,10 +7,17 @@ const h3 = require("h3-js");
 const md5 = require("md5");
 const cache = require("./cache");
 const report = require("./report");
+const hash = require('object-hash');
 
 const version = require(path.join(__dirname, "../package.json")).version;
 
 var Z = 9;
+
+class JSONSet extends Set {
+    toJSON () {
+        return [...this]
+    }
+}
 
 const summarize = async function(
   startDay,
@@ -30,6 +37,14 @@ const summarize = async function(
       return config.providers[provider].enabled;
     });
     providers.push("All");
+
+    var auditPath = path.join(
+      publicPath,
+      "audits",
+      reportDay.format("YYYY-MM-DD"),
+      p = moment(new Date()).format("YYYY-MM-DD_HH.mm.ss")
+    );
+    mkdirp.sync(auditPath);
 
     var cacheDayPath = path.join(cachePath, reportDay.format("YYYY-MM-DD"));
     if (!fs.existsSync(cacheDayPath)) {
@@ -65,6 +80,11 @@ const summarize = async function(
 
       var totalVehicles = new Set();
       var totalActiveVehicles = new Set();
+
+      var auditLog = {
+        day : {}
+      };
+
       var stats = {
         version: version,
         totalVehicles: 0,
@@ -181,6 +201,24 @@ const summarize = async function(
       }
 
       for (let trip of trips) {
+        var day = getStartDay(trip.start_time);
+        if(!auditLog.day[day]) {
+          auditLog.day[day] = {
+            version: version,
+            totalTrips: 0,
+            totalVehicles: 0,
+            totalChanges: 0,
+            vehicleIds: new JSONSet(),
+            tripHashes: new JSONSet(),
+            changeHashes: new JSONSet()
+          };
+        }
+
+        var tripHash = hash(trip);
+        auditLog.day[day].totalTrips++;
+        auditLog.day[day].tripHashes.add(tripHash);
+        auditLog.day[day].vehicleIds.add(trip.vehicle_id);
+
         totalVehicles.add(trip.vehicle_id);
         totalActiveVehicles.add(trip.vehicle_id);
 
@@ -203,9 +241,30 @@ const summarize = async function(
         stats.averageTrips = stats.totalTrips / stats.totalActiveVehicles;
       }
 
+      console.log(JSON.stringify(auditLog));
+
       // build state histories for each vehicle
       var states = {};
       changes.forEach(change => {
+
+        var day = getStartDay(change.event_time);
+        if(!auditLog.day[day]) {
+          auditLog.day[day] = {
+            version: version,
+            totalTrips: 0,
+            totalVehicles: 0,
+            totalChanges: 0,
+            vehicleIds: new JSONSet(),
+            tripHashes: new JSONSet(),
+            changeHashes: new JSONSet()
+          }
+        }
+
+        var changeHash = hash(change);
+        auditLog.day[day].totalChanges++;
+        auditLog.day[day].changeHashes.add(changeHash);
+        auditLog.day[day].vehicleIds.add(change.vehicle_id);
+
         if (!states[change.vehicle_id]) {
           totalVehicles.add(change.vehicle_id);
           stats.totalVehicles = totalVehicles.size;
@@ -219,6 +278,14 @@ const summarize = async function(
           return a.event_time - b.event_time;
         });
       });
+
+      for(var day of Object.keys(auditLog.day)) {
+        auditLog.day[day].totalVehicles = auditLog.day[day].vehicleIds.size;
+
+        auditFilePath = path.join(auditPath, provider + '_' + day + ".json");
+        fs.writeFileSync(auditFilePath, JSON.stringify(auditLog.day[day]));
+
+      }
 
       console.log("      fleet sizes...");
       await fleet(startDay, endDay, reportDay, stats, states);
@@ -282,6 +349,12 @@ function getTimeBins(reportDay, timestamp) {
   bins.minute = bins.hour + "-" + formattedMinutes;
 
   return bins;
+}
+
+function getStartDay(timestamp) {
+  var time = moment(timestamp);
+  var day = time.format("YYYY-MM-DD");
+  return day;
 }
 
 async function tripVolumes(

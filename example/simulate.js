@@ -42,15 +42,15 @@ cmd += "--changes data/{provider}/changes.json ";
 cmd += "--trips data/{provider}/trips.json ";
 cmd += "--quiet ";
 
-const minAgents = 5000;
-const maxAgents = 5000;
+const minAgents = 100;
+const maxAgents = 100;
 
 console.log("running simulations...");
 
 for (var day = 1; day <= days; day++) {
   console.log(day + " / " + days);
   console.log("- - -");
-  const time = start + day * 86400000 + 21600;
+  const time = start + (day * 86400000 + 21600);
 
   for (let provider of providers) {
     console.log("  " + provider);
