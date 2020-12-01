@@ -245,7 +245,9 @@ A full static file structure should be generated at `./public`. See the _Serving
 
 ## Auditing
 
-Mobility Metrics version +4.7.x implements data auditing functionality that allows fine-grain comparison of source data used in reports generated for similar or overlapping time period. This allows debugging of source data to ensure metrics differences are not the result of underlying data integrity problems, without requiring that users store sensitve data that can be used to reconstruct trips. When a report is run, Mobility Metrics stores auditing logs in `./audits` alongside the report data. The audit log contains summary stats about the input data as well as a complete set irreversible hashes for each input trip and status_change event. When a data audit is performed the logs from from each report are compared and differences are flagged.
+Mobility Metrics version +4.7.x implements data auditing functionality that allows fine-grain comparison of source data used in reports for similar or overlapping time periods. This allows debugging of source data to ensure metrics differences are not the result of underlying data integrity problems, without also requiring that users store sensitve data that can be used to reconstruct trips. 
+
+When a report is run, Mobility Metrics stores hashed auditing data in `./audits` alongside the report data. The audit log contains summary stats about the input data as well as a complete set irreversible hashes for each input trip and status_change event. When a data audit is performed the logs from each report are compared and differences are flagged.
 
 The audit log directory path for each report is listed at the bottom of the report page:
 
